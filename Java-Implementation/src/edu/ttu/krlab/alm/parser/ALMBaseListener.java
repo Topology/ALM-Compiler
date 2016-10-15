@@ -12,8 +12,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import edu.ttu.krlab.alm.ALM;
-import edu.ttu.krlab.alm.ALMTranslator;
-import edu.ttu.krlab.alm.TranslatorSettings;
+import edu.ttu.krlab.alm.ALMCompiler;
+import edu.ttu.krlab.alm.ALMCompilerSettings;
 import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.Location;
 import edu.ttu.krlab.alm.datastruct.VariableManager;
@@ -76,7 +76,7 @@ public class ALMBaseListener implements ALMListener {
 	private SymbolTable st;
 	private ErrorReport er;
 	private ASPfProgram aspf;
-	private TranslatorSettings s;
+	private ALMCompilerSettings s;
 
 	// Function Type
 	boolean staticType = false;
@@ -85,7 +85,7 @@ public class ALMBaseListener implements ALMListener {
 	boolean definedType = false;
 	boolean totalType = false;
 
-	public ALMBaseListener(TranslatorSettings settings, SymbolTable st, ErrorReport er, ASPfProgram aspf) {
+	public ALMBaseListener(ALMCompilerSettings settings, SymbolTable st, ErrorReport er, ASPfProgram aspf) {
 		this.s = settings;
 		this.st = st;
 		this.er = er;
@@ -1161,7 +1161,7 @@ public class ALMBaseListener implements ALMListener {
 							.add(prev_const.getLocation());
 
 				} catch (NotSourceSortException e) {
-					ALMTranslator.PROGRAM_FAILURE("Creating Object Constant Entry",
+					ALMCompiler.PROGRAM_FAILURE("Creating Object Constant Entry",
 							"Unhandled Semantic Error, sort entry did not exist or was not a source sort.");
 					// already handled previously, no new error needs to be
 					// thrown. This line should never execute.
@@ -2189,7 +2189,7 @@ public class ALMBaseListener implements ALMListener {
 		for (ALMParser.Object_constantContext inst : instances) {
 			ALMTerm aterm = ALM.ParseALMTerm(inst);
 			if (aterm == null)
-				ALMTranslator.PROGRAM_FAILURE("Structure Instance", "Failed To Parse ALMTerm:" + inst.getText());
+				ALMCompiler.PROGRAM_FAILURE("Structure Instance", "Failed To Parse ALMTerm:" + inst.getText());
 			if (aterm.isSchema())
 				sort_instances.add(aterm);
 			else
@@ -2511,7 +2511,7 @@ public class ALMBaseListener implements ALMListener {
 			break;
 		default:
 			// Nothing Else Should Occur As Literal
-			ALMTranslator.PROGRAM_FAILURE("Semantic Check Of Literals",
+			ALMCompiler.PROGRAM_FAILURE("Semantic Check Of Literals",
 					"ALMTerm [" + lit.toString() + "] is not a literal");
 		}
 		return error_occurred;

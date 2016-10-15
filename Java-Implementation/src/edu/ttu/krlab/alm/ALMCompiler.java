@@ -45,7 +45,7 @@ import edu.ttu.krlab.alm.parser.ALMParser;
 import edu.ttu.krlab.alm.parser.ALMSyntaxErrorListener;
 import edu.ttu.krlab.alm.parser.PermanentTranslatorFailure;
 
-public class ALMTranslator {
+public class ALMCompiler {
 	
 	public static final String VERSION = "0.1.0";  //Major = huge features, Minor = smaller adjustments, Release Build = bugfixes  
 	private static final boolean DEBUG_VERSION = true;
@@ -60,7 +60,7 @@ public class ALMTranslator {
 
 		System.err.println("ALM Translator Version: "+VERSION);
 		
-		TranslatorSettings s = new TranslatorSettings();
+		ALMCompilerSettings s = new ALMCompilerSettings();
 		s.processCommandlineArgs(args);
 		
 		SymbolTable st = new SymbolTable();
@@ -76,7 +76,7 @@ public class ALMTranslator {
 			Reader br = s.SystemDescriptionReader();
 		
 			//Call The Translation Function (Where the magic happens)
-			ALMTranslator.Translate(br, s, st, er, aspf, pm, as, tm);
+			ALMCompiler.Translate(br, s, st, er, aspf, pm, as, tm);
 
 			
 		} catch (FileNotFoundException e) {
@@ -92,7 +92,7 @@ public class ALMTranslator {
 		
 	}
 
-	private static List<AnswerSet> GetAnswerSet(SPARCProgram pm, TranslatorSettings s) throws IOException {
+	private static List<AnswerSet> GetAnswerSet(SPARCProgram pm, ALMCompilerSettings s) throws IOException {
 		StringWriter sparcwriter = new StringWriter();
 		BufferedWriter out = new BufferedWriter(sparcwriter);
 		pm.writeTo(out);
@@ -126,7 +126,7 @@ public class ALMTranslator {
 			pm.addSPARCSort(nodes);
 		} catch (SPARCSortAlreadyDefined e) {
 			e.printStackTrace();
-			ALMTranslator.PROGRAM_FAILURE("PreModel Creating Sorts Section", "Special Sort For Nodes In Hierarchy Was Already Defined");
+			ALMCompiler.PROGRAM_FAILURE("PreModel Creating Sorts Section", "Special Sort For Nodes In Hierarchy Was Already Defined");
 			//This should never happen. 
 		}
 		
@@ -233,7 +233,7 @@ public class ALMTranslator {
 				//need to add signature to predicate, leaving off boolean if that is the range sort.
 				List<SortEntry> sig = fun.getSignature();
 				if(sig == null)
-					ALMTranslator.PROGRAM_FAILURE("Pre Model Create Predicate Section", "Function Has No Signature");
+					ALMCompiler.PROGRAM_FAILURE("Pre Model Create Predicate Section", "Function Has No Signature");
 				
 				int length = sig.size()-1;
 				for(int i = 0; i <= length; i++){
@@ -242,7 +242,7 @@ public class ALMTranslator {
 						try{
 							pred.addSPARCSort(pm.getSPARCSort(sig.get(i).getSortName()));	
 						} catch (SPARCSortNotDefined e) {
-							ALMTranslator.PROGRAM_FAILURE("Premodel SPARC Program", "SPARC Sort ["+se.getSortName()+"] Not defined in pre model program for function ["+fun.getFunctionName()+"].");
+							ALMCompiler.PROGRAM_FAILURE("Premodel SPARC Program", "SPARC Sort ["+se.getSortName()+"] Not defined in pre model program for function ["+fun.getFunctionName()+"].");
 						}
 				}	
 					
@@ -694,7 +694,7 @@ public class ALMTranslator {
 	}
 
 
-	private static void ConstructFinalProgram(SPARCProgram tm, AnswerSet as, SPARCProgram pm, SymbolTable st, ASPfProgram aspf, TranslatorSettings s) {
+	private static void ConstructFinalProgram(SPARCProgram tm, AnswerSet as, SPARCProgram pm, SymbolTable st, ASPfProgram aspf, ALMCompilerSettings s) {
 		CreateFinalSortsSection(tm, pm, as);
 		CreateFinalPredicatesSection(tm, pm, as);
 		CreateFinalProgramRules(tm, st, pm, aspf);
@@ -710,7 +710,7 @@ public class ALMTranslator {
 					tm.addSPARCSort(pmsort);
 				} catch (SPARCSortAlreadyDefined e) {
 					//This should never happen since the pre-model program did not have duplicate sorts.
-					ALMTranslator.PROGRAM_FAILURE("Final Program Sorts", "Redundant Sort Error In Final Program.");
+					ALMCompiler.PROGRAM_FAILURE("Final Program Sorts", "Redundant Sort Error In Final Program.");
 				}
 			} else {
 				SPARCSort tmsort = new SPARCSort(pmsort.getSortName());
@@ -719,7 +719,7 @@ public class ALMTranslator {
 					tm.addSPARCSort(tmsort);
 				} catch (SPARCSortAlreadyDefined e) {
 					//This should never happen since the pre-model program did not have duplicate sorts.
-					ALMTranslator.PROGRAM_FAILURE("Final Program Sorts", "Redundant Sort Error In Final Program.");
+					ALMCompiler.PROGRAM_FAILURE("Final Program Sorts", "Redundant Sort Error In Final Program.");
 				}
 			}
 		}
@@ -743,7 +743,7 @@ public class ALMTranslator {
 				tm.addSPARCPredicate(pred);
 			} catch (PredicateAlreadyDeclared e) {
 				//This should never happen since the pre-model program did not have duplicate predicates.
-				ALMTranslator.PROGRAM_FAILURE("Final Program Predicates", "Redundant Predicate Error In Final Program.");
+				ALMCompiler.PROGRAM_FAILURE("Final Program Predicates", "Redundant Predicate Error In Final Program.");
 			}	
 	}
 
@@ -800,7 +800,7 @@ public class ALMTranslator {
 		}
 	}
 
-	private static void LoadFactsFromPreModelAnswerSet(SPARCProgram tm, AnswerSet as, TranslatorSettings s) {
+	private static void LoadFactsFromPreModelAnswerSet(SPARCProgram tm, AnswerSet as, ALMCompilerSettings s) {
 		tm.createSection(ALM.OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET);
 		if(s.OptimizationAddAllFactsFromPreModelAnswerset())
 			for(List<ALMTerm> lits : as.getAllAlmTerms())
@@ -828,7 +828,7 @@ public class ALMTranslator {
 
 
 	
-	public static final void Translate(Reader r,TranslatorSettings s, SymbolTable st, ErrorReport er, 
+	public static final void Translate(Reader r,ALMCompilerSettings s, SymbolTable st, ErrorReport er, 
 			ASPfProgram aspf, SPARCProgram pm, List<AnswerSet> as, SPARCProgram tm) throws IOException{
 		
 		CharStream cs = null;

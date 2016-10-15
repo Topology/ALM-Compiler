@@ -8,8 +8,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.*;
 
-import edu.ttu.krlab.alm.ALMTranslator;
-import edu.ttu.krlab.alm.TranslatorSettings;
+import edu.ttu.krlab.alm.ALMCompiler;
+import edu.ttu.krlab.alm.ALMCompilerSettings;
 import edu.ttu.krlab.answerset.parser.AnswerSet;
 import edu.ttu.krlab.alm.datastruct.aspf.ASPfProgram;
 import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
@@ -18,7 +18,7 @@ import edu.ttu.krlab.alm.datastruct.sparc.SPARCProgram;
 
 public class TestingCommon {
 
-	 TranslatorSettings s;
+	 ALMCompilerSettings s;
 	 SymbolTable st;
 	 ErrorReport er;
 	 ASPfProgram aspf;
@@ -27,7 +27,7 @@ public class TestingCommon {
 	 List<AnswerSet> as;
 	
 	public TestingCommon(){
-		this.s = new TranslatorSettings();
+		this.s = new ALMCompilerSettings();
 	}
 	
 	private void reset(){
@@ -44,7 +44,7 @@ public class TestingCommon {
 		reset();
 		StringReader r = new StringReader(almProgram);
 		try {
-			ALMTranslator.Translate(r, s, st, er, aspf, pm, as, tm);
+			ALMCompiler.Translate(r, s, st, er, aspf, pm, as, tm);
 		} catch (IOException e) {
 			e.printStackTrace();
 			assertEquals("Translation Threw An Error That Was Not Handled", 0,1);

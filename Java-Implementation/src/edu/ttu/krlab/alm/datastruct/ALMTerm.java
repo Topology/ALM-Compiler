@@ -30,7 +30,7 @@ import java.util.Set;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import edu.ttu.krlab.alm.ALM;
-import edu.ttu.krlab.alm.ALMTranslator;
+import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.aspf.ASPfLiteral;
 import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
 import edu.ttu.krlab.alm.datastruct.err.SemanticError;
@@ -398,7 +398,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 			}
 		
 		default: 
-			ALMTranslator.PROGRAM_FAILURE("Type Checking ALMTerm", "All Cases Should Be Explicit, but case ["+type+"] was not handled.");
+			ALMCompiler.PROGRAM_FAILURE("Type Checking ALMTerm", "All Cases Should Be Explicit, but case ["+type+"] was not handled.");
 		}
 		return null;
 		
@@ -486,7 +486,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 			}
 			break;
 		default:
-			ALMTranslator.PROGRAM_FAILURE("Writing Out ALMTerm", "Unhandled type ["+this.type+"]");
+			ALMCompiler.PROGRAM_FAILURE("Writing Out ALMTerm", "Unhandled type ["+this.type+"]");
 				
 		}	
 	}
@@ -501,7 +501,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 			out.close();
 			return sw.toString();
 		} catch (IOException e) {
-			ALMTranslator.PROGRAM_FAILURE("To String", "Failed to write out term due to IO error");
+			ALMCompiler.PROGRAM_FAILURE("To String", "Failed to write out term due to IO error");
 		}
 		return null;
 	}
@@ -547,7 +547,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 		case ALMTerm.INT:
 			return this.name;
 		default:
-			ALMTranslator.PROGRAM_FAILURE("SortInstance As String", "Unhandled type ["+this.type+"]");
+			ALMCompiler.PROGRAM_FAILURE("SortInstance As String", "Unhandled type ["+this.type+"]");
 			return null;
 		}	
 	}

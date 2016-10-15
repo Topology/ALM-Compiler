@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import edu.ttu.krlab.alm.ALM;
-import edu.ttu.krlab.alm.ALMTranslator;
+import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.Location;
 
 public class NormalFunctionEntry implements FunctionEntry {
@@ -219,7 +219,7 @@ public class NormalFunctionEntry implements FunctionEntry {
 				out.write(" * ");
 		}
 		if(length == 0)
-			ALMTranslator.PROGRAM_FAILURE("Writing Function Entry", "Length Of Signature is 0 for function ["+this.funName+"]");
+			ALMCompiler.PROGRAM_FAILURE("Writing Function Entry", "Length Of Signature is 0 for function ["+this.funName+"]");
 		out.write(" -> ");
 		out.write(signature.get(signature.size()-1).getSortName());
 		out.write(" "+loc.toString()+ " ");

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import edu.ttu.krlab.alm.ALM;
-import edu.ttu.krlab.alm.ALMTranslator;
+import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.Location;
 
@@ -46,7 +46,7 @@ public class SymbolTable{
 			initialize();
 		} catch (DuplicateFunctionException | DuplicateSortException e) {
 			e.printStackTrace();
-			ALMTranslator.PROGRAM_FAILURE("Initializing Symbol Table", "Initialize Function Threw An Exception");
+			ALMCompiler.PROGRAM_FAILURE("Initializing Symbol Table", "Initialize Function Threw An Exception");
 			//this should never happen.
 		}
 	}

@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class TranslatorSettings {
+public class ALMCompilerSettings {
 
 	public static final String CL_H = "-h";
 	public static final String CL_HELP = "--help";
@@ -93,7 +93,7 @@ public class TranslatorSettings {
 	private BufferedWriter as_destination = null;
 	
 	
-	public TranslatorSettings(){
+	public ALMCompilerSettings(){
 		settings = new HashMap<String, String>();
 		defaultSettings();
 	}
@@ -486,11 +486,11 @@ public class TranslatorSettings {
 				}
 			}
 			if(!version18found)
-				ALMTranslator.PROGRAM_FAILURE("Testing Java Version", "Java is not version 1.8.*  Location of jre version 1.8.* must be provided.");
+				ALMCompiler.PROGRAM_FAILURE("Testing Java Version", "Java is not version 1.8.*  Location of jre version 1.8.* must be provided.");
 		} catch (IOException e) {
-			ALMTranslator.PROGRAM_FAILURE("Testing Java Version", "Could not start java executable from filename: "+settings.get(JAVA_LOCATION));
+			ALMCompiler.PROGRAM_FAILURE("Testing Java Version", "Could not start java executable from filename: "+settings.get(JAVA_LOCATION));
 		} catch (InterruptedException e) {
-			ALMTranslator.PROGRAM_FAILURE("Testing Java Version", "Java was started but was interrupted, could not get version information.");
+			ALMCompiler.PROGRAM_FAILURE("Testing Java Version", "Java was started but was interrupted, could not get version information.");
 		}
 	}
 
@@ -500,7 +500,7 @@ public class TranslatorSettings {
 		case SOLVER_CLINGO:
 			break;
 			default:
-				ALMTranslator.PROGRAM_FAILURE("Testing ASP Solver", "SOLVER_TYPE must be set to one of (clingo | dlv).  (See commandline option --help)");
+				ALMCompiler.PROGRAM_FAILURE("Testing ASP Solver", "SOLVER_TYPE must be set to one of (clingo | dlv).  (See commandline option --help)");
 		}
 		String solver = settings.get(SOLVER_TYPE);
 		String solver_path = settings.get(SOLVER_LOCATION);
@@ -517,9 +517,9 @@ public class TranslatorSettings {
 			Process solver_proc = pb_solver.start();
 			solver_proc.waitFor();
 		} catch (IOException e) {
-			ALMTranslator.PROGRAM_FAILURE("Testing Solver "+solver, "Could not start solver from location: "+settings.get(SOLVER_LOCATION));
+			ALMCompiler.PROGRAM_FAILURE("Testing Solver "+solver, "Could not start solver from location: "+settings.get(SOLVER_LOCATION));
 		} catch (InterruptedException e) {
-			ALMTranslator.PROGRAM_FAILURE("Testing Solver "+solver, "solver was started but was interrupted.");
+			ALMCompiler.PROGRAM_FAILURE("Testing Solver "+solver, "solver was started but was interrupted.");
 		}
 		
 	}
@@ -539,13 +539,13 @@ public class TranslatorSettings {
 			java.waitFor();
 			while((line = read.readLine())!= null){
 				if(line.contains("Error"))
-					ALMTranslator.PROGRAM_FAILURE("Testing SPARC Jar", "Could not start sparc from filename: "+sparc_loc);
+					ALMCompiler.PROGRAM_FAILURE("Testing SPARC Jar", "Could not start sparc from filename: "+sparc_loc);
 
 			}
 		} catch (IOException e) {
-			ALMTranslator.PROGRAM_FAILURE("Testing SPARC Jar", "Could not start sparc from filename: "+sparc_loc);
+			ALMCompiler.PROGRAM_FAILURE("Testing SPARC Jar", "Could not start sparc from filename: "+sparc_loc);
 		} catch (InterruptedException e) {
-			ALMTranslator.PROGRAM_FAILURE("Testing SPARC Jar", "java was started but was interrupted.");
+			ALMCompiler.PROGRAM_FAILURE("Testing SPARC Jar", "java was started but was interrupted.");
 		}
 		
 		

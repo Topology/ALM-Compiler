@@ -3,7 +3,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.List;
 
-import edu.ttu.krlab.alm.ALMTranslator;
+import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.LogicProgramArtifact;
 
 public class SPARCRule   extends LogicProgramArtifact {
@@ -38,7 +38,7 @@ public class SPARCRule   extends LogicProgramArtifact {
 		if(head  == null){
 			//head does not exist
 			if(body == null || body.size() == 0 ){
-				ALMTranslator.PROGRAM_FAILURE("Rendering SPARC rule", "Rule Has No Head Or Body");
+				ALMCompiler.PROGRAM_FAILURE("Rendering SPARC rule", "Rule Has No Head Or Body");
 			} else {
 				//body exists but head does not, this is a constraint. 
 				//write constraint
