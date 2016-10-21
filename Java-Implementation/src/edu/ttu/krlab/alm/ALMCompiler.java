@@ -43,7 +43,6 @@ import edu.ttu.krlab.alm.parser.ALMBaseListener;
 import edu.ttu.krlab.alm.parser.ALMLexer;
 import edu.ttu.krlab.alm.parser.ALMParser;
 import edu.ttu.krlab.alm.parser.ALMSyntaxErrorListener;
-import edu.ttu.krlab.alm.parser.PermanentTranslatorFailure;
 
 public class ALMCompiler {
 	
@@ -819,7 +818,7 @@ public class ALMCompiler {
 
 	public static void PROGRAM_FAILURE(String phase, String error) {
 		if(DEBUG_VERSION)
-			throw new PermanentTranslatorFailure(phase, error);
+			throw new AlmCompilerPermanentFailure(phase, error);
 		
 		System.err.println("["+phase+"] "+error);
 		System.exit(-1);	

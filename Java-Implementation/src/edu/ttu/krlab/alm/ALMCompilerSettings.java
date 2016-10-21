@@ -320,6 +320,9 @@ public class ALMCompilerSettings {
 	public void processCommandlineArgs(String[] args) {
 		boolean sourceset = false;
 		
+		if(args.length < 1)
+			printUsageAndExit();
+		
 		for(int i = 0; i < args.length; i++){
 			switch(args[i]){
 			case CL_H: 
@@ -452,7 +455,6 @@ public class ALMCompilerSettings {
 				}
 			}
 		}
-		TestSettings();
 	}
 	
 
@@ -554,6 +556,8 @@ public class ALMCompilerSettings {
 	private void processConfigFile(String string) {
 		String line;
 		File configfile = new File(string);
+		String CDreplace = configfile.getParentFile().getAbsolutePath();
+		String FNreplace = "";
 		try {
 			BufferedReader foo = new BufferedReader(new FileReader(configfile));
 			try {
@@ -564,7 +568,17 @@ public class ALMCompilerSettings {
 					int pos = line.indexOf(':');
 					if(pos > 0){
 						String key = line.substring(0, pos).toUpperCase().trim();
-						String value = line.substring(pos+1).toLowerCase().trim();
+						String value = line.substring(pos+1).trim();
+						if(key.compareTo(SYS_DESC_SOURCE) ==0){
+							int lastslash = value.lastIndexOf('/');
+							if(lastslash >0){
+								int firstdot = value.indexOf('.', lastslash);
+								FNreplace = value.substring(lastslash+1, firstdot);
+							}
+						}
+					    value = value.replaceFirst("<CD>", CDreplace);
+					    if(FNreplace.compareTo("") != 0)
+					    	value = value.replaceFirst("<FN>", FNreplace);	
 						settings.put(key, value);
 					}
 				}

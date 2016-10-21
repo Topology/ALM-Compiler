@@ -1,12 +1,12 @@
-package edu.ttu.krlab.alm.parser;
+package edu.ttu.krlab.alm;
 
-public class PermanentTranslatorFailure extends RuntimeException {
+public class AlmCompilerPermanentFailure extends RuntimeException {
 
 	private String phase;
 	private String error;
 		
 	
-	public PermanentTranslatorFailure(String phase, String error) {
+	public AlmCompilerPermanentFailure(String phase, String error) {
 		this.phase = phase;
 		this.error = error;
 	}
