@@ -1,0 +1,10 @@
+% Answer Set 1 of 1
+{
+subsort(actions, universe), -subsort(actions, actions), -subsort(actions, booleans), -subsort(actions, integers), -subsort(universe, actions), -subsort(universe, universe), -subsort(universe, booleans), -subsort(universe, integers), -subsort(booleans, actions), -subsort(booleans, universe), -subsort(booleans, booleans), -subsort(booleans, integers), -subsort(integers, actions), -subsort(integers, universe), -subsort(integers, booleans), -subsort(integers, integers)
+sink(universe), sink(booleans), sink(integers), -sink(actions)
+link(actions, universe)
+has_parent(actions), -has_parent(universe), -has_parent(booleans), -has_parent(integers)
+source(actions), source(booleans), source(integers), -source(universe)
+has_child(universe), -has_child(actions), -has_child(booleans), -has_child(integers)
+}
+
