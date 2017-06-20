@@ -347,7 +347,12 @@ public class ALMCompilerSettings {
 				i++; i++;
 				if(i >= args.length || isCLCommand(args[i-1]) || isCLCommand(args[i]))
 					printUsageAndExitWithError("Missing value following "+args[i-2]);
-				settings.put(SOLVER_LOCATION, args[i-1]);
+				File f = new File(args[i-1]);
+				//System.out.println(f.getParent());
+				if(f.isDirectory() || !f.exists()) {
+					printUsageAndExitWithError("Clingo not found at " + args[i-1]);
+				}
+				settings.put(SOLVER_LOCATION, f.getParent());
 				settings.put(SOLVER_TYPE, args[i].toLowerCase());
 				break;
 			case CL_PM:

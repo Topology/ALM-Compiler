@@ -23,6 +23,8 @@ public class SymbolTable{
 	SortEntry booleans;
 	SortEntry integers;
 	
+	SortEntry timestep;
+	
 	private HashSet<SortEntry> predefined;
 	private HashMap<String, SortEntry> SEMap;
 	private HashMap<String, ConstantEntry> CEMap;
@@ -76,19 +78,19 @@ public class SymbolTable{
 
 
 
-	public ConstantEntry createConstantEntry(String constname, List<SortEntry> sourceSorts, Location loc) throws DuplicateConstantException, NotSourceSortException {
+	public ConstantEntry createConstantEntry(String constname, List<SortEntry> sourceSorts, List<SortEntry> arguments, Location loc) throws DuplicateConstantException {
 		// Constant Entries must be uniquely named
 		ConstantEntry existing = getConstantEntry(constname);
 		if(existing != null)
 			throw new DuplicateConstantException(existing);
 		
 		// Add new Constant Entry
-		ConstantEntry ce = new ConstantEntry(constname, sourceSorts, loc);
+		ConstantEntry ce = new ConstantEntry(constname, sourceSorts, arguments, loc);
 		Iterator<SortEntry> itS = sourceSorts.iterator();
 		while(itS.hasNext()){
 			SortEntry se = itS.next();
-			if(se.getChildSorts().isEmpty() == false)
-				throw new NotSourceSortException(se);
+//			if(se.getChildSorts().isEmpty() == false)
+//				throw new NotSourceSortException(se);
 		}
 		CEMap.put(constname, ce);
 		return ce;
@@ -143,6 +145,9 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 	
 		// Add Universe Sort
 		universe = this.createSortEntry(ALM.SORT_UNIVERSE, null);
+		
+		// Add timestep Sort
+		timestep = this.createSortEntry(ALM.SORT_TIMESTEP, null);
 		
 		//Add Actions Sort (child of universe)
 		actions = this.createSortEntry(ALM.SORT_ACTIONS, null);
@@ -325,6 +330,12 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 		return universe;
 	}
 	
+	
+	public SortEntry getTimestepSortEntry() {
+		
+		return timestep;
+	}
+	
 	public SortEntry getActionsSortEntry(){
 		return actions;
 	}
@@ -366,7 +377,11 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 			Set<NormalFunctionEntry> entries = this.getFunctionEntry(funName);
 			if(entries != null)
 				for(FunctionEntry f : entries){
-					if(f.getSignature().size() == num_afun_args+1)  // first function of proper number of arguments is returned.  
+					if(f.isAttribute()){
+						if(f.getSignature().size() == num_afun_args+1 || num_afun_args == 0)  // first function of proper number of arguments is returned.  
+							return f;
+					}
+					else if(f.getSignature().size() == num_afun_args+1)  // first function of proper number of arguments is returned.  
 						return f;
 				}
 			throw new FunctionNotFound(afun);

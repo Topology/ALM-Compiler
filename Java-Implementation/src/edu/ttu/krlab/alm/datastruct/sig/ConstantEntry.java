@@ -10,19 +10,29 @@ public class ConstantEntry {
 	
 	String constName;
 	List<SortEntry> sourceSorts;
+	List<SortEntry> arguments;
 	Location loc;
 	
-	public ConstantEntry(String name, List<SortEntry> sourceSorts, Location loc){
+	public ConstantEntry(String name, List<SortEntry> sourceSorts, List<SortEntry> arguments, Location loc){
 		this.constName = name;
 		this.sourceSorts = sourceSorts;
+		this.arguments = arguments;
 		this.loc = loc;
 	}
 	public String getConstName() {
 		return constName;
 	}
 	
+	public void setConstName(String newName) {
+		this.constName = newName;
+	}
+	
 	public List<SortEntry> getSourceSorts() {
 		return sourceSorts;
+	}
+	
+	public List<SortEntry> getArguments() {
+		return arguments;
 	}
 	
 	public Location getLocation(){

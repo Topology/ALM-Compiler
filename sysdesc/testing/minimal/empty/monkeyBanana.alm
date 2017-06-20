@@ -1,0 +1,140 @@
+system description travel
+	theory basic_motion
+		module moving
+			sort declarations
+				points, things :: universe
+				agents :: things
+				move :: actions
+					attributes
+						actor : agents
+						origin : points
+						dest : points
+			function declarations
+				statics
+					basic
+						symmetric_connectivity : booleans
+						transitive_connectivity : booleans
+				fluents
+					basic
+						connected : points * points -> booleans
+						total loc_in : things -> points
+			axioms
+				dynamic causal laws
+					occurs(X) causes loc_in(A) = D if instance(X, move),actor(X) = A, dest(X) = D.
+				state constraints
+					connected(X, X).
+					connected(X, Y) if connected(Y, X),symmetric_connectivity.
+					-connected(X, Y) if -connected(Y, X),symmetric_connectivity.
+					connected(X, Z) if connected(X, Y),connected(Y, Z),transitive_connectivity.
+				executability conditions
+					impossible occurs(X) if instance(X, move),actor(X) = A, loc_in(A) != origin(X).
+					impossible occurs(X) if instance(X, move),actor(X) = A, loc_in(A) = dest(X).
+					impossible occurs(X) if instance(X, move),actor(X) = A, loc_in(A) = O, dest(X) = D,-connected(O, D).
+			
+
+		module carrying_things depends on moving
+			sort declarations
+				carriables :: things
+				carry :: move
+					attributes
+						carried_object : carriables
+				grasp :: actions
+					attributes
+						grasper : agents
+						grasped_thing : things
+				release :: actions
+					attributes
+						releaser : agents
+						released_thing : things
+			function declarations
+				fluents
+					basic
+						total holding : agents * things -> booleans
+					defined
+						is_held : things -> booleans
+						can_reach : agents * things -> booleans
+			axioms
+				dynamic causal laws
+					occurs(A) causes holding(X,Y) if instance(A,grasp), grasper(A) = X, grasped_thing(A) = Y.
+					occurs(A) causes -holding(X,Y) if instance(A,release), releaser(A) = X, released_thing(A) = Y.
+				state constraints
+					loc_in(C) = P if holding(T,C), loc_in(T) = P.
+					loc_in(T) = P if holding(T,C), loc_in(C) = P.
+					-holding(X,Y2) if holding(X,Y1), Y1 != Y2.
+				function definitions
+					is_held(X) if holding(T,X).
+					can_reach(M,O) if loc_in(M) = loc_in(O).
+				executability conditions
+					impossible occurs(A) if instance(A,grasp), grasper(A) = X, grasped_thing(A) = Y, holding(X,Y).
+					impossible occurs(A) if instance(A,grasp), grasper(A) = X, grasped_thing(A) = Y, -can_reach(X,Y).
+					impossible occurs(A) if instance(A,release), releaser(A) = X, released_thing(A) = Y, -holding(X,Y).
+					impossible occurs(X) if instance(X,move), actor(X) = A, is_held(A).
+					impossible occurs(X) if instance(X,carry), actor(X) = A, carried_object(X) = C, -holding(A,C).
+		module climbing depends on moving
+			sort declarations
+				elevations :: things
+				climb :: move
+					attributes
+						elevation : elevations
+			object constants
+				top(elevations) : points
+			axioms
+				state constraints
+					dest(A) = top(E) if elevation(A) = E.
+					false if loc_in(E) = top(E).
+				executability conditions
+					impossible occurs(X) if instance(X,climb), actor(X) = A, elevation(X) = O, loc_in(O) != loc_in(A).
+		module main depends on carrying_things, climbing
+			sort declarations
+				floor_points, ceiling_points, movable_points :: points
+			object constants
+				monkey : agents
+				box : carriables, elevations
+				banana : carriables
+				constantTest : agents
+			function declarations
+				statics
+					basic
+						under : floor_points * things -> booleans
+
+
+			axioms
+				function definitions
+					can_reach(monkey, banana) if loc_in(box) = P, under(P,banana),loc_in(monkey) = top(box).
+				state constraints
+					connected(top(box),P) if loc_in(box) = P, instance(P, floor_points).
+					-connected(top(box),P) if loc_in(box) != P, instance(P,floor_points).
+					connected(P1,P2) if instance(P1,floor_points), instance(P2, floor_points).
+					-connected(P1, P2) if instance(P1, ceiling_points), instance(P2,points), P1 != P2.
+								
+structure monkey_and_banana
+
+	constants
+		top(class1) = a //
+		top(class2) = b
+		
+	instances
+		top(box) in movable_points
+		under_banana, initial_monkey, initial_box in floor_points
+		initial_banana in ceiling_points
+		move(P) in move where instance(P, points)
+			actor = monkey
+			dest = P
+		carry(box, P) in carry where instance(P, floor_points)
+			actor = monkey
+			carried_object = box
+			dest = P
+		grasp(C) in grasp where instance(C, carriables)
+			grasper = monkey
+			grasped_thing = C
+		release(C) in release where instance(C, carriables)
+			releaser = monkey
+			released_thing = C
+		climb(box) in climb
+			actor = monkey
+			elevation = box
+	value of statics
+		under(under_banana,banana).
+		symmetric_connectivity.
+		-transitive_connectivity.
+
