@@ -19,8 +19,11 @@ public class SortEntry {
 	Set<SortEntry> childSorts;
 	Set<NormalFunctionEntry> attributes;
 	List<ALMTerm> instances;
+	List<ConstantEntry> constants; 
 	Location loc;
 	
+	
+
 	public SortEntry(String sortname, Location loc){
 		sortName = sortname;
 		if(loc == null)
@@ -31,6 +34,7 @@ public class SortEntry {
 		childSorts = new HashSet<SortEntry>();
 		attributes = new HashSet<NormalFunctionEntry>();
 		instances = new ArrayList<ALMTerm>();
+		constants = new ArrayList<ConstantEntry>();
 	}
 	
 	public String getSortName() {
@@ -136,6 +140,14 @@ public class SortEntry {
 		
 	}
 
+	public List<ConstantEntry> getConstants() {
+		return constants;
+	}
+
+	public void addConstants(ConstantEntry constants) {
+		this.constants.add(constants);
+	}
+	
 	public boolean subsortof(SortEntry sort) {
 		if(sort == null)
 			return false;

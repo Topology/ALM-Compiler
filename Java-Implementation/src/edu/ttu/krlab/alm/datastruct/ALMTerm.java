@@ -34,6 +34,7 @@ import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.aspf.ASPfLiteral;
 import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
 import edu.ttu.krlab.alm.datastruct.err.SemanticError;
+import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionNotFound;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
@@ -195,10 +196,38 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 		//common variables. 
 		SortEntry se = null;
 		ALMTerm arg1 = null, arg2 = null;
+		
+		boolean compatible = false;
+		SortEntry returnSort = null;
+		
 		switch(this.type){
 		case ALMTerm.ID:
-			//TODO: Should this lookup sort of constant to return it or if expected, find const declaration?    
-			return null;
+			//write those cases where is the object constant as a single name occurs, instance
+			ConstantEntry cnst = st.getConstantEntry(this.getName());
+			if(cnst != null){
+				List<SortEntry> sourceSort = cnst.getSourceSorts();
+				for(SortEntry sEntry: sourceSort){
+					if(expected != null && sEntry.subsortof(expected)){
+						compatible = true;
+						returnSort = sEntry;
+						break;
+					}
+				}
+				if(compatible == false)
+					er.newSemanticError(SemanticError.TYP003);
+	
+				return returnSort;
+			}else{
+				//it is an instance of the expected sort
+				compatible = false;
+				returnSort = isInstance(expected);
+				
+				if(returnSort == null)
+					er.newSemanticError(SemanticError.TYP003);
+				else
+					return returnSort;
+				
+			}
 		case ALMTerm.VAR: 
 			if(expected != null)
 				vm.addTypedVar(this.name, expected, this.prc);
@@ -291,6 +320,9 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 				arg1 = args.get(0);
 				try {
 					se = st.getSortEntry(arg1.getName());
+					Set<SortEntry> sorts = se.getChildSorts();
+					if(sorts != null && sorts.size() > 0)
+						er.newSemanticError(SemanticError.SPF013).add(this.prc);
 				} catch (SortNotFoundException e1) {
 					er.newSemanticError(SemanticError.SPF009).add(this.prc);
 				}
@@ -299,6 +331,9 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 				arg1 = args.get(0);
 				try {
 					se = st.getSortEntry(arg1.getName());
+					Set<SortEntry> sorts = se.getChildSorts();
+					if(sorts != null && sorts.size() > 0)
+						er.newSemanticError(SemanticError.SPF013).add(this.prc);
 				} catch (SortNotFoundException e1) {
 					er.newSemanticError(SemanticError.SPF010).add(this.prc);
 				}
@@ -339,7 +374,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 				try {
 					se = st.getSortEntry(arg2.getName());
 					Set<SortEntry> sorts = se.getChildSorts();
-					if(sorts != null && sorts.size() > 0)
+					if(sorts == null && sorts.size() == 0)
 						er.newSemanticError(SemanticError.SPF013).add(this.prc);
 				} catch (SortNotFoundException e1) {
 					er.newSemanticError(SemanticError.SPF003).add(this.prc);
@@ -356,7 +391,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 				try {
 					se = st.getSortEntry(arg2.getName());
 					Set<SortEntry> sorts = se.getChildSorts();
-					if(sorts != null && sorts.size() > 0)
+					if(sorts == null && sorts.size() == 0)
 						er.newSemanticError(SemanticError.SPF014).add(this.prc);
 				} catch (SortNotFoundException e1) {
 					er.newSemanticError(SemanticError.SPF006).add(this.prc);
@@ -380,21 +415,55 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 				return booleans;
 			default:
 				try {
-					FunctionEntry fe = st.getFunctionEntry(this);
-					List<SortEntry> sig = fe.getSignature();
-					if(sig != null && sig.size() > 0){
-						int num_args = sig.size();
-						for(int i = 0; i < num_args-1; i++)
-							this.getArg(i).typeCheck(vm, st, er, sig.get(i));
-						SortEntry returnSort = sig.get(num_args-1);
-						if(expected != null && !returnSort.subsortof(expected))
-							er.newSemanticError(SemanticError.TYP003).add(this).add(expected).add(returnSort);
-						return returnSort; //range sort of function.
-					}	
+					//check if t is object constant or not
+					ConstantEntry ce = st.getConstantEntry(this.getName());
+					if(ce == null){ // t is a normal function
+						//get the function entry of the t
+						FunctionEntry fe = st.getFunctionEntry(this);
+						//get the signature of t's function entry
+						List<SortEntry> sig = fe.getSignature();
+						//check type of t's function entry's argument
+						if(sig != null && sig.size() > 0){
+							int num_args = sig.size();
+							for(int i = 0; i < num_args-1; i++)
+								this.getArg(i).typeCheck(vm, st, er, sig.get(i));
+							//get the range of the t's function entry
+							returnSort = sig.get(num_args-1);
+							//check the compatibility of the expected sort and the range of the t's function entry
+							if(expected != null && !returnSort.subsortof(expected))
+								er.newSemanticError(SemanticError.TYP003).add(this).add(expected).add(returnSort);
+							return returnSort; //range sort of function.
+						}	
+					}else{
+						
+						//typeCheck the parameter(s) of the object constant ce
+						List<SortEntry> sig = ce.getArguments();
+						if(sig != null && sig.size() >0){
+							int num_args = sig.size();
+							for(int i = 0; i < num_args; i++)
+								this.getArg(i).typeCheck(vm, st, er, sig.get(i));
+						}
+						//get the source sort(s) of object constant ce
+						List<SortEntry> sourceSorts = ce.getSourceSorts();
+						returnSort = null;
+						compatible = false;
+						//check the range of the attribute function is subsort of the source sort(s) of the object constant otherwise return false
+						for(SortEntry sEntry: sourceSorts){
+							if(expected != null && sEntry.subsortof(expected)){
+								compatible = true;
+								returnSort = sEntry;
+								break;
+							}
+						}
+						if(compatible == false)
+							er.newSemanticError(SemanticError.TYP003).add(this).add(expected);
+						else
+							return returnSort;
+					}
 				} catch (FunctionNotFound e) {
 					er.newSemanticError(SemanticError.FND003).add(this.prc);
 				}
-				return null;
+				
 			}
 		
 		default: 
@@ -422,6 +491,36 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 			return true;
 		}
 		return false;
+	}
+	
+	
+	public SortEntry isInstance(SortEntry sort) {
+		boolean compatible = false;
+		SortEntry returnSort = null;
+		//check compability to the instances of expected sort
+		List<ALMTerm> instances = sort.getInstances();
+		for(ALMTerm inst: instances){
+			if(inst.getName().equals(this.getName())){ 
+				compatible = true;
+				returnSort = sort;
+				break;
+			}
+		}
+		if(compatible == false){
+			//we can have multi-level of child sort so it needs to have a recursive function, write a function that called instance function
+			//if it is not compatible with expected sort's instances check the child sort's instances
+			Set<SortEntry> childSorts = sort.getChildSorts();
+			for(SortEntry child: childSorts){
+				returnSort = isInstance(child);
+				if( returnSort != null)
+					break;
+			}
+		}
+		
+		if(returnSort != null)
+			return returnSort;
+		else
+			return null;
 	}
 
 	@Override

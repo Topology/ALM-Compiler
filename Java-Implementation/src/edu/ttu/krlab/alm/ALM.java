@@ -38,6 +38,9 @@ public abstract class ALM {
 	public static final String SYMBOL_NEQ = "!=";
 	public static final String SORT_UNKNOWN = null;
 	public static final String SORT_INTEGERS = "integers";
+	
+	public static final String SORT_TIMESTEP = "timeStep";
+	
 	public static final String SORT_BOOLEANS = "booleans";
 	public static final String SORT_UNIVERSE = "universe";
 	public static final String SORT_ACTIONS = "actions";
@@ -232,7 +235,7 @@ public abstract class ALM {
 	}
 
 	//term: BOOL | VAR | ID | integer | function_term | expression;
-	private static ALMTerm ParseTerm(TermContext tcon) {
+	public static ALMTerm ParseTerm(TermContext tcon) {
 		
 		if(tcon.BOOL() != null){
 			return new ALMTerm(tcon.BOOL().getText(), ALMTerm.BOOL, tcon);

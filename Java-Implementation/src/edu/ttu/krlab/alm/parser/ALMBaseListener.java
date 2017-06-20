@@ -3,6 +3,7 @@
 package edu.ttu.krlab.alm.parser;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -26,12 +27,14 @@ import edu.ttu.krlab.alm.parser.ALMParser.Fun_defContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Function_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Instance_atomContext;
 import edu.ttu.krlab.alm.parser.ALMParser.LiteralContext;
+import edu.ttu.krlab.alm.parser.ALMParser.ModuleContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Object_constantContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Occurs_atomContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Occurs_literalContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_attribute_declContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_attribute_defContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Sort_nameContext;
+import edu.ttu.krlab.alm.parser.ALMParser.TermContext;
 
 /**
  * This class provides an empty implementation of {@link ALMListener},
@@ -78,6 +81,10 @@ public class ALMBaseListener implements ALMListener {
 	private ASPfProgram aspf;
 	private ALMCompilerSettings s;
 
+	// multi module
+	private List<HashMap<String, List<String>>> multiModule = new ArrayList<HashMap<String, List<String>>>();
+	
+	
 	// Function Type
 	boolean staticType = false;
 	boolean fluentType = false;
@@ -702,6 +709,33 @@ public class ALMBaseListener implements ALMListener {
 	 * The default implementation does nothing.
 	 * </p>
 	 */
+	
+	@Override
+	public void enterModule(ModuleContext ctx) {
+		// TODO Auto-generated method stub
+		System.out.println("Check the children of ctx here");
+		
+	}
+
+	@Override
+	public void exitModule(ModuleContext ctx) {
+		// TODO Auto-generated method stub
+		
+		if(ctx.getChildCount() > 3){
+			HashMap<String, List<String>> currentModule = new HashMap<String, List<String>>();
+			List<String> parentModule = new ArrayList<String>();
+			for(int i = 1; i < ctx.module_name().size(); i++){
+				parentModule.add(ctx.module_name().get(1).getText());
+			}
+			currentModule.put(ctx.module_name().get(0).getText(), parentModule);
+	        multiModule.add(currentModule);
+		}
+		
+		System.out.print("here we should have all the information of modules");
+		System.out.println(ctx.getChildCount());
+		
+	}
+	
 	@Override
 	public void enterModule_name(ALMParser.Module_nameContext ctx) {
 	}
@@ -715,6 +749,8 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void exitModule_name(ALMParser.Module_nameContext ctx) {
+		int i = 0; 
+		System.out.print(ctx.children);
 	}
 
 	/**
@@ -737,37 +773,11 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void exitSequence_of_modules(ALMParser.Sequence_of_modulesContext ctx) {
+		int i = 0;
+		System.out.println("this is important: //here you should check for dependency"); 
+		System.out.println(ctx.children);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterModule(ALMParser.ModuleContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitModule(ALMParser.ModuleContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
 	@Override
 	public void enterModule_body(ALMParser.Module_bodyContext ctx) {
 	}
@@ -781,6 +791,9 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void exitModule_body(ALMParser.Module_bodyContext ctx) {
+		int i = 0;
+		System.out.print("the module body is");
+		System.out.print(ctx.children);
 	}
 
 	/**
@@ -901,6 +914,7 @@ public class ALMBaseListener implements ALMListener {
 		List<One_attribute_declContext> attributes = null;
 		if (attributes_section != null)
 			attributes = attributes_section.one_attribute_decl();
+		
 
 		// convert sort_names into sort_entries for parents,
 		// throw semantic error
@@ -935,12 +949,20 @@ public class ALMBaseListener implements ALMListener {
 			}
 
 		// link parent and child together in symbol table.
-		for (SortEntry parent : parent_sorts)
+		for (SortEntry parent : parent_sorts) {
 			for (SortEntry child : child_sorts) {
 				parent.addChildSort(child);
 				child.addParentSort(parent);
+//				// if parent sorts have attribute the child should has them as well
+//				Set<NormalFunctionEntry> parentAttributes = parent.getAttributes();
+//				if(parentAttributes.size() != 0){
+//					for(NormalFunctionEntry pAttr : parentAttributes){
+//						child.addAttribute(pAttr);
+//					}
+//				}
 			}
-
+		}
+		
 		// Create Attribute Functions
 		// one_attribute_decl: ID ':' (sort_name (',' sort_name )* RIGHT_ARROW)?
 		// sort_name;
@@ -1135,11 +1157,13 @@ public class ALMBaseListener implements ALMListener {
 			boolean schema_passed = true;
 			// check to make sure all parameters are source sorts in hierarchy.
 			List<ALMTerm> args = obj_const.getArgs();
+			List<SortEntry> arguments = new ArrayList<SortEntry>();
 			if (args != null)
 				for (ALMTerm arg : args) {
 					try {
 						SortEntry sort = st.getSortEntry(arg.toString());
 						Set<SortEntry> children = sort.getChildSorts();
+						arguments.add(sort);
 						if (children.size() != 0) {
 							SortEntry childsort = children.iterator().next();
 							er.newSemanticError(SemanticError.CND002).add(arg.getLocation())
@@ -1152,20 +1176,23 @@ public class ALMBaseListener implements ALMListener {
 					}
 
 				}
+			
 			if (schema_passed)
 				try {
-					st.createConstantEntry(obj_const.getName(), sort_entries, new Location(ctx));
+					
+					st.createConstantEntry(obj_const.getName(), sort_entries,arguments, new Location(ctx));
 				} catch (DuplicateConstantException e) {
 					ConstantEntry prev_const = e.getConstantEntry();
 					er.newSemanticError(SemanticError.CND005).add(obj_const.getLocation())
 							.add(prev_const.getLocation());
 
-				} catch (NotSourceSortException e) {
-					ALMCompiler.PROGRAM_FAILURE("Creating Object Constant Entry",
-							"Unhandled Semantic Error, sort entry did not exist or was not a source sort.");
-					// already handled previously, no new error needs to be
-					// thrown. This line should never execute.
 				}
+			
+			//adding object constant of sorts
+			for(int i = 0 ; i < sort_entries.size(); i++){
+				sort_entries.get(i).addConstants(st.getConstantEntry(obj_const.getName()));
+			}
+
 		}
 	}
 
@@ -1599,6 +1626,8 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void enterDefinitions(ALMParser.DefinitionsContext ctx) {
+		System.out.println("The number of definitions part");
+		System.out.println(ctx.getChildCount());
 	}
 
 	/**
@@ -1610,7 +1639,7 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void exitDefinitions(ALMParser.DefinitionsContext ctx) {
-
+	
 	}
 
 	/**
@@ -1878,21 +1907,20 @@ public class ALMBaseListener implements ALMListener {
 			try {
 				FunctionEntry head_function = st.getFunctionEntry(headFunction);
 				//head function must be basic
-				if(!head_function.isBasic()){
-					er.newSemanticError(SemanticError.AXM004).add(headFunction);
-					error_occurred = true;
-				}
+				if(!head_function.isAttribute())
+					if(!head_function.isBasic()){
+						er.newSemanticError(SemanticError.AXM004).add(headFunction);
+						error_occurred = true;
+					}
 	
 				List<SortEntry> sig = head_function.getSignature();
 				//entity on right hand side must be variable or object constant of range sort of function. 
 				ALMTerm oterm = head.getArg(1);
-				if(!oterm.isVariable()){
-					if(oterm.isObjectConstant()){
-						//TODO:  This is a mess,  how do you address object constantschemas?  
-						//st.getConstantEntry(oterm);
-						//TODO: There should be a semantic error here if there is no object constant declaration for the range sort. 
-					} else {
-						er.newSemanticError(SemanticError.AXM009).add(headFunction).add(oterm).add(sig.get(sig.size()-1));
+				if (oterm != null){
+					if(!oterm.isVariable()){
+						if(st.getConstantEntry(oterm.getName()).getConstName()==null){
+							er.newSemanticError(SemanticError.AXM009).add(headFunction).add(oterm).add(sig.get(sig.size()-1));
+						} 
 					}
 				}
 			} catch (FunctionNotFound e) {
@@ -1955,7 +1983,8 @@ public class ALMBaseListener implements ALMListener {
 	@Override
 	public void exitOne_definition(ALMParser.One_definitionContext ctx) {
 		boolean error_occurred = false;
-		ALMTerm head = ALM.ParseALMTerm(ctx.function_term());
+		ALMTerm head = ALM.ParseFunDef(ctx.fun_def());
+//		ALMTerm head = ALM.ParseALMTerm(ctx.fun_def());
 		List<LiteralContext> literals = ctx.literal();
 		List<ALMTerm> lits = new ArrayList<ALMTerm>();
 		if (literals != null)
@@ -1966,13 +1995,18 @@ public class ALMBaseListener implements ALMListener {
 		
 		boolean isStatic = false;
 		//function must be defined
+		FunctionEntry f1= null;
 		try {
-			FunctionEntry f= st.getFunctionEntry(head);
-			if(!f.isDefined()){
+			if(head.getType() == ALMTerm.TERM_RELATION){
+				f1 = st.getFunctionEntry(head.getArg(0));
+			}else
+				f1= st.getFunctionEntry(head);
+			
+			if(!f1.isDefined()){
 				er.newSemanticError(SemanticError.AXM008).add(head);
 				error_occurred = true;
 			}
-			if(f.isStatic())
+			if(f1.isStatic())
 				isStatic = true;
 		} catch (FunctionNotFound e) {
 			er.newSemanticError(SemanticError.FND003).add(head);
@@ -2095,6 +2129,32 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void exitOne_constant_def(ALMParser.One_constant_defContext ctx) {
+		
+		System.out.println(ctx);
+		boolean error_occurred = false;
+		Object_constantContext leftObjConstant = ctx.object_constant();
+		TermContext rightTerm = ctx.term();
+		
+		ALMTerm obj_const = ALM.ParseALMTerm(leftObjConstant);
+		ALMTerm objConstVal = ALM.ParseTerm(rightTerm);
+
+		//how should we check the type checking, what is the expected sort?
+//		VariableManager vm = new VariableManager(st);
+//		obj_const.typeCheck(vm, st, er);
+		
+//		if(!vm.typeCheckPasses(er))
+//			error_occurred = true;
+		
+		if(!error_occurred){
+			ConstantEntry cnt = st.getConstantEntry(obj_const.getName());
+			//replace mean to change the name of the constant to the term in the symbol table or ???
+			cnt.setConstName(objConstVal.getName());
+			
+		}
+		
+		
+		
+		
 	}
 
 	/**
@@ -2150,6 +2210,8 @@ public class ALMBaseListener implements ALMListener {
 		// Sorts
 		// Literals
 		// Attribute Definitions
+		
+		//check the ctx of the literals ?????? (number of literal for the body 
 		List<ALMParser.Object_constantContext> instances = ctx.object_constant();
 		List<ALMParser.Sort_nameContext> sorts = ctx.sort_name();
 		List<ALMParser.LiteralContext> literals = ctx.literal();
@@ -2168,12 +2230,12 @@ public class ALMBaseListener implements ALMListener {
 				SortEntry se;
 				try {
 					se = st.getSortEntry(sort.getText());
-					if (se.getChildSorts().size() > 0)
-						er.newSemanticError("SID002").add(new Location(sort));
-					else
+					//if (se.getChildSorts().size() > 0)
+						//er.newSemanticError("SID002").add(new Location(sort));
+					//else
 						sort_entries.add(se);
 				} catch (SortNotFoundException e) {
-					er.newSemanticError("SID002").add(new Location(sort));
+					//er.newSemanticError("SID002").add(new Location(sort));
 				}
 			}
 		}
@@ -2205,7 +2267,7 @@ public class ALMBaseListener implements ALMListener {
 				lits.add(ALM.ParseLiteral(literal));
 			}
 		}
-
+		
 		// Convert Attribute Definitions into ALMTerms for term relations.
 		List<ALMTerm> attribute_defs = new ArrayList<ALMTerm>();
 		if (attr_defs != null) {
@@ -2221,18 +2283,19 @@ public class ALMBaseListener implements ALMListener {
 		VariableManager vtc = new VariableManager(st);
 		for (ALMTerm si : sort_instances)
 			si.recordVariableOccurrences(vtc, st, er); // DO NOT TYPE CHECK THIS SINCE IT IS NOT A FUNCTION IN SYMBOL TABLE.
+		//should take care of the argument of the object constant
 		for (ASPfLiteral lit : lits)
 			lit.typeCheck(vtc, st, er);
 		for (ALMTerm adef : attribute_defs) {
-			ALMTerm attr = adef.getArg(0);
+			ALMTerm attr = adef.getArg(0); 
 			String attr_name = attr.getName();
 			List<ALMTerm> attr_params = attr.getArgs();
 			int param_count = 0;
 			if (attr_params != null)
 				param_count = attr_params.size();
 			ALMTerm rangeVar = adef.getArg(1);
-			if (rangeVar.getType() != ALMTerm.VAR)
-				er.newSemanticError("SID004");
+			
+
 			for (SortEntry s : sort_entries)
 				for (FunctionEntry attr_fun : s.getAttributes())
 					if (attr_fun.getFunctionName().compareTo(attr_name) == 0) {
@@ -2245,13 +2308,38 @@ public class ALMBaseListener implements ALMListener {
 						for (int i = 0; i < param_count; i++) {
 							ALMTerm param = attr_params.get(i);
 							SortEntry param_sort = sig.get(i + 1);
-							if (param.getType() != ALMTerm.VAR) {
-								er.newSemanticError("SID004");
-								continue;
-							}
 							vtc.addTypedVar(param.getName(), param_sort, param.getLocation());
 						}
-						vtc.addTypedVar(rangeVar.getName(), sig.get(sig.size() - 1), rangeVar.getLocation());
+						if(rangeVar.getType() == ALMTerm.VAR)
+							vtc.addTypedVar(rangeVar.getName(), sig.get(sig.size() - 1), rangeVar.getLocation());
+						else if(rangeVar.getType() == ALMTerm.ID){ //if rangeVar is not variable it should be object constant
+							try {
+								//get the function entry of the attribute (the left side)
+								FunctionEntry attFun = st.getFunctionEntry(attr);
+								//get the constant entry of object constant (the right side)
+								ConstantEntry attCnst = st.getConstantEntry(rangeVar.getName());
+								//get the source sort of the object entry (the right side)
+								List<SortEntry> sortList = attCnst.getSourceSorts();
+								
+								boolean compatible = true;
+								//check the range of the attribute function is subsort of the source sort(s) of the object constant otherwise return false
+								for(SortEntry sl: sortList){
+									if(sl.subsortof(attFun.getRangeSort()) || sl.getSortName() == attFun.getRangeSort().getSortName()){
+										compatible = true;
+										break;
+									}else
+										compatible = false;
+								}
+								if(compatible == false)
+									er.newSemanticError("SID004");
+									
+								
+							} catch (FunctionNotFound e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+							
 					}
 		}
 
@@ -2277,16 +2365,25 @@ public class ALMBaseListener implements ALMListener {
 		// attribute_defs;
 		for (ALMTerm obj_const : sort_instances)
 			for (SortEntry sort_entry : sort_entries) {
-
+				
+				
 				// head
-				ALMTerm head = new ALMTerm(ALM.SPECIAL_FUNCTION_IS_A, ALMTerm.FUN);
+				ALMTerm head = null;
+				//If the sort is a source sort add is_a otherwise add instance
+				Set<SortEntry> childSorts = sort_entry.getChildSorts();
+				if(childSorts.size() == 0)
+					head = new ALMTerm(ALM.SPECIAL_FUNCTION_IS_A, ALMTerm.FUN);
+				else
+					head = new ALMTerm(ALM.SPECIAL_FUNCTION_INSTANCE, ALMTerm.FUN);
+				
 				head.addArg(obj_const);
 				head.addArg(new ALMTerm(sort_entry.getSortName(), ALMTerm.ID,
-						sort_entry.getLocation().getParserRuleContext()));
+					sort_entry.getLocation().getParserRuleContext()));
 
 				ASPfRule r = aspf.newRule(ALM.STRUCTURE_SORT_INSTANCES, head, body);
 				r.addComment("Sort Instance [" + obj_const + "] for sort [" + sort_entry + "].");
 
+				
 				// Create ASPfRules for Attribute Definitions.
 				// TODO: Need forloop over attribute definitions.
 				for (ALMTerm attr_def : attribute_defs) {
@@ -2296,6 +2393,25 @@ public class ALMBaseListener implements ALMListener {
 					// the instance injected in the first position.
 					ALMTerm attr_fun = attr_def.getArg(0);
 					ALMTerm attr_term = attr_def.getArg(1);
+					
+					
+					//the argument instance should be added to the body
+					ALMTerm argHead = new ALMTerm(ALM.SPECIAL_FUNCTION_INSTANCE, ALMTerm.FUN);
+					argHead.addArg(attr_term);
+					FunctionEntry fun = null;
+					try {
+						fun = st.getFunctionEntry(attr_fun);
+						SortEntry rangeSort = fun.getRangeSort();
+						ALMTerm secondArg = new ALMTerm(rangeSort.getSortName(),ALMTerm.SORT);
+						argHead.addArg(secondArg);
+						body.add(argHead);
+					} catch (FunctionNotFound e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					
+					
 					ALMTerm new_fun = new ALMTerm(attr_fun.getName(), ALMTerm.FUN, attr_def.getLocation());
 					new_fun.addArg(obj_const);
 					if (attr_fun.getArgs() != null)
@@ -2319,6 +2435,11 @@ public class ALMBaseListener implements ALMListener {
 					ASPfRule ar = aspf.newRule(ALM.STRUCTURE_ATTRIBUTE_DEFINITIONS, ad_head, ad_body);
 					ar.addComment("Definition of attribute [" + attr_def.getArg(0).getName() + "] for instance ["
 							+ obj_const.toString() + "] of sort [" + sort_entry.getSortName() + "].");
+					
+					
+					
+					
+				
 				}
 			}
 	}
@@ -2413,8 +2534,8 @@ public class ALMBaseListener implements ALMListener {
 	public void exitOne_static_def(ALMParser.One_static_defContext ctx) {
 
 		// get head literal
-
-		ASPfLiteral head = ALM.ParseFunDef(ctx.fun_def());
+		ALMTerm head = ALM.ParseFunDef(ctx.fun_def());
+		
 		ArrayList<ASPfLiteral> body = null;
 		List<LiteralContext> literals = ctx.literal();
 		if (literals != null && literals.size() > 0) {
@@ -2422,6 +2543,11 @@ public class ALMBaseListener implements ALMListener {
 			for (LiteralContext lit : literals)
 				body.add(ALM.ParseLiteral(lit));
 		}
+		//do we have body in the values of statics?
+		//type checking
+		VariableManager vm = new VariableManager(st);
+		head.typeCheck(vm, st, er);
+		
 
 		aspf.newRule(ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS, head, body);
 
@@ -2516,6 +2642,10 @@ public class ALMBaseListener implements ALMListener {
 		}
 		return error_occurred;
 	}
+
+
+
+	
 	
 	
 

@@ -113,6 +113,7 @@ public class ALMCompiler {
 		Set<SortEntry> started = new HashSet<SortEntry>();
 		Set<SortEntry> finished = new HashSet<SortEntry>();
 		SortEntry universe = st.getUniverseSortEntry();
+		
 		PreModelSortHierarchy(universe, pm, st, started, finished);
 		finished.add(universe);
 	
@@ -121,6 +122,7 @@ public class ALMCompiler {
 		SPARCSort nodes = new SPARCSort(nodesentry.getSortName());
 		for(ALMTerm si : nodesentry.getInstances())
 			nodes.addInstance(si);
+		
 		try {
 			pm.addSPARCSort(nodes);
 		} catch (SPARCSortAlreadyDefined e) {
@@ -203,7 +205,28 @@ public class ALMCompiler {
 				PROGRAM_FAILURE("Construct Premodel Sorts", "Sort was defined twice: "+e.getMessage());
 			}
 		}
-	
+		SPARCSort timestep = new SPARCSort("timeStep");
+		ALMTerm timestepValue0 = new ALMTerm("0", ALMTerm.INT);
+		ALMTerm timestepValue1 = new ALMTerm("1", ALMTerm.INT);
+		timestep.addInstance(timestepValue0);
+		timestep.addInstance(timestepValue1);
+		List<SPARCSort> addTime = pm.getSorts();
+		boolean includeTime = false;
+		for(SPARCSort tsort : addTime){
+			if(tsort.getSortName() == "timeStep"){
+				includeTime = true;
+				break;
+			}
+		}
+		if(!includeTime){
+			try {
+				pm.addSPARCSort(timestep);
+			} catch (SPARCSortAlreadyDefined e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	    
 		
 	}
 
@@ -226,6 +249,9 @@ public class ALMCompiler {
 			} else if(fun.isSpecial()){
 				pred = new SPARCPredicate(fun.getFunctionName());
 				pred.addComment("special function");
+			} else if(fun.isFluent()){
+				pred = new SPARCPredicate(fun.getFunctionName());
+				pred.addComment("fluent function");
 			}
 				
 			if(pred != null){
@@ -239,12 +265,20 @@ public class ALMCompiler {
 					SortEntry se = sig.get(i);
 					if(i < length || se != st.getBooleansSortEntry())
 						try{
-							pred.addSPARCSort(pm.getSPARCSort(sig.get(i).getSortName()));	
+							pred.addSPARCSort(pm.getSPARCSort(sig.get(i).getSortName()));
 						} catch (SPARCSortNotDefined e) {
 							ALMCompiler.PROGRAM_FAILURE("Premodel SPARC Program", "SPARC Sort ["+se.getSortName()+"] Not defined in pre model program for function ["+fun.getFunctionName()+"].");
 						}
-				}	
-					
+				}
+				
+				//adding time to the fluent
+				if(fun.isFluent() || (fun.isSpecial() && fun.getFunctionName().contains("occurs"))) {
+					SPARCSort step = new SPARCSort("timeStep");
+					pred.addSPARCSort(step);
+				}
+				
+			
+				
 				try {
 					pm.addSPARCPredicate(pred);
 				} catch (PredicateAlreadyDeclared e) {
@@ -722,6 +756,7 @@ public class ALMCompiler {
 				}
 			}
 		}
+		
 		List<ALMTerm> instances = as.getLiterals(ALM.SPECIAL_FUNCTION_INSTANCE);
 		if(instances != null)
 			for(ALMTerm instlit : instances){
@@ -732,6 +767,15 @@ public class ALMCompiler {
 					tmsort.addInstance(ground_object);
 				}
 			}
+		ALMTerm timstepValue0 = new ALMTerm("0", ALMTerm.INT);
+		ALMTerm timstepValue1 = new ALMTerm("1", ALMTerm.INT);
+		try {
+			tm.getSPARCSort("timeStep").addInstance(timstepValue0);
+			tm.getSPARCSort("timeStep").addInstance(timstepValue1);
+		} catch (SPARCSortNotDefined e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 
@@ -935,8 +979,8 @@ public class ALMCompiler {
 				if (thead.getName() != ALM.SYMBOL_EQ && thead.getName() != ALM.SYMBOL_NEQ)
 					PROGRAM_FAILURE("Translate Rule", "Term relation at head of rule must be = or !=");
 					//Should be caught by syntax error. 
-				if(right.getType() != ALMTerm.ID && right.getType() != ALMTerm.VAR)
-					PROGRAM_FAILURE("Translate Rule", "Right hand side of term relation must be ID or VAR in head of rule.");
+//				if(right.getType() != ALMTerm.ID && right.getType() != ALMTerm.VAR)//the object constant can be occur on the right and it is fun
+//					PROGRAM_FAILURE("Translate Rule", "Right hand side of term relation must be ID or VAR in head of rule.");
 					//Should be caught by syntax error. 
 				if(left.getType() != ALMTerm.FUN)
 					PROGRAM_FAILURE("Translate Rule", "Only a function can appear on the left hand side of a term relation at the head of a rule.");
