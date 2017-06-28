@@ -83,6 +83,7 @@ public class ALMBaseListener implements ALMListener {
 
 	// multi module
 	private List<HashMap<String, List<String>>> multiModule = new ArrayList<HashMap<String, List<String>>>();
+	private List<HashMap<ConstantEntry, ALMTerm>> constantMap = new ArrayList<HashMap<ConstantEntry, ALMTerm>>();
 	
 	
 	// Function Type
@@ -1190,7 +1191,15 @@ public class ALMBaseListener implements ALMListener {
 			
 			//adding object constant of sorts
 			for(int i = 0 ; i < sort_entries.size(); i++){
-				sort_entries.get(i).addConstants(st.getConstantEntry(obj_const.getName()));
+				sort_entries.get(i).addConstants(st.getConstantEntry(obj_const.getName())); 
+				//For every object constant, add the is_a(object_constant, source_sort) rule to ASPf
+				ALMTerm head = null;
+				head = new ALMTerm(ALM.SPECIAL_FUNCTION_IS_A, ALMTerm.FUN);
+				head.addArg(obj_const);
+				head.addArg(new ALMTerm(sort_entries.get(i).getSortName(), ALMTerm.ID,
+						sort_entries.get(i).getLocation().getParserRuleContext()));
+				ASPfRule r = aspf.newRule(ALM.STRUCTURE_SORT_INSTANCES, head, null);
+				r.addComment("Sort Instance [" + obj_const + "] for sort [" + sort_entries.get(i) + "].");
 			}
 
 		}
@@ -2084,6 +2093,23 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void exitStructure(ALMParser.StructureContext ctx) {
+		//Replace in the all of the places that object constant is occurred
+		for(int i = 0 ; i < constantMap.size(); i++){
+			Set<ConstantEntry> cntList = constantMap.get(i).keySet();
+			for(ConstantEntry cnt : cntList){
+				aspf.replaceConstant(ALM.AXIOMS_STATE_CONSTRAINTS, cnt , constantMap.get(0).get(cnt));
+				aspf.replaceConstant(ALM.AXIOMS_DEFINITIONS, cnt , constantMap.get(0).get(cnt));
+				aspf.replaceConstant(ALM.AXIOMS_DYNAMIC_CAUSAL_LAWS, cnt , constantMap.get(0).get(cnt));
+				aspf.replaceConstant(ALM.STRUCTURE_SORT_INSTANCES, cnt , constantMap.get(0).get(cnt));
+				aspf.replaceConstant(ALM.AXIOMS_DEFINITIONS_FLUENT, cnt , constantMap.get(0).get(cnt));
+				aspf.replaceConstant(ALM.STRUCTURE_ATTRIBUTE_DEFINITIONS, cnt , constantMap.get(0).get(cnt));
+				aspf.replaceConstant(ALM.AXIOMS_DEFINITIONS_STATIC, cnt , constantMap.get(0).get(cnt));
+				aspf.replaceConstant(ALM.AXIOMS_STATE_CONSTRAINTS_FLUENT, cnt , constantMap.get(0).get(cnt));
+				aspf.replaceConstant(ALM.AXIOMS_EXECUTABILITY_CONDITIONS, cnt , constantMap.get(0).get(cnt));
+				
+			}
+		}
+
 	}
 
 	/**
@@ -2147,8 +2173,10 @@ public class ALMBaseListener implements ALMListener {
 		
 		if(!error_occurred){
 			ConstantEntry cnt = st.getConstantEntry(obj_const.getName());
-			//replace mean to change the name of the constant to the term in the symbol table or ???
-			cnt.setConstName(objConstVal.getName());
+			HashMap constMap = new HashMap<>();
+			constMap.put(cnt, objConstVal);
+			constantMap.add(constMap);
+	
 			
 		}
 		
@@ -2550,7 +2578,8 @@ public class ALMBaseListener implements ALMListener {
 		
 
 		aspf.newRule(ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS, head, body);
-
+		
+		
 	}
 
 	/**

@@ -118,6 +118,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 
 
 	public String getName(){return name;}
+	public void setName(String newName){this.name = newName;}
 	public String getType(){return type;}
 	public List<ALMTerm> getArgs(){return args;}
 	
@@ -128,6 +129,10 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 		return this;
 	}
 	
+	public ALMTerm addArg(int index, ALMTerm arg){
+		args.set(index,arg);
+		return this;
+	}
 	public void setSort(String var, String sort){
 		if (this.type == VAR && this.name.compareTo(var) == 0)
 			this.sort = sort;

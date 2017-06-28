@@ -889,7 +889,7 @@ public class ALMCompiler {
 		foo.removeErrorListeners();
 		foo.addErrorListener(new ALMSyntaxErrorListener(er));
 		foo.system_description();
-
+		
 
 		st.writeTo(s.SymbolTableDestination());
 		s.closeSymbolTableDestination();
