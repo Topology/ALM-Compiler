@@ -1,0 +1,54 @@
+system description paiting_wall
+	theory basic_painting
+		module painting
+			sort declarations
+				objects, things :: universe
+				agents :: things
+				colors :: things
+				paint :: actions
+					attributes
+						actor : agents
+						wall : objects
+						color : colors
+			function declarations 
+				statics
+					basic
+						darkerColors:  colors -> booleans
+						lighterColors: colors -> booleans
+				fluents
+					basic
+						total painted: agents * objects -> colors
+						has: agents * colors -> booleans 
+						
+					defined
+						hasColor: objects * colors -> booleans
+						appropriateColor: objects * colors -> booleans
+			axioms
+			function definitions
+				hasColor(O,C) if painted(A,O) = C.
+				appropriateColor(O,C1) if hasColor(O,C2), lighterColors(C2), darkerColors(C1), C1 != C2.
+			state constraints
+                painted(A,O) != C1 if painted(A,O) = C2, C1 != C2.
+			dynamic causal laws
+				occurs(X) causes painted(A,O) =C if instance(X,paint), actor(X) = A, wall(X) = O, color(X) = C, appropriateColor(O,C).
+			executability conditions
+				impossible occurs(X) if instance(X,paint), actor(X) = A, color(X) = C, -has(A,C).
+				impossible occurs(X) if instance(X,paint), occurs(Y), instance(Y,paint), actor(X) = A, actor(Y) = B, A != B, wall(X) = W, wall(Y) = W.
+
+		
+structure jenny_paint_wall
+	instances
+		yellow, white in colors
+		wall_1 in objects
+		jenny in agents
+		painting(A,W,C) in paint
+			actor = A
+			wall = W
+			color = C
+		painting(A,C) in paint
+			actor = A
+			color = C
+	value of statics
+		darkerColors(white).
+		lighterColors(yellow).
+

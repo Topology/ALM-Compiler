@@ -5,9 +5,17 @@
 sorts
 
 % Source Sort
-#movable_points = {top(box)}.
+#carriables = {}.
 
 #timeStep = {0, 1}.
+
+% Source Sort
+#elevations = {}.
+
+% Source Sort
+#agents = {}.
+
+#things = #carriables + #elevations + #agents.
 
 % Source Sort
 #ceiling_points = {initial_banana}.
@@ -15,36 +23,28 @@ sorts
 % Source Sort
 #floor_points = {under_banana, initial_monkey, initial_box}.
 
-#points = #movable_points + #ceiling_points + #floor_points.
+% Source Sort
+#movable_points = {top(box)}.
+
+#points = #ceiling_points + #floor_points + #movable_points.
 
 % Source Sort
-#carriables = {}.
+#carry = carry(box, #points).
 
 % Source Sort
-#agents = {}.
+#climb = {climb(box)}.
 
-% Source Sort
-#elevations = {}.
-
-#things = #carriables + #agents + #elevations.
+#move = #carry + #climb.
 
 % Source Sort
 #grasp = grasp(#things).
 
 % Source Sort
-#climb = {climb(box)}.
-
-% Source Sort
-#carry = carry(box, #points).
-
-#move = #climb + #carry.
-
-% Source Sort
 #release = release(#things).
 
-#actions = #grasp + #move + #release.
+#actions = #move + #grasp + #release.
 
-#universe = #points + #actions + #things.
+#universe = #things + #actions + #points.
 
 #sort_hierarchy_nodes_ = {universe, timeStep, actions, booleans, integers, points, things, agents, move, carriables, carry, grasp, release, elevations, climb, floor_points, ceiling_points, movable_points}.
 
@@ -138,11 +138,38 @@ rules
 %-- Section: link
 %---------------------
 
+% [things] is a child sort of [universe]
+link(things, universe).
+
+% [carriables] is a child sort of [things]
+link(carriables, things).
+
+% [elevations] is a child sort of [things]
+link(elevations, things).
+
+% [agents] is a child sort of [things]
+link(agents, things).
+
+% [actions] is a child sort of [universe]
+link(actions, universe).
+
+% [move] is a child sort of [actions]
+link(move, actions).
+
+% [carry] is a child sort of [move]
+link(carry, move).
+
+% [climb] is a child sort of [move]
+link(climb, move).
+
+% [grasp] is a child sort of [actions]
+link(grasp, actions).
+
+% [release] is a child sort of [actions]
+link(release, actions).
+
 % [points] is a child sort of [universe]
 link(points, universe).
-
-% [movable_points] is a child sort of [points]
-link(movable_points, points).
 
 % [ceiling_points] is a child sort of [points]
 link(ceiling_points, points).
@@ -150,54 +177,12 @@ link(ceiling_points, points).
 % [floor_points] is a child sort of [points]
 link(floor_points, points).
 
-% [actions] is a child sort of [universe]
-link(actions, universe).
-
-% [grasp] is a child sort of [actions]
-link(grasp, actions).
-
-% [move] is a child sort of [actions]
-link(move, actions).
-
-% [climb] is a child sort of [move]
-link(climb, move).
-
-% [carry] is a child sort of [move]
-link(carry, move).
-
-% [release] is a child sort of [actions]
-link(release, actions).
-
-% [things] is a child sort of [universe]
-link(things, universe).
-
-% [carriables] is a child sort of [things]
-link(carriables, things).
-
-% [agents] is a child sort of [things]
-link(agents, things).
-
-% [elevations] is a child sort of [things]
-link(elevations, things).
+% [movable_points] is a child sort of [points]
+link(movable_points, points).
 
 %---------------------
 %-- Section: is_a
 %---------------------
-
-% Sort Instance [top(elevations)] for sort [points].
-is_a(top(elevations), points).
-
-% Sort Instance [monkey] for sort [agents].
-is_a(monkey, agents).
-
-% Sort Instance [box] for sort [carriables].
-is_a(box, carriables).
-
-% Sort Instance [box] for sort [elevations].
-is_a(box, elevations).
-
-% Sort Instance [banana] for sort [carriables].
-is_a(banana, carriables).
 
 % Sort Instance [top(box)] for sort [movable_points].
 is_a(top(box), movable_points).
@@ -215,21 +200,19 @@ is_a(initial_box, floor_points).
 is_a(initial_banana, ceiling_points).
 
 % Sort Instance [move(P)] for sort [move].
-instance(move(P), move) :- instance(P, points), instance(monkey, agents), instance(P, points).
+is_a(move(P), move) :- instance(P, points).
 
 % Sort Instance [carry(box, P)] for sort [carry].
-is_a(carry(box, P), carry) :- instance(P, floor_points), instance(monkey, agents), instance(box, carriables), instance(P, points).
+is_a(carry(box, P), carry) :- instance(P, floor_points).
 
 % Sort Instance [grasp(C)] for sort [grasp].
-is_a(grasp(C), grasp) :- instance(C, carriables), instance(monkey, agents), instance(C, things).
+is_a(grasp(C), grasp) :- instance(C, carriables).
 
 % Sort Instance [release(C)] for sort [release].
-is_a(release(C), release) :- instance(C, carriables), instance(monkey, agents), instance(C, things).
+is_a(release(C), release) :- instance(C, carriables).
 
 % Sort Instance [climb(box)] for sort [climb].
-is_a(climb(box), climb) :- instance(monkey, agents), instance(box, elevations).
-
-is_a(sonia, agents).
+is_a(climb(box), climb).
 
 %---------------------
 %-- Section: instance
@@ -315,21 +298,6 @@ move_dest(A, top(E)) :- climb_elevation(A, EO), EO=E.
 %-- Section: Structure - Sort Instances
 %---------------------
 
-% Sort Instance [top(elevations)] for sort [points].
-is_a(top(elevations), points).
-
-% Sort Instance [monkey] for sort [agents].
-is_a(monkey, agents).
-
-% Sort Instance [box] for sort [carriables].
-is_a(box, carriables).
-
-% Sort Instance [box] for sort [elevations].
-is_a(box, elevations).
-
-% Sort Instance [banana] for sort [carriables].
-is_a(banana, carriables).
-
 % Sort Instance [top(box)] for sort [movable_points].
 is_a(top(box), movable_points).
 
@@ -346,58 +314,56 @@ is_a(initial_box, floor_points).
 is_a(initial_banana, ceiling_points).
 
 % Sort Instance [move(P)] for sort [move].
-instance(move(P), move) :- instance(P, points), instance(monkey, agents), instance(P, points).
+is_a(move(P), move) :- instance(P, points).
 
 % Sort Instance [carry(box, P)] for sort [carry].
-is_a(carry(box, P), carry) :- instance(P, floor_points), instance(monkey, agents), instance(box, carriables), instance(P, points).
+is_a(carry(box, P), carry) :- instance(P, floor_points).
 
 % Sort Instance [grasp(C)] for sort [grasp].
-is_a(grasp(C), grasp) :- instance(C, carriables), instance(monkey, agents), instance(C, things).
+is_a(grasp(C), grasp) :- instance(C, carriables).
 
 % Sort Instance [release(C)] for sort [release].
-is_a(release(C), release) :- instance(C, carriables), instance(monkey, agents), instance(C, things).
+is_a(release(C), release) :- instance(C, carriables).
 
 % Sort Instance [climb(box)] for sort [climb].
-is_a(climb(box), climb) :- instance(monkey, agents), instance(box, elevations).
-
-is_a(sonia, agents).
+is_a(climb(box), climb).
 
 %---------------------
 %-- Section: Structure - Attribute Definitions
 %---------------------
 
 % Definition of attribute [actor] for instance [move(P)] of sort [move].
-move_actor(move(P), A_) :- instance(P, points), instance(monkey, agents), A_=monkey.
+move_actor(move(P), A_) :- instance(P, points), A_=monkey.
 
 % Definition of attribute [dest] for instance [move(P)] of sort [move].
-move_dest(move(P), D_) :- instance(P, points), instance(monkey, agents), instance(P, points), D_=P.
+move_dest(move(P), D_) :- instance(P, points), D_=P.
 
 % Definition of attribute [actor] for instance [carry(box, P)] of sort [carry].
-move_actor(carry(box, P), A_) :- instance(P, floor_points), instance(monkey, agents), A_=monkey.
+move_actor(carry(box, P), A_) :- instance(P, floor_points), A_=monkey.
 
 % Definition of attribute [carried_object] for instance [carry(box, P)] of sort [carry].
-carry_carried_object(carry(box, P), C_) :- instance(P, floor_points), instance(monkey, agents), instance(box, carriables), C_=box.
+carry_carried_object(carry(box, P), C_) :- instance(P, floor_points), C_=box.
 
 % Definition of attribute [dest] for instance [carry(box, P)] of sort [carry].
-move_dest(carry(box, P), D_) :- instance(P, floor_points), instance(monkey, agents), instance(box, carriables), instance(P, points), D_=P.
+move_dest(carry(box, P), D_) :- instance(P, floor_points), D_=P.
 
 % Definition of attribute [grasper] for instance [grasp(C)] of sort [grasp].
-grasp_grasper(grasp(C), G_) :- instance(C, carriables), instance(monkey, agents), G_=monkey.
+grasp_grasper(grasp(C), G_) :- instance(C, carriables), G_=monkey.
 
 % Definition of attribute [grasped_thing] for instance [grasp(C)] of sort [grasp].
-grasp_grasped_thing(grasp(C), G_1) :- instance(C, carriables), instance(monkey, agents), instance(C, things), G_1=C.
+grasp_grasped_thing(grasp(C), G_1) :- instance(C, carriables), G_1=C.
 
 % Definition of attribute [releaser] for instance [release(C)] of sort [release].
-release_releaser(release(C), R_) :- instance(C, carriables), instance(monkey, agents), R_=monkey.
+release_releaser(release(C), R_) :- instance(C, carriables), R_=monkey.
 
 % Definition of attribute [released_thing] for instance [release(C)] of sort [release].
-release_released_thing(release(C), R_1) :- instance(C, carriables), instance(monkey, agents), instance(C, things), R_1=C.
+release_released_thing(release(C), R_1) :- instance(C, carriables), R_1=C.
 
 % Definition of attribute [actor] for instance [climb(box)] of sort [climb].
-move_actor(climb(box), A_) :- instance(monkey, agents), A_=monkey.
+move_actor(climb(box), A_) :- A_=monkey.
 
 % Definition of attribute [elevation] for instance [climb(box)] of sort [climb].
-climb_elevation(climb(box), E_) :- instance(monkey, agents), instance(box, elevations), E_=box.
+climb_elevation(climb(box), E_) :- E_=box.
 
 %---------------------
 %-- Section: Structure - Static Function Definitions

@@ -1,4 +1,4 @@
-+—————————
+------------------
 -- SYMBOL TABLE --
 ------------------
 
@@ -9,7 +9,7 @@
 
 sort.name: universe
 sort.parents: 
-sort.children: points, actions, things
+sort.children: things, actions, points
 sort.attributes:
 sort.instances:
 
@@ -17,7 +17,7 @@ sort.location: [[NO TEXT] (0,0)]
 
 sort.name: actions
 sort.parents: universe
-sort.children: grasp, move, release
+sort.children: move, grasp, release
 sort.attributes:
 sort.instances:
 
@@ -36,11 +36,11 @@ sort.location: [grasp (41:4)]
 
 sort.name: move
 sort.parents: actions
-sort.children: climb, carry
+sort.children: carry, climb
 sort.attributes:
    actor: move -> agents [actor:agents (9:6)] attribute static 
-   dest: move -> points [dest:points (11:6)] attribute static 
    origin: move -> points [origin:points (10:6)] attribute static 
+   dest: move -> points [dest:points (11:6)] attribute static 
 sort.instances:
 move(P)
 
@@ -66,7 +66,7 @@ sort.location: [[NO TEXT] (0,0)]
 
 sort.name: things
 sort.parents: universe
-sort.children: carriables, agents, elevations
+sort.children: carriables, elevations, agents
 sort.attributes:
 sort.instances:
 
@@ -116,7 +116,7 @@ sort.location: [[NO TEXT] (0,0)]
 
 sort.name: points
 sort.parents: universe
-sort.children: movable_points, ceiling_points, floor_points
+sort.children: ceiling_points, floor_points, movable_points
 sort.attributes:
 sort.instances:
 
@@ -205,11 +205,6 @@ const.sorts: carriables
 const.loc: [banana:carriables (93:4)]
 
 
-const.name: test
-const.sorts: agents
-const.loc: [test:agents (94:4)]
-
-
 const.name: box
 const.sorts: carriables, elevations
 const.loc: [box:carriables,elevations (92:4)]
@@ -265,7 +260,7 @@ elevation: climb -> elevations [elevation:elevations (78:6)] attribute static
 
 is_held: things -> booleans [is_held:things->booleans (54:6)] fluent defined 
 
-under: floor_points * things -> booleans [under:floor_points*things->booleans (98:6)] static basic 
+under: floor_points * things -> booleans [under:floor_points*things->booleans (97:6)] static basic 
 
 origin: move -> points [origin:points (10:6)] attribute static 
 
