@@ -1,0 +1,130 @@
+%---------------------
+%-- ASP{f} PROGRAM ---
+%---------------------
+
+%---------------------
+%-- ASP{f} PROGRAM: Axioms - State Constraints
+%---------------------
+
+% State Constraint for function [connected].
+connected(X, X).
+
+% State Constraint for function [connected].
+connected(X, Y) :- connected(Y, X), symmetric_connectivity.
+
+% State Constraint for function [connected].
+-connected(X, Y) :- -connected(Y, X), symmetric_connectivity.
+
+% State Constraint for function [connected].
+connected(X, Z) :- connected(X, Y), connected(Y, Z), transitive_connectivity.
+
+%---------------------
+%-- ASP{f} PROGRAM: Axioms - Dynamic Causal Laws
+%---------------------
+
+loc_in(A)=D :- actor(X)=A, dest(X)=D, occurs(X), instance(X, move).
+
+%---------------------
+%-- ASP{f} PROGRAM: Axioms - Function Definitions
+%---------------------
+
+%---------------------
+%-- ASP{f} PROGRAM: Structure - Sort Instances
+%---------------------
+
+% Sort Instance [bob] for sort [agents].
+is_a(bob, agents).
+
+% Sort Instance [john] for sort [agents].
+is_a(john, agents).
+
+% Sort Instance [new_york] for sort [points].
+is_a(new_york, points).
+
+% Sort Instance [paris] for sort [points].
+is_a(paris, points).
+
+% Sort Instance [rome] for sort [points].
+is_a(rome, points).
+
+% Sort Instance [go(X, P1, P2)] for sort [move].
+is_a(go(X, P1, P2), move) :- P1!=P2.
+
+% Sort Instance [go(X, P)] for sort [move].
+is_a(go(X, P), move).
+
+%---------------------
+%-- ASP{f} PROGRAM: Structure - Static Function Definitions
+%---------------------
+
+symmetric_connectivity.
+
+-transitive_connectivity.
+
+%---------------------
+%-- ASP{f} PROGRAM: Structure - Attribute Definitions
+%---------------------
+
+% Definition of attribute [actor] for instance [go(X, P1, P2)] of sort [move].
+actor(go(X, P1, P2))=A_ :- P1!=P2, A_=X.
+
+% Definition of attribute [origin] for instance [go(X, P1, P2)] of sort [move].
+origin(go(X, P1, P2))=O_ :- P1!=P2, O_=P1.
+
+% Definition of attribute [dest] for instance [go(X, P1, P2)] of sort [move].
+dest(go(X, P1, P2))=D_ :- P1!=P2, D_=P2.
+
+% Definition of attribute [actor] for instance [go(X, P)] of sort [move].
+actor(go(X, P))=A_ :- A_=X.
+
+% Definition of attribute [dest] for instance [go(X, P)] of sort [move].
+dest(go(X, P))=D_ :- D_=P.
+
+%---------------------
+%-- ASP{f} PROGRAM: Axioms - Satic Function Definitions
+%---------------------
+
+% Definition for dom_f being positive when attribute function [actor] of sort [move] has a known definition.
+dom_move_actor(X0) :- move_actor(X0)=Y.
+
+% Definition for dom_f being positive when attribute function [origin] of sort [move] has a known definition.
+dom_move_origin(X0) :- move_origin(X0)=Y.
+
+% Definition for dom_f being positive when attribute function [dest] of sort [move] has a known definition.
+dom_move_dest(X0) :- move_dest(X0)=Y.
+
+% Definition for dom_f being positive when static function [symmetric_connectivity] has a known definition.
+dom_symmetric_connectivity :- symmetric_connectivity=Y.
+
+% Definition for dom_f being positive when static function [transitive_connectivity] has a known definition.
+dom_transitive_connectivity :- transitive_connectivity=Y.
+
+%---------------------
+%-- ASP{f} PROGRAM: Axioms - Executability Conditions
+%---------------------
+
+% Executability Condition for when [X] is impossible to execute.
+:- occurs(X), instance(X, move), actor(X)=A, loc_in(A)!=origin(X).
+
+% Executability Condition for when [X] is impossible to execute.
+:- occurs(X), instance(X, move), actor(X)=A, loc_in(A)=dest(X).
+
+% Executability Condition for when [X] is impossible to execute.
+:- occurs(X), instance(X, move), actor(X)=A, loc_in(A)=O, dest(X)=D, -connected(O, D).
+
+%---------------------
+%-- ASP{f} PROGRAM: Axioms - State Constraints Containing Fluent Functions
+%---------------------
+
+% State Constraint for dom_f being positive when basic fluent function [connected] has a known definition.
+dom_connected(X0) :- connected(X0)=Y.
+
+% State Constraint for dom_f being positive when basic fluent function [loc_in] has a known definition.
+dom_loc_in(X0) :- loc_in(X0)=Y.
+
+%-------------------------
+%-- END ASP{f} PROGRAM ---
+%-------------------------
+
+
+
