@@ -1,0 +1,46 @@
+Install latest Eclipse (64 bit) IDE for Java Developers (http://www.eclipse.org/downloads/eclipse-packages/) 
+	for MacOS. It has EGit already
+Install JDK 1.8 (for MacOS) to make Eclipse work on MacOS. 
+From Eclipse, 
+	install XTEXT 
+		Click “Help” from Menu
+		Click “Install New Software”
+		Paste the following URL into the “Work With” box 
+		http://download.eclipse.org/modeling/tmf/xtext/updates/composite/releases/ 
+		Click “Add” button, 
+		In the dialog box, put “XTEXT” to the name filed 
+		Click OK.
+		Wait for list of check boxes to appear
+		Make sure the box is UNCHECKED for “Show only the latest version of … software”
+		Open arrow for “Xtext” to drop down version list. 
+		CHECK the box “Xtext Redistributable … … 2.7.3v…”
+		Click NEXT and install the software. 
+		RESTART Eclipse after install if it does not happen automatically.
+	Install ANTLR
+		Click “Help” from Menu
+		Click “Eclipse Market Place”
+		Type “ANTLR4” into the “Find” box and hit enter or click “Go”
+		Click “Intall” for “ANTLR4 IDE 0.3.6” (or most recent version)
+		Click “Install Now” 
+		Complete Installation and Restart Eclipse. 
+Create a folder to hold the following files (have these file in repo?)
+	Download into this folder: http://www.antlr.org/download/antlr-4.5.2-complete.jar
+	Download into this folder: sparc.jar
+	Download into this folder: clingo (macport is used to install gringo, copy installed clingo 
+		to this folder)
+
+Configure Eclipse
+	Run configurations:
+		argument: -c /.../alm.config 
+		  not full path is used above
+		see alm.config under Java-Impelementation
+		
+	Right click the project name build path -> configure build path -> add jar file of ANTLR
+
+
+		
+		
+		
+	
+	
+ 

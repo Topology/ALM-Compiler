@@ -563,6 +563,11 @@ public class ALMCompilerSettings {
 		File configfile = new File(string);
 		String CDreplace = configfile.getParentFile().getAbsolutePath();
 		String FNreplace = "";
+		
+		//YL 
+		System.out.println("Working Directory = " +
+	              System.getProperty("user.dir"));
+		
 		try {
 			BufferedReader foo = new BufferedReader(new FileReader(configfile));
 			try {
