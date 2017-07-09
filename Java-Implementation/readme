@@ -32,10 +32,12 @@ Create a folder to hold the following files (have these file in repo?)
 Configure Eclipse
 	Run configurations:
 		argument: -c /.../alm.config 
-		  not full path is used above
+		  note full path is used above
 		see alm.config under Java-Impelementation
 		
 	Right click the project name build path -> configure build path -> add jar file of ANTLR
+	
+Create a folder on repo where ALM program can be put? (the intermediate files will be there too)
 
 
 		
