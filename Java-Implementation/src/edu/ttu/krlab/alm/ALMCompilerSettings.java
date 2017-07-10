@@ -556,7 +556,7 @@ public class ALMCompilerSettings {
 	private void processConfigFile(String string) {
 		String line;
 		File configfile = new File(string);
-		String CDreplace = configfile.getParentFile().getAbsolutePath();
+		String cdReplace = configfile.getParentFile().getAbsolutePath();
 		String FNreplace = "";
 		try {
 			BufferedReader foo = new BufferedReader(new FileReader(configfile));
@@ -576,9 +576,13 @@ public class ALMCompilerSettings {
 								FNreplace = value.substring(lastslash+1, firstdot);
 							}
 						}
-					    value = value.replaceFirst("<CD>", CDreplace);
+						int cdPos = value.indexOf("<CD>");
+						if(cdPos >= 0) {
+							value = cdReplace + File.separator + value.substring(cdPos + 5);
+						}
 					    if(FNreplace.compareTo("") != 0)
-					    	value = value.replaceFirst("<FN>", FNreplace);	
+					    	value = value.replaceFirst("<FN>", FNreplace);
+					    value = (new File(value)).getCanonicalPath();
 						settings.put(key, value);
 					}
 				}
