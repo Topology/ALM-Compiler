@@ -55,8 +55,8 @@ public abstract class ALM {
 	public static final String SPECIAL_FUNCTION_SINK = "sink";
 	public static final String SPECIAL_FUNCTION_SOURCE = "source";
 	public static final String SPECIAL_FUNCTION_OCCURS = "occurs";
-	public static final String RULES_CWA_FOR_DEFINED_STATIC_FUNCTIONS = "Close World Assumption For Defined Static Functions";
-	public static final String RULES_CWA_FOR_DEFINED_FLUENT_FUNCTIONS = "Close World Assumption For Defined Fluent Functions";
+	public static final String RULES_STATIC_FUNCTIONS = "Auxiliary Rules For Static Functions";
+	public static final String RULES_FLUENT_FUNCTIONS = "Auxiliary Rules For Fluent Functions";
 	public static final String AXIOMS_DYNAMIC_CAUSAL_LAWS = "Axioms - Dynamic Causal Laws";
 	public static final String AXIOMS_EXECUTABILITY_CONDITIONS = "Axioms - Executability Conditions";
 	public static final String AXIOMS_STATE_CONSTRAINTS = "Axioms - State Constraints";

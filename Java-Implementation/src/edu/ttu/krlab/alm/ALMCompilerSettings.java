@@ -71,6 +71,7 @@ public class ALMCompilerSettings {
 	public static final String ASPF_DESTINATION = "ASPF_DESTINATION";
 	public static final String SYS_DESC_SOURCE = "SYS_DESC_SOURCE";
 	public static final String OPT_ALL_PM_FACTS = "OPT_ALL_PM_FACTS";
+	public static final String IMPORT_CONFIG = "IMPORT_CONFIG";
 
 	
 	public static final String STD_ERR = "standard_err";
@@ -232,6 +233,12 @@ public class ALMCompilerSettings {
 		case STD_OUT : 
 			return new BufferedWriter(new OutputStreamWriter(System.out));
 			default:
+				//ensure parent directories exist
+				try {
+					new File(new File(destination).getParent()).mkdirs();
+				} catch (Exception ex) {
+					ALMCompiler.PROGRAM_FAILURE("Opening file for output.", "Parent directories could not be created along path: "+destination);
+				}
 				er_destination = new BufferedWriter( new FileWriter(destination));
 				return er_destination;
 		}
@@ -247,6 +254,12 @@ public class ALMCompilerSettings {
 		case STD_OUT : 
 			return new BufferedWriter(new OutputStreamWriter(System.out));
 			default:
+				//ensure parent directories exist
+				try {
+					new File(new File(destination).getParent()).mkdirs();
+				} catch (Exception ex) {
+					ALMCompiler.PROGRAM_FAILURE("Opening file for output.", "Parent directories could not be created along path: "+destination);
+				}
 				st_destination = new BufferedWriter( new FileWriter(destination));
 				return st_destination;
 		}
@@ -263,6 +276,12 @@ public class ALMCompilerSettings {
 		case STD_OUT : 
 			return new BufferedWriter(new OutputStreamWriter(System.out));
 			default:
+				//ensure parent directories exist
+				try {
+					new File(new File(destination).getParent()).mkdirs();
+				} catch (Exception ex) {
+					ALMCompiler.PROGRAM_FAILURE("Opening file for output.", "Parent directories could not be created along path: "+destination);
+				}
 				aspf_destination = new BufferedWriter( new FileWriter(destination));
 				return aspf_destination;
 		}
@@ -279,6 +298,12 @@ public class ALMCompilerSettings {
 		case STD_OUT : 
 			return new BufferedWriter(new OutputStreamWriter(System.out));
 			default:
+				//ensure parent directories exist
+				try {
+					new File(new File(destination).getParent()).mkdirs();
+				} catch (Exception ex) {
+					ALMCompiler.PROGRAM_FAILURE("Opening file for output.", "Parent directories could not be created along path: "+destination);
+				}
 				pm_destination = new BufferedWriter( new FileWriter(destination));
 				return pm_destination;
 		}
@@ -295,6 +320,12 @@ public class ALMCompilerSettings {
 		case STD_OUT : 
 			return new BufferedWriter(new OutputStreamWriter(System.out));
 			default:
+				//ensure parent directories exist
+				try {
+					new File(new File(destination).getParent()).mkdirs();
+				} catch (Exception ex) {
+					ALMCompiler.PROGRAM_FAILURE("Opening file for output.", "Parent directories could not be created along path: "+destination);
+				}
 				as_destination = new BufferedWriter( new FileWriter(destination));
 				return as_destination;
 		}
@@ -311,6 +342,12 @@ public class ALMCompilerSettings {
 		case STD_OUT : 
 			return new BufferedWriter(new OutputStreamWriter(System.out));
 			default:
+				//ensure parent directories exist
+				try {
+					new File(new File(destination).getParent()).mkdirs();
+				} catch (Exception ex) {
+					ALMCompiler.PROGRAM_FAILURE("Opening file for output.", "Parent directories could not be created along path: "+destination);
+				}
 				tm_destination = new BufferedWriter( new FileWriter(destination));
 				return tm_destination;
 		}
@@ -413,7 +450,7 @@ public class ALMCompilerSettings {
 				i++;
 				if(i > args.length || isCLCommand(args[i]))
 					printUsageAndExitWithError("Missing value following "+args[i-1]);
-				processConfigFile(args[i]);
+				processConfigFile(args[i], null, null);
 				break;
 			case CL_OPT:
 			case CL_OPTIMIZATION: 
@@ -558,11 +595,11 @@ public class ALMCompilerSettings {
 		
 	}
 
-	private void processConfigFile(String string) {
+	private void processConfigFile(String config_file_name, String CD_Replace, String FN_Replace) {
 		String line;
-		File configfile = new File(string);
-		String cdReplace = configfile.getParentFile().getAbsolutePath();
-		String FNreplace = "";
+		File configfile = new File(config_file_name);
+		if(CD_Replace == null)
+			CD_Replace = configfile.getParentFile().getAbsolutePath();
 		try {
 			BufferedReader foo = new BufferedReader(new FileReader(configfile));
 			try {
@@ -574,29 +611,49 @@ public class ALMCompilerSettings {
 					if(pos > 0){
 						String key = line.substring(0, pos).toUpperCase().trim();
 						String value = line.substring(pos+1).trim();
-						if(key.compareTo(SYS_DESC_SOURCE) ==0){
-							int lastslash = value.lastIndexOf('/');
-							if(lastslash >0){
-								int firstdot = value.indexOf('.', lastslash);
-								FNreplace = value.substring(lastslash+1, firstdot);
-							}
-						}
+						//process <CD> and <FN> in value
 						int cdPos = value.indexOf("<CD>");
 						if(cdPos >= 0) {
-							value = cdReplace + File.separator + value.substring(cdPos + 5);
+							value = CD_Replace + File.separator + value.substring(cdPos + 5);
 						}
-					    if(FNreplace.compareTo("") != 0)
-					    	value = value.replaceFirst("<FN>", FNreplace);
-					    value = (new File(value)).getCanonicalPath();
+					    if(FN_Replace != null) {
+					    	value = value.replaceFirst("<FN>", FN_Replace);
+					    }
+					    switch(key) {
+					    case AS_DESTINATION: 
+					    case ASPF_DESTINATION:
+					    case TM_DESTINATION:
+					    case ER_DESTINATION:
+					    case ST_DESTINATION:
+					    case TP_DESTINATION:
+					    case PM_DESTINATION:
+					    case SYS_DESC_SOURCE:
+					    case IMPORT_CONFIG:
+						    value = (new File(value)).getCanonicalPath(); 
+						
+					    }
+						if(key.compareTo(SYS_DESC_SOURCE) ==0){
+							int lastslash = value.lastIndexOf(File.separator);
+							int firstdot = value.indexOf('.', lastslash);
+							if(firstdot == -1) {
+								FN_Replace = value.substring(lastslash+1);
+							} else {
+								FN_Replace = value.substring(lastslash+1, firstdot);
+							}
+						}
+						else if(key.compareTo(IMPORT_CONFIG) == 0) {
+							processConfigFile(value, CD_Replace, FN_Replace);
+							continue; //skip recording setting.  
+						}
 						settings.put(key, value);
 					}
 				}
 			foo.close();
 			} catch (IOException e) {
-				this.printUsageAndExitWithError("Could not read from configuration file:"+string);
+				this.printUsageAndExitWithError("Could not read from configuration file:"+config_file_name);
 			}
 		} catch (FileNotFoundException e) {
-			this.printUsageAndExitWithError("Configuration file was not found at path:"+string);
+			this.printUsageAndExitWithError("Configuration file was not found at path:"+config_file_name);
 		}
 		
 		
@@ -610,10 +667,21 @@ public class ALMCompilerSettings {
 		
 		try {
 			BufferedWriter out = new BufferedWriter(new FileWriter(f));
-			out.write("#ALMTranslator Settings File\n");
+			out.write("#ALMCompiler Settings File\n");
 			out.write("#Comments Are lines starting with '#' characters.\n");
 			out.write("#If there is no uncommented line for a setting, the default behavior is used.  \n");
 			out.write("\n");
+
+			out.write("# Path Overrides (Do not uncomment, just FYI) \n");
+			out.write("# <CD> - shorthand for the name of the directory containing the config file setting SYS_DESC_SOURCE.\n");
+			out.write("# <FN> - the name of the file (prior to the first '.') containing the system description (set by SYS_DESC_SOURCE)\n");
+			out.write("\n");
+			
+			out.write("#IMPORT CONFIG FILE\n");
+			out.write("#If commented out, default is to not import any other settings.\n");
+			out.write("#The SYS_DESC_SOURCE must be set prior to using <CD> and <FN> in paths.");
+			out.write("#IMPORT_CONFIG : <path to config file to import>\n");
+			out.write("\n");	
 			
 			out.write("# SYSTEM SETUP CONFIGURATIONS\n");
 			out.write("\n");

@@ -179,13 +179,11 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 		nodes_nodes_booleans_sig.add(booleans);
 		
 		// nodes -> booleans
-
 		List<SortEntry> nodes_booleans_sig = new ArrayList<SortEntry>();
 		nodes_booleans_sig.add(nodes);
 		nodes_booleans_sig.add(booleans);
 		
 		// actions -> booleans
-		
 		List<SortEntry> actions_booleans_sig = new ArrayList<SortEntry>();
 		actions_booleans_sig.add(actions);
 		actions_booleans_sig.add(booleans);
@@ -197,47 +195,65 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 		FunctionEntry is_a = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_IS_A, universe_nodes_booleans_sig, null);
 		is_a.setSpecial();
 		is_a.setStatic();
+		is_a.setTotal();
+		is_a.setDefined();
 		
 		
 		// instance
 		FunctionEntry instance = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_INSTANCE, universe_nodes_booleans_sig, null);
 		instance.setSpecial();
 		instance.setStatic();
+		instance.setTotal();
+		instance.setDefined();
 		
 		// link
 		FunctionEntry link = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_LINK, nodes_nodes_booleans_sig, null);
 		link.setSpecial();
 		link.setStatic();
+		link.setTotal();
+		link.setDefined();
 		
 		// subsort
 		FunctionEntry subsort = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SUBSORT, nodes_nodes_booleans_sig, null);
 		subsort.setSpecial();
 		subsort.setStatic();
+		subsort.setTotal();
+		subsort.setDefined();
 		
 		// has_child
 		FunctionEntry has_child = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_CHILD, nodes_booleans_sig, null);
 		has_child.setSpecial();
 		has_child.setStatic();
+		has_child.setTotal();
+		has_child.setDefined();
 		
 		// has_parent
 		FunctionEntry has_parent = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_PARENT, nodes_booleans_sig, null);
 		has_parent.setSpecial();
 		has_parent.setStatic();
+		has_parent.setTotal();
+		has_parent.setDefined();
 		
 		// sink
 		FunctionEntry sink = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SINK, nodes_booleans_sig, null);
 		sink.setSpecial();
 		sink.setStatic();
+		sink.setTotal();
+		sink.setDefined();
 		
 		// source
 		FunctionEntry source = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SOURCE, nodes_booleans_sig, null);
 		source.setSpecial();
 		source.setStatic();
+		source.setTotal();
+		source.setDefined();
 		
 		// occurs
 		FunctionEntry occurs = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_OCCURS, actions_booleans_sig, null);
 		occurs.setSpecial();
 		occurs.setFluent();
+		occurs.setTotal();
+		occurs.setDefined();
 		
 	}
 	
@@ -354,6 +370,8 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 		if(afun == null || afun.getType() != ALMTerm.FUN)
 			return null;
 		
+		//This algorithm uses the number of arguments to match functions.  
+		//It might be possible to use type inference, but that would require passing in a variable manager to provide type information.  
 		int num_afun_args = 0;
 		if(afun.getArgs() != null)
 			num_afun_args = afun.getArgs().size();
@@ -373,7 +391,6 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 				}
 			throw new FunctionNotFound(afun);
 		} else {
-		
 			Set<NormalFunctionEntry> entries = this.getFunctionEntry(funName);
 			if(entries != null)
 				for(FunctionEntry f : entries){
@@ -394,6 +411,11 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 	}
 	
 
-
+	public Set<DOMFunctionEntry> getDOMFunctions(){
+		return new HashSet<>(DMap.values());
+	}
 	
+	public DOMFunctionEntry getDOMFunction(FunctionEntry f) {
+		return DMap.get(f);
+	}
 }

@@ -49,6 +49,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 	public static final String SIGN_NEG = "-";
 	public static final String SIGN_POS = "";
 	public static final String SIGN_NOT = "not ";
+	public static final String SIGN_NOT_NEG = "not -";
 	public static final String ID = "ID";
 	public static final String VAR = "VAR";
 	public static final String INT = "INTEGER";
@@ -120,7 +121,13 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 	public String getName(){return name;}
 	public void setName(String newName){this.name = newName;}
 	public String getType(){return type;}
-	public List<ALMTerm> getArgs(){return args;}
+	public List<ALMTerm> getArgs(){
+		//return empty list if null.
+		if(args == null) {
+			args = new ArrayList<ALMTerm>();
+		}
+		return args;
+	}
 	
 	public ALMTerm addArg(ALMTerm arg){
 		if(args == null)

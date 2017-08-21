@@ -27,6 +27,7 @@ import edu.ttu.krlab.alm.datastruct.aspf.ASPfProgram;
 import edu.ttu.krlab.alm.datastruct.aspf.ASPfRule;
 import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
 import edu.ttu.krlab.alm.datastruct.err.SemanticError;
+import edu.ttu.krlab.alm.datastruct.sig.DOMFunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionNotFound;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
@@ -234,61 +235,72 @@ public class ALMCompiler {
 
 
 	private static void PreModelCreatePredicatesSection(SPARCProgram pm, SymbolTable st) {
-		//For each static function, generate a predicate signature.
-		//TODO: This needs to be altered to match any final naming convention. 
+		//For each function, generate a predicate signature for it and its dom_f function. 
 		
-		for(FunctionEntry fun : st.getFunctions()){
-			SPARCPredicate pred = null;
-			if(fun.isAttribute()){
-				pred = new SPARCPredicate(fun.getQualifiedFunctionName());
-				pred.addComment("attribute function ["+fun.getFunctionName()+"] for sort ["+fun.getSignature().get(0).getSortName()+"]");
+		for(FunctionEntry f : st.getFunctions()){
+			String f_name = f.getFunctionName();
+			DOMFunctionEntry dom_f = st.getDOMFunction(f);
+			String dom_f_name = dom_f.getFunctionName();
+			SPARCPredicate f_pred = null;
+			SPARCPredicate dom_f_pred = null;
+			if(f.isAttribute()){
+				f_pred = new SPARCPredicate(f.getQualifiedFunctionName());
+				f_pred.addComment("Attribute Function ["+f_name+"] for sort ["+f.getSignature().get(0).getSortName()+"].");
+				dom_f_pred = new SPARCPredicate(dom_f.getQualifiedFunctionName());
+				dom_f_pred.addComment("Domain Function ["+dom_f.getQualifiedFunctionName()+"] for attribute function ["+
+										f_name+"] of sort ["+f.getSignature().get(0).getSortName()+"].");
+			} else {
+				f_pred = new SPARCPredicate(f_name);
+				dom_f_pred = new SPARCPredicate(dom_f_name);
+				dom_f_pred.addComment("Domain Function ["+dom_f_name+"].");
 				
-			} else if(fun.isStatic()){
-				pred =  new SPARCPredicate(fun.getFunctionName());
-				pred.addComment("static function");
-			} else if(fun.isSpecial()){
-				pred = new SPARCPredicate(fun.getFunctionName());
-				pred.addComment("special function");
-			} else if(fun.isFluent()){
-				pred = new SPARCPredicate(fun.getFunctionName());
-				pred.addComment("fluent function");
+				if(f.isSpecial()){
+					f_pred.addComment("Special Function ["+ f_name +"]");
+				} else if(f.isStatic()){
+					f_pred.addComment("Static Function ["+ f_name +"]");
+				} else if(f.isFluent()){
+					f_pred.addComment("Fluent Function ["+ f_name +"]");
+				}
 			}
 				
-			if(pred != null){
-				//need to add signature to predicate, leaving off boolean if that is the range sort.
-				List<SortEntry> sig = fun.getSignature();
-				if(sig == null)
-					ALMCompiler.PROGRAM_FAILURE("Pre Model Create Predicate Section", "Function Has No Signature");
-				
-				int length = sig.size()-1;
-				for(int i = 0; i <= length; i++){
-					SortEntry se = sig.get(i);
-					if(i < length || se != st.getBooleansSortEntry())
-						try{
-							pred.addSPARCSort(pm.getSPARCSort(sig.get(i).getSortName()));
-						} catch (SPARCSortNotDefined e) {
-							ALMCompiler.PROGRAM_FAILURE("Premodel SPARC Program", "SPARC Sort ["+se.getSortName()+"] Not defined in pre model program for function ["+fun.getFunctionName()+"].");
-						}
-				}
-				
-				//adding time to the fluent
-				if(fun.isFluent() || (fun.isSpecial() && fun.getFunctionName().contains("occurs"))) {
-					SPARCSort step = new SPARCSort("timeStep");
-					pred.addSPARCSort(step);
-				}
-				
+			//need to add signature to predicate, leaving off boolean if that is the range sort.
+			List<SortEntry> sig = f.getSignature();
+			if(sig == null)
+				ALMCompiler.PROGRAM_FAILURE("PreModelCreatePredicatesSection", "Function Has No Signature");
 			
-				
-				try {
-					pm.addSPARCPredicate(pred);
-				} catch (PredicateAlreadyDeclared e) {
-					e.printStackTrace();
-					PROGRAM_FAILURE("Adding SPARC Predicate Declaration", "A second predicate declaration with the same name cannot be created."); 
-					//This should be prevented by semantic error checking.  
+			int dom_length = sig.size()-1;
+			for(int i = 0; i <= dom_length; i++){
+				SortEntry se = sig.get(i);
+				if(i < dom_length || se != st.getBooleansSortEntry()) {
+					try{
+						SPARCSort ss = pm.getSPARCSort(sig.get(i).getSortName());
+						f_pred.addSPARCSort(ss);
+						if(i < dom_length) {
+							dom_f_pred.addSPARCSort(ss);;
+						}
+					} catch (SPARCSortNotDefined e) {
+						ALMCompiler.PROGRAM_FAILURE("PreModelCreatePredicatesSection", "SPARC Sort ["+se.getSortName()+"] Not defined in pre model program for function ["+f.getFunctionName()+"].");
+					}
 				}
-			}		
-		}
+			}
+			
+			//adding time to fluents
+			if(f.isFluent()) {
+				SPARCSort step = new SPARCSort(st.getTimestepSortEntry().getSortName());
+				f_pred.addSPARCSort(step);
+				dom_f_pred.addSPARCSort(step);
+			}
+			
 		
+			try {
+				pm.addSPARCPredicate(f_pred);
+				pm.addSPARCPredicate(dom_f_pred);
+			} catch (PredicateAlreadyDeclared e) {
+				e.printStackTrace();
+				PROGRAM_FAILURE("PreModelCreatePredicatesSection", "A second predicate declaration with the same name cannot be created."); 
+				//This should be prevented by semantic error checking.  
+			}
+		}
 	}
 
 	private static void PreModelCreateRules(SPARCProgram pm, SymbolTable st, ASPfProgram aspf) {
@@ -297,7 +309,7 @@ public class ALMCompiler {
 		PreModelSortHierarchyRules(pm, st, aspf);
 		
 		//ST: Add Fundamental Axioms For ALL Static Functions
-		PreModelStaticFunctionsRules(pm, st);
+		PreModelStaticFunctionRules(pm, st);
 		
 		//ASPF: Static State Constraint Axioms
 		PreModelStaticStateConstraintAxioms(pm, st, aspf);
@@ -647,14 +659,30 @@ public class ALMCompiler {
 	}
 	
 	
-
-	private static void PreModelStaticFunctionsRules(SPARCProgram pm, SymbolTable st) {
-		//Static Functions have predicates declared in the predicate section, 
-		//These rules are described in the ALM paper as needing to be added per type of function
-		//1) defined functions need the closed world assumption.  -foo(t1..tn) :- not foo(t1..tn).
+	/**
+	 * Static Functions have predicates declared in the predicate section, 
+	 * These rules are described in the ALM paper as needing to be added per type of function
+	 * 1) defined functions need the closed world assumption.  -f(X1..Xn) :- not f(X1..Xn).
+	 * 2) dom_f needs to have its axioms specified.
+	 * 			dom_f(X1..Xn) :- f(X1..Xn). when f's range is boolean. 
+	 *          dom_f(X1..Xn) :- f(X1..Xn, R). when f's range is not boolean. 
+	 * 			-dom_f(X1..Xn) :- not dom_f(X1..Xn). closed world assumption on domain of static functions.  
+	 * 			:- -dom_f(X1..Xn). when f is total. 
+	 * @param pm
+	 * @param st
+	 */
+	private static void PreModelStaticFunctionRules(SPARCProgram pm, SymbolTable st) {
+		List<FunctionEntry> functions = st.getFunctions();
 		
-		for(FunctionEntry f : st.getFunctions()){
-			if(f.isStatic())
+		for(FunctionEntry f : functions){
+			if(f.isStatic()) {
+				DOMFunctionEntry dom_f = st.getDOMFunction(f);
+				List<SortEntry> sig = f.getSignature();
+				int dom_size = sig.size()-1;
+				int count;
+				SPARCRule r;
+				String XVar = "X";
+				
 				if(f.isDefined()){
 					//defined static functions need the closed world assumption.
 					ALMTerm closeworld_head = new ALMTerm(f.getFunctionName(), ALMTerm.FUN, f.getLocation());
@@ -663,22 +691,69 @@ public class ALMCompiler {
 					closeworld_body_fun.setSign(ALMTerm.SIGN_NOT);
 					List<SPARCLiteral> closeworld_body = new ArrayList<SPARCLiteral>();
 					closeworld_body.add(closeworld_body_fun);
-					
-					SPARCPredicate pred_sig = pm.getPredicate(f.getFunctionName());
-					String XVar = "X";
-					List<SPARCSort> sig = pred_sig.getSignatrue();
-					for(int count = 1; count <= sig.size(); count++){
+					for(count = 0; count < dom_size; count++){
 						ALMTerm arg = new ALMTerm(XVar+count, ALMTerm.VAR);
 						closeworld_head.addArg(arg);
 						closeworld_body_fun.addArg(arg);
 					}
 					
-					SPARCRule r = pm.newSPARCRule(ALM.RULES_CWA_FOR_DEFINED_STATIC_FUNCTIONS, closeworld_head, closeworld_body);
-					r.addComment("Function ["+f.getFunctionName()+"] is a defined static function and needs the closed world assumption.");
+					r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, closeworld_head, closeworld_body);
+					r.addComment("Function ["+f.getFunctionName()+"] is a defined static function and has the closed world assumption.");
 				}
+				//add dom definition for static functions.  
+				ALMTerm dom_def_head = new ALMTerm(dom_f.getFunctionName(), ALMTerm.FUN, dom_f.getLocation());
+				ALMTerm dom_def_body_pred = new ALMTerm(f.getFunctionName(), ALMTerm.FUN, f.getLocation());
+				for(count = 0; count < dom_size; count++){
+					ALMTerm arg = new ALMTerm(XVar+count, ALMTerm.VAR);
+					dom_def_head.addArg(arg);
+					dom_def_body_pred.addArg(arg);
+				}
+				SortEntry rangeSort = sig.get(count);
+				List<SPARCLiteral> dom_def_body = new ArrayList<>();
+				dom_def_body.add(dom_def_body_pred);
+				r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, dom_def_head, dom_def_body);	 
+				if(rangeSort != st.getBooleansSortEntry()) {
+					//the predicate in the body of the rule includes the range of the non-boolean function.
+					dom_def_body_pred.addArg(new ALMTerm("R", ALMTerm.VAR));
+					r.addComment("Definition of ["+dom_f.getFunctionName()+"] when ["+f.getFunctionName()+"] is assigned a value.");
+				} else {
+					//if function was boolean, a false assignment results in positive dom_f as well.
+					r.addComment("Definition of ["+dom_f.getFunctionName()+"] when ["+f.getFunctionName()+"] is true.");
+					List<SPARCLiteral> dom_def_body_neg = new ArrayList<>();
+					ALMTerm dom_def_body_neg_pred = new ALMTerm(f.getFunctionName(), ALMTerm.FUN, f.getLocation());
+					dom_def_body_neg_pred.getArgs().addAll(dom_def_body_pred.getArgs());
+					dom_def_body_neg_pred.setSign(ALMTerm.SIGN_NEG);
+					dom_def_body_neg.add(dom_def_body_neg_pred);
+					r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, dom_def_head, dom_def_body_neg);
+					r.addComment("Definition of ["+dom_f.getFunctionName()+"] when ["+f.getFunctionName()+"] is false.");
+				}
+
+				//closed world assumption for dom_f
+				ALMTerm dom_cwa_head = new ALMTerm(dom_f.getFunctionName(), ALMTerm.FUN, dom_f.getLocation());
+				ALMTerm dom_cwa_body_pred = new ALMTerm(dom_f.getFunctionName(), ALMTerm.FUN, dom_f.getLocation());
+				dom_cwa_head.getArgs().addAll(dom_def_head.getArgs());
+				dom_cwa_head.setSign(ALMTerm.SIGN_NEG);
+				dom_cwa_body_pred.getArgs().addAll(dom_def_head.getArgs());
+				dom_cwa_body_pred.setSign(ALMTerm.SIGN_NOT);
+				List<SPARCLiteral> dom_cwa_body = new ArrayList<>(); 
+				dom_cwa_body.add(dom_cwa_body_pred);	
+				r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, dom_cwa_head, dom_cwa_body);
+				r.addComment("Closed world assumption holds for ["+dom_f.getFunctionName()+"] since ["+f.getFunctionName()+"] is a static function.");  
+
+				//total static functions need constraint on dom_f.
+				if(f.isTotal()) {
+					ALMTerm dom_neg_body_pred = new ALMTerm(dom_f.getFunctionName(), ALMTerm.FUN, dom_f.getLocation());
+					dom_neg_body_pred.setSign(ALMTerm.SIGN_NEG);
+					dom_neg_body_pred.getArgs().addAll(dom_def_head.getArgs());
+					List<SPARCLiteral> dom_neg_body = new ArrayList<>();
+					dom_neg_body.add(dom_neg_body_pred);
+					r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, null, dom_neg_body);
+					r.addComment("Function ["+f.getFunctionName()+"] is a total total static function.");
+				}
+			}
 		}
 		
-		//Any other rules related to simply the existence of static user defined functions should go here. 
+		//Any other rules related to simply the existence of static functions should go here. 
 		
 	}
 
@@ -794,6 +869,9 @@ public class ALMCompiler {
 		//Copy section from pre model program
 		tm.copyRulesSections(pm);
 		
+		//New Rules for dom_f fluents. 
+		FinalProgramFluentFunctionRules(tm, st);
+		
 		//Add sections containing fluent functions.
 		FinalProgramDynamicCausalLaws(tm, st, aspf);
 		
@@ -804,6 +882,130 @@ public class ALMCompiler {
 		FinalProgramDefinitions(tm, st, aspf);
 	}
 
+	/**
+	 * Fluent functions need law of inertia with exception to when the domain is explicitly marked undefined.  
+	 * 1) f(X1..Xn, R, I+1) :- f(X1..Xn, R, I), not f(X1..Xn, R2, I), R != R2, dom_f(X1...Xn, I+1). 
+	 * 2) dom_f(X1..Xn, I+1) :- dom_f(X1..Xn, I), not -dom_f(X1..Xn, I+1).
+	 * 3) -dom_f(X1..Xn, I+1) :- -dom_f(X1..Xn,I), not dom_f(X1..Xn, I+1). 
+	 * 4) dom_f(X1..Xn, I) :- f(X1..Xn,R,I).
+	 * 5) -dom_f(X1..Xn, I) :- not dom_f(X1 .. Xn, I).
+	 * 
+	 * @param tm
+	 * @param st
+	 */
+	private static void FinalProgramFluentFunctionRules(SPARCProgram tm, SymbolTable st) {
+		
+		for(FunctionEntry f: st.getFunctions()) {
+			if(f.isFluent()) {
+				DOMFunctionEntry dom_f = st.getDOMFunction(f);
+				String f_name = f.getFunctionName();
+				String dom_f_name = dom_f.getFunctionName();
+				String XVar = "X";
+				List<ALMTerm> domain_args = new ArrayList<ALMTerm>();
+				int count = 0;
+				int dom_length = dom_f.getSignature().size();
+				for(count = 0; count < dom_length; count++) {
+					domain_args.add(new ALMTerm(XVar + count, ALMTerm.VAR));
+				}
+				ALMTerm R = new ALMTerm("R", ALMTerm.VAR);
+				ALMTerm R2 = new ALMTerm("R2", ALMTerm.VAR);
+				ALMTerm I = new ALMTerm("I", ALMTerm.VAR);
+				ALMTerm Inc = new ALMTerm("I+1", ALMTerm.VAR);
+				List<ALMTerm> args;
+				SPARCRule r;
+				List<SPARCLiteral> body;
+				
+				// 1) f(X1..Xn, R, I+1) :- f(X1..Xn, R, I), not f(X1..Xn, R2, I+1), R != R2, dom_f(X1...Xn, I+1).
+				body = new ArrayList<>();
+				ALMTerm f_Inc = new ALMTerm(f_name, ALMTerm.FUN);
+				args = f_Inc.getArgs();
+				args.addAll(domain_args);
+				args.add(R);
+				args.add(Inc);
+				ALMTerm f_I = new ALMTerm(f_name, ALMTerm.FUN);
+				args = f_I.getArgs();
+				args.addAll(domain_args);
+				args.add(R);
+				args.add(I);
+				body.add(f_I);
+				ALMTerm not_f_Inc = new ALMTerm(f_name, ALMTerm.FUN);
+				not_f_Inc.setSign(ALMTerm.SIGN_NOT);
+				args = not_f_Inc.getArgs();
+				args.addAll(domain_args);
+				args.add(R2);
+				args.add(Inc);
+				body.add(not_f_Inc);
+				ALMTerm R_not_R2 = new ALMTerm(ALM.SYMBOL_NEQ, ALMTerm.TERM_RELATION);
+				args = R_not_R2.getArgs();
+				args.add(R);
+				args.add(R2);
+				body.add(R_not_R2);
+				ALMTerm dom_f_Inc = new ALMTerm(dom_f_name, ALMTerm.FUN);
+				args = dom_f_Inc.getArgs();
+				args.addAll(domain_args);
+				args.add(Inc);
+				body.add(dom_f_Inc);
+				r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, f_Inc, body);
+				r.addComment("Law Of Inertia for ["+f_name+"].");
+				
+				//2) dom_f(X1..Xn, I+1) :- dom_f(X1..Xn, I), not -dom_f(X1..Xn, I+1).
+				body = new ArrayList<>();
+				ALMTerm dom_f_I = new ALMTerm(dom_f_name, ALMTerm.FUN);
+				args = dom_f_I.getArgs();
+				args.addAll(domain_args);
+				args.add(I);
+				body.add(dom_f_I);
+				ALMTerm not_neg_dom_f_Inc = new ALMTerm(dom_f_name, ALMTerm.FUN);
+				not_neg_dom_f_Inc.setSign(ALMTerm.SIGN_NOT_NEG);
+				args = not_neg_dom_f_Inc.getArgs();
+				args.addAll(domain_args);
+				args.add(Inc);
+				body.add(not_neg_dom_f_Inc);
+				r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, dom_f_Inc, body);
+				r.addComment("Law Of Inertia for positive ["+dom_f_name+"].");
+
+				
+				//3) -dom_f(X1..Xn, I+1) :- -dom_f(X1..Xn,I), not dom_f(X1..Xn, I+1).
+				body = new ArrayList<>();
+				ALMTerm neg_dom_f_Inc = new ALMTerm(dom_f_name, ALMTerm.FUN);
+				neg_dom_f_Inc.setSign(ALMTerm.SIGN_NEG);
+				args = neg_dom_f_Inc.getArgs();
+				args.addAll(domain_args);
+				args.add(Inc);
+				ALMTerm neg_dom_f_I = new ALMTerm(dom_f_name, ALMTerm.FUN);
+				neg_dom_f_I.setSign(ALMTerm.SIGN_NEG);
+				args = neg_dom_f_I.getArgs();
+				args.addAll(domain_args);
+				args.add(I);
+				body.add(neg_dom_f_I);
+				ALMTerm not_dom_f_Inc = new ALMTerm(dom_f_name, ALMTerm.FUN);
+				not_dom_f_Inc.setSign(ALMTerm.SIGN_NOT);
+				args = not_dom_f_Inc.getArgs();
+				args.addAll(domain_args);
+				args.add(Inc);
+				body.add(not_dom_f_Inc);
+				r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, neg_dom_f_Inc, body);
+				r.addComment("Law Of Intertia for negated ["+dom_f_name+"].");
+				
+				//4) dom_f(X1..Xn, I) :- f(X1..Xn,R,I).
+				body = new ArrayList<>();
+				body.add(f_I);
+				r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, dom_f_I, body);
+				r.addComment("Definition of positive ["+dom_f_name+"].");
+				
+				//5) -dom_f(X1..Xn, I) :- not dom_f(X1 .. Xn, I).
+				body = new ArrayList<>();
+				ALMTerm not_dom_f_I = new ALMTerm(dom_f_name, ALMTerm.FUN);
+				not_dom_f_I.setSign(ALMTerm.SIGN_NEG);
+				args = not_dom_f_I.getArgs();
+				args.addAll(domain_args);
+				args.add(I);
+				body.add(not_dom_f_I);
+				r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, neg_dom_f_I, body);
+				r.addComment("Definition of negative ["+dom_f_name+"] (Closed World Assumption).");	
+			}	
+		}
+	}
 
 	private static void FinalProgramDynamicCausalLaws(SPARCProgram tm, SymbolTable st, ASPfProgram aspf) {
 		//all rules are dynamic since it has actions. 

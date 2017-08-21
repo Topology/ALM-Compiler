@@ -1,0 +1,19 @@
+# TRANSLATOR INPUT OUTPUT AND ERROR DESTINATIONS 
+
+# Path Overrides
+# <FN> the name of the file (prior to the first '.') containing the system description (set by SYS_DESC_SOURCE)
+# <CD> shorthand for the name of the directory containing the config file setting (SYS_DESC_SOURCE)  
+
+
+#setting SYS_DESC_SOURCE : <filename>
+#Source of the input ALM System Description.
+#If commented out, default is to read from std_in.
+#SYS_DESC_SOURCE : <path to file containing system description>
+#The following setting also indicates the source as standard in:
+#SYS_DESC_SOURCE : standard_in
+SYS_DESC_SOURCE : <CD>/empty.alm
+
+
+IMPORT_CONFIG : <CD>/../testing.almconf
+IMPORT_CONFIG : <CD>/../../system_setup.almconf
+

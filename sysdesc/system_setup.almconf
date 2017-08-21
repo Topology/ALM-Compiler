@@ -1,0 +1,27 @@
+# SYSTEM SETUP CONFIGURATIONS
+
+#setting JAVA_LOCATION
+#Java executable for Java version 1.8 or later must be used.
+#If next line is commented out, default is current working directory or active path.
+#JAVA_LOCATION : <path to java executable>
+
+#setting SPARC_LOCATION
+#Location of SPARC's jar file must be provided.
+#If next line is commented out, default is find it in current working directory or active path.
+#SPARC_LOCATION : <path to sparc jar>
+SPARC_LOCATION : C:\programming\logic\sparc.jar
+
+#setting SOLVER_LOCATION: 
+#Directory containing "dlv" or "clingo" ASP solvers. (needed by SPARC)  
+#If next list is commented out, default is current working directory or active path.
+#SOLVER_LOCATION : <path to directory containing "dlv" or "clingo" executable>
+SOLVER_LOCATION : C:\programming\logic
+
+#setting SOLVER_TYPE : (dlv | clingo)
+#SPARC only recognizes 'dlv' and 'clingo' as names for executables of ASP solvers.
+#Executable name of solver on file system will need to be changed to match either dlv or clingo.
+#If next line is commented out, default is dlv.
+#SOLVER_TYPE : < "clingo" or "dlv" >
+SOLVER_TYPE : clingo
+
+
