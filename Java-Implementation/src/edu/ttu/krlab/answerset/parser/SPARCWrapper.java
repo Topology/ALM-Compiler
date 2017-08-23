@@ -78,11 +78,9 @@ class OsUtils { // from Evgenii Balai and modified to meet ALM's Needs
 		OsUtils.result = new StringBuffer();
 		try {
 			ProcessBuilder sparcprocess = new ProcessBuilder(command);
-			System.out.println(sparcprocess.environment().get("PATH"));
 			String currentPATH = sparcprocess.environment().get("PATH"); 
 			if(aspsolverpath!= null && aspsolverpath.length() > 0)
 				sparcprocess.environment().put("PATH", aspsolverpath  + File.pathSeparatorChar + currentPATH);
-			System.out.println(sparcprocess.environment().get("PATH"));
 			process = sparcprocess.start();
 			
 			//create a new process for dlv

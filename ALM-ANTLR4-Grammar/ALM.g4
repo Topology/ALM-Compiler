@@ -87,8 +87,9 @@ ZERO: [0]+; //TOKEN For ZERO, not a non-terminal in ALM BNF, used in 'integer'  
 /*
  * BASIC PARSER RULES BUILT OUT OF SPECIAL LEXER TOKENS
  */
- 
-integer : ZERO | POSINT | NEGINT; //<iclutter,nteger>
+
+nat_num : ZERO | POSINT; //<natural_number>
+integer : ZERO | POSINT | NEGINT; //<integer>
 relation: EQ | NEQ | COMP_REL; //<arithmetic_rel>
 
 alm_name : ID | VAR;
@@ -148,7 +149,7 @@ occurs_literal:  occurs_atom | '-' occurs_atom;
  
 library_name: alm_name;     
 sys_desc_name: alm_name;
-system_description  : 'system' 'description' sys_desc_name theory structure;    //<system_description>
+system_description  : 'system' 'description' sys_desc_name theory structure solver_mode;    //<system_description>
 
 /* ALM THEORY */
 
@@ -251,4 +252,15 @@ one_attribute_def: function_term EQ term;
 statics_defs:  'value' 'of' 'statics' (one_static_def)+ ; 
 one_static_def: fun_def ('if' literal (',' literal)*)? '.';
 //<one_static_literal><body>
+
+/* SOLVER MODE */
+
+
+solver_mode : temporal_projection?;
+
+temporal_projection : 'temporal' 'projection' max_steps history;
+max_steps: 'max' 'steps' POSINT;
+history : 'history' (observed | happened)+;
+observed : 'observed' '(' function_term ',' term ',' nat_num ')' ;
+happened : 'happened' '(' object_constant ',' nat_num ')' ;
 

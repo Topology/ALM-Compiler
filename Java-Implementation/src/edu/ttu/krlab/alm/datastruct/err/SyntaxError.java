@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 
 import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Vocabulary;
 
 import edu.ttu.krlab.alm.datastruct.Location;
 import edu.ttu.krlab.alm.parser.ALMParser;
@@ -34,7 +35,8 @@ public class SyntaxError{
 			err.write(msg);
 		}
 		if(recErr != null){
-			err.write("unexpected token {"+recErr.getOffendingToken().getText()+"}, expected one of "+recErr.getExpectedTokens().toString(ALMParser.VOCABULARY)+".");			
+			Vocabulary v = recErr.getRecognizer().getVocabulary();
+			err.write("unexpected token {"+recErr.getOffendingToken().getText()+"}, expected one of "+recErr.getExpectedTokens().toString(v)+".");			
 		}
 		err.write("\n\n");
 		err.flush();

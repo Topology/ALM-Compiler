@@ -1,4 +1,4 @@
-// Generated from ALM.g4 by ANTLR 4.5.3
+// Generated from ALM.g4 by ANTLR 4.7
 
     package edu.ttu.krlab.alm.parser;
 
@@ -9,6 +9,16 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  * {@link ALMParser}.
  */
 public interface ALMListener extends ParseTreeListener {
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#nat_num}.
+	 * @param ctx the parse tree
+	 */
+	void enterNat_num(ALMParser.Nat_numContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#nat_num}.
+	 * @param ctx the parse tree
+	 */
+	void exitNat_num(ALMParser.Nat_numContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ALMParser#integer}.
 	 * @param ctx the parse tree
@@ -699,4 +709,64 @@ public interface ALMListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitOne_static_def(ALMParser.One_static_defContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#solver_mode}.
+	 * @param ctx the parse tree
+	 */
+	void enterSolver_mode(ALMParser.Solver_modeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#solver_mode}.
+	 * @param ctx the parse tree
+	 */
+	void exitSolver_mode(ALMParser.Solver_modeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#temporal_projection}.
+	 * @param ctx the parse tree
+	 */
+	void enterTemporal_projection(ALMParser.Temporal_projectionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#temporal_projection}.
+	 * @param ctx the parse tree
+	 */
+	void exitTemporal_projection(ALMParser.Temporal_projectionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#max_steps}.
+	 * @param ctx the parse tree
+	 */
+	void enterMax_steps(ALMParser.Max_stepsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#max_steps}.
+	 * @param ctx the parse tree
+	 */
+	void exitMax_steps(ALMParser.Max_stepsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#history}.
+	 * @param ctx the parse tree
+	 */
+	void enterHistory(ALMParser.HistoryContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#history}.
+	 * @param ctx the parse tree
+	 */
+	void exitHistory(ALMParser.HistoryContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#observed}.
+	 * @param ctx the parse tree
+	 */
+	void enterObserved(ALMParser.ObservedContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#observed}.
+	 * @param ctx the parse tree
+	 */
+	void exitObserved(ALMParser.ObservedContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#happened}.
+	 * @param ctx the parse tree
+	 */
+	void enterHappened(ALMParser.HappenedContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#happened}.
+	 * @param ctx the parse tree
+	 */
+	void exitHappened(ALMParser.HappenedContext ctx);
 }

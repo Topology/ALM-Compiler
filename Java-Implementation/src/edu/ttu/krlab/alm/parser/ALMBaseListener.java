@@ -25,15 +25,22 @@ import edu.ttu.krlab.alm.datastruct.sig.*;
 import edu.ttu.krlab.alm.parser.ALMParser.AttributesContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Fun_defContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Function_nameContext;
+import edu.ttu.krlab.alm.parser.ALMParser.HappenedContext;
+import edu.ttu.krlab.alm.parser.ALMParser.HistoryContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Instance_atomContext;
 import edu.ttu.krlab.alm.parser.ALMParser.LiteralContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Max_stepsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.ModuleContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Nat_numContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Object_constantContext;
+import edu.ttu.krlab.alm.parser.ALMParser.ObservedContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Occurs_atomContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Occurs_literalContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_attribute_declContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_attribute_defContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Solver_modeContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Sort_nameContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Temporal_projectionContext;
 import edu.ttu.krlab.alm.parser.ALMParser.TermContext;
 
 /**
@@ -81,8 +88,6 @@ public class ALMBaseListener implements ALMListener {
 	private ASPfProgram aspf;
 	private ALMCompilerSettings s;
 
-	// multi module
-	private List<HashMap<String, List<String>>> multiModule = new ArrayList<HashMap<String, List<String>>>();
 	private List<HashMap<ConstantEntry, ALMTerm>> constantMap = new ArrayList<HashMap<ConstantEntry, ALMTerm>>();
 	
 	
@@ -713,28 +718,10 @@ public class ALMBaseListener implements ALMListener {
 	
 	@Override
 	public void enterModule(ModuleContext ctx) {
-		// TODO Auto-generated method stub
-		System.out.println("Check the children of ctx here");
-		
 	}
 
 	@Override
 	public void exitModule(ModuleContext ctx) {
-		// TODO Auto-generated method stub
-		
-		if(ctx.getChildCount() > 3){
-			HashMap<String, List<String>> currentModule = new HashMap<String, List<String>>();
-			List<String> parentModule = new ArrayList<String>();
-			for(int i = 1; i < ctx.module_name().size(); i++){
-				parentModule.add(ctx.module_name().get(1).getText());
-			}
-			currentModule.put(ctx.module_name().get(0).getText(), parentModule);
-	        multiModule.add(currentModule);
-		}
-		
-		System.out.print("here we should have all the information of modules");
-		System.out.println(ctx.getChildCount());
-		
 	}
 	
 	@Override
@@ -750,8 +737,6 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void exitModule_name(ALMParser.Module_nameContext ctx) {
-		int i = 0; 
-		System.out.print(ctx.children);
 	}
 
 	/**
@@ -774,9 +759,6 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void exitSequence_of_modules(ALMParser.Sequence_of_modulesContext ctx) {
-		int i = 0;
-		System.out.println("this is important: //here you should check for dependency"); 
-		System.out.println(ctx.children);
 	}
 
 	@Override
@@ -792,9 +774,6 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void exitModule_body(ALMParser.Module_bodyContext ctx) {
-		int i = 0;
-		System.out.print("the module body is");
-		System.out.print(ctx.children);
 	}
 
 	/**
@@ -1635,8 +1614,6 @@ public class ALMBaseListener implements ALMListener {
 	 */
 	@Override
 	public void enterDefinitions(ALMParser.DefinitionsContext ctx) {
-		System.out.println("The number of definitions part");
-		System.out.println(ctx.getChildCount());
 	}
 
 	/**
@@ -1992,8 +1969,7 @@ public class ALMBaseListener implements ALMListener {
 	@Override
 	public void exitOne_definition(ALMParser.One_definitionContext ctx) {
 		boolean error_occurred = false;
-		ALMTerm head = ALM.ParseFunDef(ctx.fun_def());
-//		ALMTerm head = ALM.ParseALMTerm(ctx.fun_def());
+		ALMTerm head = ALM.ParseALMTerm(ctx.function_term());
 		List<LiteralContext> literals = ctx.literal();
 		List<ALMTerm> lits = new ArrayList<ALMTerm>();
 		if (literals != null)
@@ -2156,7 +2132,6 @@ public class ALMBaseListener implements ALMListener {
 	@Override
 	public void exitOne_constant_def(ALMParser.One_constant_defContext ctx) {
 		
-		System.out.println(ctx);
 		boolean error_occurred = false;
 		Object_constantContext leftObjConstant = ctx.object_constant();
 		TermContext rightTerm = ctx.term();
@@ -2670,6 +2645,93 @@ public class ALMBaseListener implements ALMListener {
 					"ALMTerm [" + lit.toString() + "] is not a literal");
 		}
 		return error_occurred;
+	}
+
+	@Override
+	public void enterSolver_mode(Solver_modeContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void exitSolver_mode(Solver_modeContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void enterTemporal_projection(Temporal_projectionContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void exitTemporal_projection(Temporal_projectionContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void enterMax_steps(Max_stepsContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void exitMax_steps(Max_stepsContext ctx) {
+		TerminalNode max = ctx.POSINT();
+		if(max != null) {
+			st.setMaxSteps(Integer.parseInt(max.getText()));
+		}
+			
+	}
+
+	@Override
+	public void enterHistory(HistoryContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void exitHistory(HistoryContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void enterObserved(ObservedContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void exitObserved(ObservedContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void enterHappened(HappenedContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void exitHappened(HappenedContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void enterNat_num(Nat_numContext ctx) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void exitNat_num(Nat_numContext ctx) {
+		// TODO Auto-generated method stub
+		
 	}
 
 

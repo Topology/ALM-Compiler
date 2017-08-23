@@ -418,4 +418,16 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 	public DOMFunctionEntry getDOMFunction(FunctionEntry f) {
 		return DMap.get(f);
 	}
+
+	/**
+	 * Creates the time step instances i where 0 <= i < {@code upper_boud}
+	 * 
+	 * @param upper_bound The number of time steps.  
+	 */
+	public void setMaxSteps(int upper_bound) {
+		this.timestep.instances.clear();
+		for(int i = 0; i < upper_bound; i++) {
+			timestep.instances.add(new ALMTerm(Integer.toString(i), ALMTerm.INT));
+		}
+	}
 }

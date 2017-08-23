@@ -21,7 +21,7 @@ TM_DESTINATION : <CD>/out/<FN>_TM.sparc
 #ER_DESTINATION : standard_out
 #uncomment the following to send to standard err. 
 #ER_DESTINATION : standard_err
-ER_DESTINATION : <CD>/out/<FN>.almerr
+#ER_DESTINATION : <CD>/out/<FN>.almerr
 
 # OPTIMIZATION OPTIONS 
 

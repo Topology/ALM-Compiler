@@ -117,6 +117,7 @@ public class ALMCompiler {
 		
 		PreModelSortHierarchy(universe, pm, st, started, finished);
 		finished.add(universe);
+
 	
 		//need to add special sort nodes to pre-model.
 		SortEntry nodesentry = st.getNodesSpecialSortEntry();
@@ -128,10 +129,21 @@ public class ALMCompiler {
 			pm.addSPARCSort(nodes);
 		} catch (SPARCSortAlreadyDefined e) {
 			e.printStackTrace();
-			ALMCompiler.PROGRAM_FAILURE("PreModel Creating Sorts Section", "Special Sort For Nodes In Hierarchy Was Already Defined");
+			ALMCompiler.PROGRAM_FAILURE("PreModel Creating Sorts Section", "Special Sort For Nodes In Hierarchy Was Already Defined.");
 			//This should never happen. 
 		}
-		
+
+		//add time steps to sorts. 
+		SortEntry timeSteps = st.getTimestepSortEntry();
+		SPARCSort time = new SPARCSort(timeSteps.getSortName());
+		//no instances added for static section. 
+		try {
+			pm.addSPARCSort(time);
+		} catch (SPARCSortAlreadyDefined e) {
+			e.printStackTrace();
+			ALMCompiler.PROGRAM_FAILURE("PreModel Creating Sorts Section", "Special Sort For Time Steps In Hierarchy Was Already Defined.");
+			//This should never happen. 
+		}
 	}
 
 	private static void PreModelSortHierarchy(SortEntry se, SPARCProgram pm, SymbolTable st, Set<SortEntry> started, Set<SortEntry> finished)  {
@@ -206,29 +218,6 @@ public class ALMCompiler {
 				PROGRAM_FAILURE("Construct Premodel Sorts", "Sort was defined twice: "+e.getMessage());
 			}
 		}
-		SPARCSort timestep = new SPARCSort("timeStep");
-		ALMTerm timestepValue0 = new ALMTerm("0", ALMTerm.INT);
-		ALMTerm timestepValue1 = new ALMTerm("1", ALMTerm.INT);
-		timestep.addInstance(timestepValue0);
-		timestep.addInstance(timestepValue1);
-		List<SPARCSort> addTime = pm.getSorts();
-		boolean includeTime = false;
-		for(SPARCSort tsort : addTime){
-			if(tsort.getSortName() == "timeStep"){
-				includeTime = true;
-				break;
-			}
-		}
-		if(!includeTime){
-			try {
-				pm.addSPARCSort(timestep);
-			} catch (SPARCSortAlreadyDefined e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	    
-		
 	}
 
 
@@ -803,13 +792,13 @@ public class ALMCompiler {
 
 
 	private static void ConstructFinalProgram(SPARCProgram tm, AnswerSet as, SPARCProgram pm, SymbolTable st, ASPfProgram aspf, ALMCompilerSettings s) {
-		CreateFinalSortsSection(tm, pm, as);
+		CreateFinalSortsSection(tm, pm, as, st);
 		CreateFinalPredicatesSection(tm, pm, as);
 		CreateFinalProgramRules(tm, st, pm, aspf);
 		LoadFactsFromPreModelAnswerSet(tm, as, s);
 	}
 
-	private static void CreateFinalSortsSection(SPARCProgram tm, SPARCProgram pm, AnswerSet as) {
+	private static void CreateFinalSortsSection(SPARCProgram tm, SPARCProgram pm, AnswerSet as, SymbolTable st) {
 		HashMap<String, SPARCSort> sortmap = new HashMap<String, SPARCSort>();
 		List<SPARCSort> pmsorts = pm.getSorts();
 		for(SPARCSort pmsort: pmsorts){
@@ -833,7 +822,7 @@ public class ALMCompiler {
 		}
 		
 		List<ALMTerm> instances = as.getLiterals(ALM.SPECIAL_FUNCTION_INSTANCE);
-		if(instances != null)
+		if(instances != null) {
 			for(ALMTerm instlit : instances){
 				ALMTerm ground_object = instlit.getArg(0);
 				ALMTerm sort = instlit.getArg(1);
@@ -842,16 +831,19 @@ public class ALMCompiler {
 					tmsort.addInstance(ground_object);
 				}
 			}
-		ALMTerm timstepValue0 = new ALMTerm("0", ALMTerm.INT);
-		ALMTerm timstepValue1 = new ALMTerm("1", ALMTerm.INT);
-		try {
-			tm.getSPARCSort("timeStep").addInstance(timstepValue0);
-			tm.getSPARCSort("timeStep").addInstance(timstepValue1);
-		} catch (SPARCSortNotDefined e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
-		
+
+
+		//add time steps to sorts. 
+		try {
+			SPARCSort time = tm.getSPARCSort(ALM.SORT_TIMESTEP);
+			for(ALMTerm si : st.getTimestepSortEntry().getInstances()) {
+				time.addInstance(si);
+			}
+		} catch (SPARCSortNotDefined e1) {
+			ALMCompiler.PROGRAM_FAILURE("TM Creating Sorts Section", "Special Sort For Time Steps In Hierarchy Was Not In Pre-Model.");
+			//This should never happen. 
+		}
 	}
 
 
