@@ -568,8 +568,12 @@ public class ALMCompilerSettings {
 			try {
 				while((line = foo.readLine()) != null){
 					line = line.trim();
+					
 					if(line.length() == 0 || line.charAt(0) == '#')
 						continue;
+					
+					//System.out.println(line + "\n");
+					
 					int pos = line.indexOf(':');
 					if(pos > 0){
 						String key = line.substring(0, pos).toUpperCase().trim();
@@ -587,6 +591,24 @@ public class ALMCompilerSettings {
 						}
 					    if(FNreplace.compareTo("") != 0)
 					    	value = value.replaceFirst("<FN>", FNreplace);
+					    
+					    // Check the existence of the file.
+					    //File f = new File(value);
+					    
+//					    if(f.exists()) { 
+//					    	value = (new File(value)).getCanonicalPath();
+//					    }
+//					    else {
+//					    	System.out.println("The file " + value + " does not exist.\n");
+//					    	
+//					    	// Throw IOException
+//					    	IOException e = new IOException();
+//					    	throw e;
+//					    }
+
+//					    if(key.compareToIgnoreCase("SOLVER_TYPE") == 0) {
+//					    	System.out.println("Solver type error\n");
+//					    }
 					    value = (new File(value)).getCanonicalPath();
 						settings.put(key, value);
 					}

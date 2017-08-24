@@ -83,7 +83,7 @@ public class ALMBaseListener implements ALMListener {
 
 	// multi module
 	private List<HashMap<String, List<String>>> multiModule = new ArrayList<HashMap<String, List<String>>>();
-	private List<HashMap<ConstantEntry, ALMTerm>> constantMap = new ArrayList<HashMap<ConstantEntry, ALMTerm>>();
+	private List<HashMap<ALMTerm, ALMTerm>> constantMap = new ArrayList<HashMap<ALMTerm, ALMTerm>>();
 	
 	
 	// Function Type
@@ -2095,8 +2095,8 @@ public class ALMBaseListener implements ALMListener {
 	public void exitStructure(ALMParser.StructureContext ctx) {
 		//Replace in the all of the places that object constant is occurred
 		for(int i = 0 ; i < constantMap.size(); i++){
-			Set<ConstantEntry> cntList = constantMap.get(i).keySet();
-			for(ConstantEntry cnt : cntList){
+			Set<ALMTerm> cntList = constantMap.get(i).keySet();
+			for(ALMTerm cnt : cntList) {
 				aspf.replaceConstant(ALM.AXIOMS_STATE_CONSTRAINTS, cnt , constantMap.get(0).get(cnt));
 				aspf.replaceConstant(ALM.AXIOMS_DEFINITIONS, cnt , constantMap.get(0).get(cnt));
 				aspf.replaceConstant(ALM.AXIOMS_DYNAMIC_CAUSAL_LAWS, cnt , constantMap.get(0).get(cnt));
@@ -2171,18 +2171,14 @@ public class ALMBaseListener implements ALMListener {
 //		if(!vm.typeCheckPasses(er))
 //			error_occurred = true;
 		
-		if(!error_occurred){
-			ConstantEntry cnt = st.getConstantEntry(obj_const.getName());
+		if(!error_occurred) {
+			/*ConstantEntry cnt = st.getConstantEntry(obj_const.getName()); // wrong - changed 07/25/2017 by JL, YZ*/
 			HashMap constMap = new HashMap<>();
-			constMap.put(cnt, objConstVal);
-			constantMap.add(constMap);
-	
 			
+			// The object constant is associated with its value in the constant definition table.
+			constMap.put(obj_const, objConstVal);
+			constantMap.add(constMap);
 		}
-		
-		
-		
-		
 	}
 
 	/**

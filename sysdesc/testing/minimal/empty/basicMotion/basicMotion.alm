@@ -44,4 +44,3 @@ structure bob_and_john
 	value of statics
 		symmetric_connectivity.
 		-transitive_connectivity.
-

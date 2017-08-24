@@ -1,4 +1,4 @@
-package edu.ttu.krlab.alm.unittest;
+/*package edu.ttu.krlab.alm.unittest;
 
 import static org.junit.Assert.assertEquals;
 
@@ -60,5 +60,5 @@ public class OneSortDeclaration extends TestingCommon {
 	
 
 	
-}
+}*/
 

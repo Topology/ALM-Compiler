@@ -1,6 +1,6 @@
 package edu.ttu.krlab.alm.unittest;
 
-import org.junit.runner.RunWith;
+/*import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 
@@ -11,4 +11,4 @@ import org.junit.runners.Suite;
 public class ALMUnitTestingSuite {
 
 }
-
+*/

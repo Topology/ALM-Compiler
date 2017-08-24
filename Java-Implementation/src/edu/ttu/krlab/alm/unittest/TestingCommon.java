@@ -1,4 +1,4 @@
-package edu.ttu.krlab.alm.unittest;
+/*package edu.ttu.krlab.alm.unittest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,4 +64,4 @@ public class TestingCommon {
 		assertEquals(comment,1,0);
 		
 	}
-}
+}*/

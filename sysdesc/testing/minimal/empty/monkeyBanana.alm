@@ -30,7 +30,7 @@ system description travel
 					impossible occurs(X) if instance(X, move),actor(X) = A, loc_in(A) != origin(X).
 					impossible occurs(X) if instance(X, move),actor(X) = A, loc_in(A) = dest(X).
 					impossible occurs(X) if instance(X, move),actor(X) = A, loc_in(A) = O, dest(X) = D,-connected(O, D).
-			
+
 
 		module carrying_things depends on moving
 			sort declarations
@@ -106,13 +106,13 @@ system description travel
 					-connected(top(box),P) if loc_in(box) != P, instance(P,floor_points).
 					connected(P1,P2) if instance(P1,floor_points), instance(P2, floor_points).
 					-connected(P1, P2) if instance(P1, ceiling_points), instance(P2,points), P1 != P2.
-					
-								
+
+
 structure monkey_and_banana
 
 	constants
 		test = sonia
-		
+
 	instances
 		top(box) in movable_points
 		under_banana, initial_monkey, initial_box in floor_points
@@ -137,4 +137,3 @@ structure monkey_and_banana
 		under(under_banana,banana).
 		symmetric_connectivity.
 		-transitive_connectivity.
-

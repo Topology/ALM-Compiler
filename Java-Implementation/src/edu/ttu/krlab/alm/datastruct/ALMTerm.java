@@ -78,17 +78,16 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 	private ParserRuleContext prc;
 	private VariableManager typechecker;
 	
-	private void defaultInit(){
+	private void defaultInit() {
 		this.args = null;
 		this.sign = ALMTerm.SIGN_POS; //positive by default
 		typechecker = null;
 		
 		switch(type){
-		case INT: sort = ALM.SORT_INTEGERS; break;
-		case BOOL: sort = ALM.SORT_BOOLEANS; break;
-		case VAR: sort = ALM.SORT_UNKNOWN; break;
-		default: sort = null;
-		
+			case INT: sort = ALM.SORT_INTEGERS; break;
+			case BOOL: sort = ALM.SORT_BOOLEANS; break;
+			case VAR: sort = ALM.SORT_UNKNOWN; break;
+			default: sort = null;
 		}
 	}
 	
@@ -96,6 +95,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 		this.name = name;
 		this.type = type;
 		this.prc = null;
+		ALMTerm next;
 		defaultInit();
 		
 	}
@@ -105,9 +105,17 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 		this.type = type;
 		this.prc = prc;
 		defaultInit();
-		
 	}
 	
+	public ALMTerm(String name, String type, String sort, String sign, List<ALMTerm> args, ParserRuleContext prc, VariableManager typechecker) {
+		this.name = name;
+		this.type = type;
+		this.sort = sort;
+		this.sign = sign;
+		this.args = args;
+		this.prc = prc;
+		this.typechecker = typechecker;
+	}
 	
 	public ALMTerm(String name, String type, Location loc) {
 		this.name = name;
@@ -133,17 +141,50 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 		args.set(index,arg);
 		return this;
 	}
+	
+	public void setArg(int index, ALMTerm arg) {
+		this.args.set(index, arg);
+	}
+	
 	public void setSort(String var, String sort){
 		if (this.type == VAR && this.name.compareTo(var) == 0)
 			this.sort = sort;
 		for(ALMTerm arg : args)
 			arg.setSort(var, sort);
-		
+	}
+	
+	/*
+		private VariableManager typechecker;
+	 * Set content of ALMTerm to that of t's content
+	 */
+	
+	public void setContent(ALMTerm t) {
+		setName(t.name);
+		setType(t.type);
+		this.sort = t.getSort();
+		setSign(t.getSign());
+		setArgs(t.getArgs());
+		this.prc = t.getParserRuleContext();
+		this.typechecker = t.getTypeChecker();
 	}
 	
 	public String getSort(){ return sort;}
 	
-
+	public ParserRuleContext getParserRuleContext() {
+		return this.prc;
+	}
+	
+	public VariableManager getTypeChecker() {
+		return this.typechecker;
+	}
+	
+	public void setArgsToNull() {
+		this.args = null;
+	}
+	
+	public void setArgs(List<ALMTerm> newArgs) {
+		this.args = newArgs;
+	}
 
 	public boolean isSchema() {
 		//schemas have string constants and variables, no mathematical expressions. 
