@@ -23,6 +23,14 @@ TM_DESTINATION : <CD>/out/<FN>_TM.sparc
 #ER_DESTINATION : standard_err
 #ER_DESTINATION : <CD>/out/<FN>.almerr
 
+#setting FINAL_AS_DESTINATION : <filename>
+#Destination for resulting answersets from application of TM sparc program.
+#If commented out, default is send to standard_out.
+#uncomment the following to send to standard out. 
+#FINAL_AS_DESTINATION : standard_out
+#uncomment the following to send to standard err. 
+FINAL_AS_DESTINATION : <CD>/out/<FN>_FINAL.answerset
+
 # OPTIMIZATION OPTIONS 
 
 #setting OPT_ALL_PM_FACTS : (on | off)
@@ -58,10 +66,10 @@ ASPF_DESTINATION : <CD>/out/<FN>.aspf
 #uncomment the following to send to standard err. 
 PM_DESTINATION : <CD>/out/<FN>_PM.sparc
 
-#setting AS_DESTINATION : <filename>
+#setting PREMODEL_AS_DESTINATION : <filename>
 #Destination for resulting answersets of pre model sparc program.
 #If commented out, default is not to output the answersets.
 #uncomment the following to send to standard out. 
-#AS_DESTINATION : standard_out
+#PREMODEL_AS_DESTINATION : standard_out
 #uncomment the following to send to standard err. 
-AS_DESTINATION : <CD>/out/<FN>_PM.answerset
+PREMODEL_AS_DESTINATION : <CD>/out/<FN>_PM.answerset

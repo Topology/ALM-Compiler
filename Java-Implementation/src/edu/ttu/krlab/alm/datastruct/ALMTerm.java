@@ -774,5 +774,10 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral{
 		return this.sign;
 	}
 
+	@Override
+	public ALMTerm toALMTerm() {
+		return this;
+	}
+
 
 }

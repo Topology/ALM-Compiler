@@ -2649,26 +2649,19 @@ public class ALMBaseListener implements ALMListener {
 
 	@Override
 	public void enterSolver_mode(Solver_modeContext ctx) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void exitSolver_mode(Solver_modeContext ctx) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void enterTemporal_projection(Temporal_projectionContext ctx) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void exitTemporal_projection(Temporal_projectionContext ctx) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -2688,50 +2681,82 @@ public class ALMBaseListener implements ALMListener {
 
 	@Override
 	public void enterHistory(HistoryContext ctx) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void exitHistory(HistoryContext ctx) {
-		// TODO Auto-generated method stub
-		
+		st.setMode(ALM.HISTORY, true);
+		aspf.createSection(ALM.HISTORY);
 	}
 
 	@Override
 	public void enterObserved(ObservedContext ctx) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void exitObserved(ObservedContext ctx) {
-		// TODO Auto-generated method stub
+		ALMTerm f = ALM.ParseALMTerm(ctx.function_term());
+		ALMTerm t = ALM.ParseTerm(ctx.term());
+		int i = Integer.parseInt(ctx.nat_num().getText());
 		
+		ALMTerm observed = new ALMTerm(ALM.HISTORY_OBSERVED, ALMTerm.FUN);
+		observed.addArg(f);
+		observed.addArg(t);
+		observed.addArg(new ALMTerm(Integer.toString(i), ALMTerm.INT));
+		
+		try {
+			FunctionEntry f_ent  = st.getFunctionEntry(f);
+			if(f_ent.isFluent()) {
+				if(st.isTimeStep(i)) {
+					aspf.newRule(ALM.HISTORY, observed, null);
+				} else {
+					//TODO record semantic error
+					ALMCompiler.PROGRAM_FAILURE("Parsing History", "observed time step is out of bounds, semantic error not implemented yet.");					
+				}
+			} else {
+				//TODO record semantic error
+				ALMCompiler.PROGRAM_FAILURE("Parsing History", "observed function not fluent, semantic error not implemented yet.");
+			}
+		} catch (FunctionNotFound e) {
+			//TODO record semantic error. 
+			ALMCompiler.PROGRAM_FAILURE("Parsing History", "function not recognized, semantic error not implemented yet.");
+			
+		}
 	}
 
 	@Override
 	public void enterHappened(HappenedContext ctx) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void exitHappened(HappenedContext ctx) {
-		// TODO Auto-generated method stub
+		ALMTerm a = ALM.ParseALMTerm(ctx.object_constant());
+		int i = Integer.parseInt(ctx.nat_num().getText());
+		
+		ALMTerm happened = new ALMTerm(ALM.HISTORY_HAPPENED, ALMTerm.FUN);
+		happened.addArg(a);
+		happened.addArg(new ALMTerm(Integer.toString(i), ALMTerm.INT));
+		
+		if(st.isAction(a)) {
+			if(st.isTimeStep(i)) {
+				aspf.newRule(ALM.HISTORY, happened, null);
+			} else {
+				//TODO record semantic error. 
+				ALMCompiler.PROGRAM_FAILURE("Parsing History", "timeStep is out of bounds, semantic error not implemented yet.");			
+			}
+		} else {
+			//TODO record semantic error. 
+			ALMCompiler.PROGRAM_FAILURE("Parsing History", "action not recognized, semantic error not implemented yet.");			
+		}
 		
 	}
 
 	@Override
 	public void enterNat_num(Nat_numContext ctx) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void exitNat_num(Nat_numContext ctx) {
-		// TODO Auto-generated method stub
-		
 	}
 
 

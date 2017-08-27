@@ -18,17 +18,24 @@ public class AnswerSets {
 			count ++;
 			out.write("% Answer Set "+count+" of "+ num_anssets+"\n");
 			out.write("{\n");
+			boolean firstLine = true;
 			for(List<ALMTerm> lits : as.getAllAlmTerms()){
+				if(firstLine) {
+					firstLine = false;
+					out.write(" ");
+				} else {
+					out.write(",");
+				}
 				boolean first = true;
 				for(ALMTerm lit : lits){
 					if(first){
-						lit.writeTo(out);
 						first = false;
 					} else {
 						out.write(", ");
-						lit.writeTo(out);
 					}
+					lit.writeTo(out);
 				}
+
 				out.write("\n");
 			}
 			out.write("}\n\n");

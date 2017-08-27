@@ -24,7 +24,9 @@ public class SymbolTable{
 	SortEntry integers;
 	
 	SortEntry timestep;
+	int maxStep = -1;
 	
+	private Set<String> modes;
 	private HashSet<SortEntry> predefined;
 	private HashMap<String, SortEntry> SEMap;
 	private HashMap<String, ConstantEntry> CEMap;
@@ -39,7 +41,7 @@ public class SymbolTable{
 	
 	
 	public SymbolTable(){
-		
+		modes = new HashSet<>();	
 		SEMap = new HashMap<String, SortEntry>();
 		CEMap = new HashMap<String, ConstantEntry>();
 		FEMap = new HashMap<String, Set<NormalFunctionEntry>>();
@@ -89,8 +91,7 @@ public class SymbolTable{
 		Iterator<SortEntry> itS = sourceSorts.iterator();
 		while(itS.hasNext()){
 			SortEntry se = itS.next();
-//			if(se.getChildSorts().isEmpty() == false)
-//				throw new NotSourceSortException(se);
+			se.getInstances().add(new ALMTerm(constname, ALMTerm.ID));
 		}
 		CEMap.put(constname, ce);
 		return ce;
@@ -429,5 +430,45 @@ private  void initialize() throws DuplicateFunctionException, DuplicateSortExcep
 		for(int i = 0; i < upper_bound; i++) {
 			timestep.instances.add(new ALMTerm(Integer.toString(i), ALMTerm.INT));
 		}
+		maxStep = upper_bound -1;
 	}
+	
+	public boolean isTimeStep(int i) {
+		return i <= maxStep && i >= 0;
+	}
+
+
+	public boolean modeActive(String mode) {
+		return this.modes.contains(mode);
+	}
+	
+	public void setMode(String mode, boolean setting) {
+		if(setting){
+			this.modes.add(mode);
+		} else {
+			this.modes.remove(mode);
+		}
+	}
+
+	public boolean isAction(ALMTerm action) {
+		return true;
+	}
+	
+	private boolean isInstance(SortEntry sort, ALMTerm instance) {
+		List<ALMTerm> instances = sort.instances;
+		if(instances != null) {
+			for(ALMTerm i : instances) {
+				if(i.toString().compareTo(instance.toString()) == 0) {
+					return true;
+				}
+			}
+		}
+		for(SortEntry child : sort.getChildSorts()) {
+			if(isInstance(child, instance)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

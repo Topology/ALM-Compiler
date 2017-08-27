@@ -298,7 +298,7 @@ public class ALMCompiler {
 		PreModelSortHierarchyRules(pm, st, aspf);
 		
 		//ST: Add Fundamental Axioms For ALL Static Functions
-		PreModelStaticFunctionRules(pm, st);
+		PreModelRulesStaticFunctions(pm, st);
 		
 		//ASPF: Static State Constraint Axioms
 		PreModelStaticStateConstraintAxioms(pm, st, aspf);
@@ -660,7 +660,7 @@ public class ALMCompiler {
 	 * @param pm
 	 * @param st
 	 */
-	private static void PreModelStaticFunctionRules(SPARCProgram pm, SymbolTable st) {
+	private static void PreModelRulesStaticFunctions(SPARCProgram pm, SymbolTable st) {
 		List<FunctionEntry> functions = st.getFunctions();
 		
 		for(FunctionEntry f : functions){
@@ -674,9 +674,9 @@ public class ALMCompiler {
 				
 				if(f.isDefined()){
 					//defined static functions need the closed world assumption.
-					ALMTerm closeworld_head = new ALMTerm(f.getFunctionName(), ALMTerm.FUN, f.getLocation());
+					ALMTerm closeworld_head = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN, f.getLocation());
 					closeworld_head.setSign(ALMTerm.SIGN_NEG);
-					ALMTerm closeworld_body_fun = new ALMTerm(f.getFunctionName(), ALMTerm.FUN, f.getLocation());
+					ALMTerm closeworld_body_fun = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN, f.getLocation());
 					closeworld_body_fun.setSign(ALMTerm.SIGN_NOT);
 					List<SPARCLiteral> closeworld_body = new ArrayList<SPARCLiteral>();
 					closeworld_body.add(closeworld_body_fun);
@@ -687,11 +687,15 @@ public class ALMCompiler {
 					}
 					
 					r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, closeworld_head, closeworld_body);
-					r.addComment("Function ["+f.getFunctionName()+"] is a defined static function and has the closed world assumption.");
-				}
+					r.addComment("Function ["+f.getQualifiedFunctionName()+"] is a defined static function and has the closed world assumption.");
+					continue;
+					//static defined functions are total due to closed world assumption and do not need dom_f functions.  
+				} 
+				
+					
 				//add dom definition for static functions.  
-				ALMTerm dom_def_head = new ALMTerm(dom_f.getFunctionName(), ALMTerm.FUN, dom_f.getLocation());
-				ALMTerm dom_def_body_pred = new ALMTerm(f.getFunctionName(), ALMTerm.FUN, f.getLocation());
+				ALMTerm dom_def_head = new ALMTerm(dom_f.getQualifiedFunctionName(), ALMTerm.FUN, dom_f.getLocation());
+				ALMTerm dom_def_body_pred = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN, f.getLocation());
 				for(count = 0; count < dom_size; count++){
 					ALMTerm arg = new ALMTerm(XVar+count, ALMTerm.VAR);
 					dom_def_head.addArg(arg);
@@ -704,22 +708,22 @@ public class ALMCompiler {
 				if(rangeSort != st.getBooleansSortEntry()) {
 					//the predicate in the body of the rule includes the range of the non-boolean function.
 					dom_def_body_pred.addArg(new ALMTerm("R", ALMTerm.VAR));
-					r.addComment("Definition of ["+dom_f.getFunctionName()+"] when ["+f.getFunctionName()+"] is assigned a value.");
+					r.addComment("Definition of ["+dom_f.getQualifiedFunctionName()+"] when ["+f.getQualifiedFunctionName()+"] is assigned a value.");
 				} else {
 					//if function was boolean, a false assignment results in positive dom_f as well.
-					r.addComment("Definition of ["+dom_f.getFunctionName()+"] when ["+f.getFunctionName()+"] is true.");
+					r.addComment("Definition of ["+dom_f.getQualifiedFunctionName()+"] when ["+f.getQualifiedFunctionName()+"] is true.");
 					List<SPARCLiteral> dom_def_body_neg = new ArrayList<>();
-					ALMTerm dom_def_body_neg_pred = new ALMTerm(f.getFunctionName(), ALMTerm.FUN, f.getLocation());
+					ALMTerm dom_def_body_neg_pred = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN, f.getLocation());
 					dom_def_body_neg_pred.getArgs().addAll(dom_def_body_pred.getArgs());
 					dom_def_body_neg_pred.setSign(ALMTerm.SIGN_NEG);
 					dom_def_body_neg.add(dom_def_body_neg_pred);
 					r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, dom_def_head, dom_def_body_neg);
-					r.addComment("Definition of ["+dom_f.getFunctionName()+"] when ["+f.getFunctionName()+"] is false.");
+					r.addComment("Definition of ["+dom_f.getQualifiedFunctionName()+"] when ["+f.getQualifiedFunctionName()+"] is false.");
 				}
 
 				//closed world assumption for dom_f
-				ALMTerm dom_cwa_head = new ALMTerm(dom_f.getFunctionName(), ALMTerm.FUN, dom_f.getLocation());
-				ALMTerm dom_cwa_body_pred = new ALMTerm(dom_f.getFunctionName(), ALMTerm.FUN, dom_f.getLocation());
+				ALMTerm dom_cwa_head = new ALMTerm(dom_f.getQualifiedFunctionName(), ALMTerm.FUN, dom_f.getLocation());
+				ALMTerm dom_cwa_body_pred = new ALMTerm(dom_f.getQualifiedFunctionName(), ALMTerm.FUN, dom_f.getLocation());
 				dom_cwa_head.getArgs().addAll(dom_def_head.getArgs());
 				dom_cwa_head.setSign(ALMTerm.SIGN_NEG);
 				dom_cwa_body_pred.getArgs().addAll(dom_def_head.getArgs());
@@ -727,17 +731,17 @@ public class ALMCompiler {
 				List<SPARCLiteral> dom_cwa_body = new ArrayList<>(); 
 				dom_cwa_body.add(dom_cwa_body_pred);	
 				r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, dom_cwa_head, dom_cwa_body);
-				r.addComment("Closed world assumption holds for ["+dom_f.getFunctionName()+"] since ["+f.getFunctionName()+"] is a static function.");  
+				r.addComment("Closed world assumption holds for ["+dom_f.getQualifiedFunctionName()+"] since ["+f.getQualifiedFunctionName()+"] is a static function.");  
 
-				//total static functions need constraint on dom_f.
+				//total static functions that are not defined need a constraint on dom_f to always be positive.
 				if(f.isTotal()) {
-					ALMTerm dom_neg_body_pred = new ALMTerm(dom_f.getFunctionName(), ALMTerm.FUN, dom_f.getLocation());
+					ALMTerm dom_neg_body_pred = new ALMTerm(dom_f.getQualifiedFunctionName(), ALMTerm.FUN, dom_f.getLocation());
 					dom_neg_body_pred.setSign(ALMTerm.SIGN_NEG);
 					dom_neg_body_pred.getArgs().addAll(dom_def_head.getArgs());
 					List<SPARCLiteral> dom_neg_body = new ArrayList<>();
 					dom_neg_body.add(dom_neg_body_pred);
 					r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, null, dom_neg_body);
-					r.addComment("Function ["+f.getFunctionName()+"] is a total total static function.");
+					r.addComment("Function ["+f.getQualifiedFunctionName()+"] is a total total static function.");
 				}
 			}
 		}
@@ -795,9 +799,10 @@ public class ALMCompiler {
 		CreateFinalSortsSection(tm, pm, as, st);
 		CreateFinalPredicatesSection(tm, pm, as);
 		CreateFinalProgramRules(tm, st, pm, aspf);
+		CreateHistory(tm, st, aspf);
 		LoadFactsFromPreModelAnswerSet(tm, as, s);
 	}
-
+	
 	private static void CreateFinalSortsSection(SPARCProgram tm, SPARCProgram pm, AnswerSet as, SymbolTable st) {
 		HashMap<String, SPARCSort> sortmap = new HashMap<String, SPARCSort>();
 		List<SPARCSort> pmsorts = pm.getSorts();
@@ -888,14 +893,14 @@ public class ALMCompiler {
 	private static void FinalProgramFluentFunctionRules(SPARCProgram tm, SymbolTable st) {
 		
 		for(FunctionEntry f: st.getFunctions()) {
-			if(f.isFluent()) {
+			if(f.isFluent() && !f.isSpecial()) {
 				DOMFunctionEntry dom_f = st.getDOMFunction(f);
 				String f_name = f.getFunctionName();
 				String dom_f_name = dom_f.getFunctionName();
 				String XVar = "X";
 				List<ALMTerm> domain_args = new ArrayList<ALMTerm>();
 				int count = 0;
-				int dom_length = dom_f.getSignature().size();
+				int dom_length = f.getSignature().size()-1;
 				for(count = 0; count < dom_length; count++) {
 					domain_args.add(new ALMTerm(XVar + count, ALMTerm.VAR));
 				}
@@ -1036,6 +1041,62 @@ public class ALMCompiler {
 			}
 		}
 	}
+	
+
+	/**
+	 * Translates the observed history into rules of the program. 
+	 * 
+	 * @param tm SPARCProgram that rules from facts of history will be added to. 
+	 * @param st The SymbolTable of the ALMCompiler.
+	 * @param aspf The ASPf Program containing the History section parsed from the system description. 
+	 */
+	private static void CreateHistory(SPARCProgram tm, SymbolTable st, ASPfProgram aspf) {
+		if(!st.modeActive(ALM.HISTORY)){
+			return;
+		}
+		for(ASPfRule history_rule: aspf.getRules(ALM.HISTORY)) {
+			ALMTerm head = history_rule.getHead().toALMTerm();
+			if(ALM.HISTORY_HAPPENED.equals(head.getName())) {
+				ALMTerm action = head.getArg(0);
+				ALMTerm I = head.getArg(1);
+				
+				ALMTerm occurs = new ALMTerm(ALM.SPECIAL_FUNCTION_OCCURS, ALMTerm.FUN);
+				occurs.addArg(action);
+				occurs.addArg(I);
+				
+				SPARCRule r = tm.newSPARCRule(ALM.HISTORY, occurs, null);
+				r.addComment("HISTORY: "+head.toString());
+			} else if(ALM.HISTORY_OBSERVED.equals(head.getName())) {
+				ALMTerm f = head.getArg(0);
+				ALMTerm v = head.getArg(1);
+				ALMTerm I = head.getArg(2);
+				
+				ALMTerm f_ext = new ALMTerm(f.getName(), ALMTerm.FUN);
+				f_ext.getArgs().addAll(f.getArgs());
+				f_ext.addArg(v);
+				f_ext.addArg(I);
+				
+				if(Integer.parseInt(I.toString())== 0) {
+					SPARCRule r = tm.newSPARCRule(ALM.HISTORY, f_ext, null);
+					r.addComment("HISTORY: "+head.toString());
+				} else {
+					ALMTerm dom_f = new ALMTerm(ALM.DOM_PREFIX+f.getName(), ALMTerm.FUN);
+					dom_f.getArgs().addAll(f.getArgs());
+					dom_f.addArg(I);
+					
+					f_ext.setSign(ALMTerm.SIGN_NOT);
+					
+					List<SPARCLiteral> body = new ArrayList<>();
+					body.add(dom_f);
+					body.add(f_ext);
+					SPARCRule r = tm.newSPARCRule(ALM.HISTORY, null, body);
+					r.addComment("HISTORY: "+head.toString());
+				}
+			}
+		}
+	}
+
+	
 
 	private static void LoadFactsFromPreModelAnswerSet(SPARCProgram tm, AnswerSet as, ALMCompilerSettings s) {
 		tm.createSection(ALM.OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET);
@@ -1096,11 +1157,14 @@ public class ALMCompiler {
 			s.closePreModelDestination();
 			as = GetAnswerSet(pm, s);
 			AnswerSets.writeTo(s.AnswerSetsDestination(), as);
-			s.closeAnswerSetsDestination();
+			s.closePremodelAnswerSetsDestination();
 			if(as.size() == 1){
 				ConstructFinalProgram(tm, as.get(0), pm, st, aspf, s );
 				tm.writeTo(s.TransitionModelDestination());
 				s.closeTransitionModelDestination();
+				as = GetAnswerSet(tm, s);
+				AnswerSets.writeTo(s.FinalAnswerSetsDestination(), as);
+				s.closeFinalAnswerSetsDestination();
 			} else {
 				er.newSemanticError(SemanticError.ANS001);
 				
@@ -1157,7 +1221,7 @@ public class ALMCompiler {
 							head = thead; 
 					else if(f.isFluent()) {
 							//construct corresponding sparc literal
-							head = new_SPARCLiteral_Boolean_Fluent(f, thead.getArgs(), timestep);
+							head = new_SPARCLiteral_Boolean_Fluent(thead.getSign(), f, thead.getArgs(), timestep+"+1");
 					}else
 						PROGRAM_FAILURE("Translate Rule", "Non Static Or Fluent Function ["+f.getFunctionName()+ " at head of rule");
 						//Should never happen
@@ -1227,7 +1291,7 @@ public class ALMCompiler {
 								body.add(tlit); 
 						else if(f.isFluent()) {
 								//construct corresponding sparc literal
-								body.add(new_SPARCLiteral_Boolean_Fluent(f, tlit.getArgs(), timestep));
+								body.add(new_SPARCLiteral_Boolean_Fluent(tlit.getSign(), f, tlit.getArgs(), timestep));
 						}else
 							PROGRAM_FAILURE("Translate Rule", "Non Static Or Fluent Function ["+f.getFunctionName()+ "] in body of rule");
 							//Should never happen
@@ -1312,12 +1376,13 @@ public class ALMCompiler {
 	}
 
 
-	private static SPARCLiteral new_SPARCLiteral_Boolean_Fluent(FunctionEntry f, List<ALMTerm> args, String timestep) {
+	private static SPARCLiteral new_SPARCLiteral_Boolean_Fluent(String sign, FunctionEntry f, List<ALMTerm> args, String timestep) {
 		ALMTerm slit = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN);
 		if(args != null)
 			for(ALMTerm arg:args)
 				slit.addArg(arg);
 		slit.addArg(new ALMTerm(timestep, ALMTerm.ID));
+		slit.setSign(sign);
 		return slit;
 	}
 

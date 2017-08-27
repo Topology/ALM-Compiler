@@ -133,8 +133,6 @@ public class VariableManager {
 	}
 
 	public SortEntry getNarrowestSort(String var) {
-		//check this part for override function on structure - it shows an error
-		System.out.println(this.narrowestSorts.get(var).sort);
 		return this.narrowestSorts.get(var).sort;
 	}
 	

@@ -1,0 +1,43 @@
+system description coin_flip
+theory coin_flip
+module coin_flip
+	sort declarations
+		sides :: universe
+		coins :: universe
+		flips :: actions
+			attributes
+				flipped_coin : coins
+		hides :: actions
+			attributes
+				coin_hidden : coins
+	object constants
+		heads, tails : sides
+	function declarations
+		fluents 
+			basic
+				showing: coins -> sides
+	axioms
+		dynamic causal laws
+			occurs(X) causes showing(Y) = heads if instance(X, flips), flipped_coin(X) = Y, showing(Y) = tails.
+			occurs(X) causes showing(Y) = tails if instance(X, flips), flipped_coin(X) = Y, showing(Y) = heads.
+			occurs(X) causes -dom_showing(Y) if instance(X, hides), coin_hidden(X) = Y. 
+structure coin_flip
+	instances
+		nickel, dime in coins
+		flip(X) in flips
+			flipped_coin = X
+		hide(X) in hides
+			coin_hidden = X
+temporal projection
+max steps 6
+history 
+observed(showing(dime), heads, 0)
+happened(flip(dime), 0)
+observed(showing(nickel), tails, 0)
+happened(flip(nickel), 0)
+happened(hide(nickel), 1)
+happened(flip(dime), 2)
+happened(flip(nickel), 2)
+happened(flip(dime), 4)
+happened(flip(nickel), 4) 
+happened(hide(dime), 4)

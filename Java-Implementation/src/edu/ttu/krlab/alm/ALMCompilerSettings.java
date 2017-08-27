@@ -27,8 +27,10 @@ public class ALMCompilerSettings {
 	public static final String CL_SOLVER = "--solver";
 	public static final String CL_PM = "-pm";
 	public static final String CL_PREMODEL = "--premodel";
-	public static final String CL_AS = "-as";
-	public static final String CL_ANSWERSET = "--answersets";
+	public static final String CL_PAS = "-pas";
+	public static final String CL_PREMODEL_ANSWERSET = "--premodel-answerset";
+	public static final String CL_FAS = "-fas";
+	public static final String CL_FINAL_ANSWERSET = "--final-answerset";
 	public static final String CL_TM = "-o";
 	public static final String CL_TRANSITIONMODEL = "--out";
 	public static final String CL_ER = "-er";
@@ -36,15 +38,15 @@ public class ALMCompilerSettings {
 	public static final String CL_ST = "-st";
 	public static final String CL_SYMBOLTABLE = "--symboltable";
 	public static final String CL_ASPF = "-aspf";
-	public static final String CL_INTERMEDIATEASPF = "--intermediateaspf";
+	public static final String CL_INTERMEDIATEASPF = "--intermediate-aspf";
 	public static final String CL_SD = "-sd";
-	public static final String CL_SYSTEMDESCRIPTION = "--systemdescription";
+	public static final String CL_SYSTEMDESCRIPTION = "--system-description";
 	public static final String CL_D = "-d";
 	public static final String CL_DEBUG = "--debug";
 	public static final String CL_C = "-c";
 	public static final String CL_CONFIG = "--config";
 	public static final String CL_CC = "-cc";
-	public static final String CL_CREATECONFIG = "--createconfig";
+	public static final String CL_CREATECONFIG = "--create-config";
 	public static final String CL_OPT = "-opt";
 	public static final String CL_OPTIMIZATION = "--optimization";
 	public static final String CL_HIST = "-hist";
@@ -62,7 +64,8 @@ public class ALMCompilerSettings {
 	public static final String SOLVER_LOCATION = "SOLVER_LOCATION";
 	public static final String SOLVER_TYPE = "SOLVER_TYPE";
 	public static final String PM_DESTINATION = "PM_DESTINATION";
-	public static final String AS_DESTINATION = "AS_DESTINATION";
+	public static final String PREMODEL_AS_DESTINATION = "PREMODEL_AS_DESTINATION";
+	public static final String FINAL_AS_DESTINATION = "FINAL_AS_DESTINATION";
 	public static final String TM_DESTINATION = "TM_DESTINATION";
 	public static final String ER_DESTINATION = "ER_DESTINATION";
 	public static final String ST_DESTINATION = "ST_DESTINATION";
@@ -91,7 +94,8 @@ public class ALMCompilerSettings {
 	private BufferedWriter aspf_destination = null;
 	private BufferedWriter pm_destination = null;
 	private BufferedWriter tm_destination = null;
-	private BufferedWriter as_destination = null;
+	private BufferedWriter premodel_as_destination = null;
+	private BufferedWriter final_as_destination = null;
 	
 	
 	public ALMCompilerSettings(){
@@ -105,7 +109,8 @@ public class ALMCompilerSettings {
 	public static final String DEFAULT_SOLVER_LOCATION = "./"; //assumes current working directory
 	public static final String DEFAULT_SOLVER_TYPE = SOLVER_DLV; //assume using dlv
 	public static final String DEFAULT_PM_DESTINATION = null; //no destination
-	public static final String DEFAULT_AS_DESTINATION = null; //no destination
+	public static final String DEFAULT_INTERMEDIATE_AS_DESTINATION = null; //no destination
+	public static final String DEFAULT_FINAL_AS_DESTINATION = null;
 	public static final String DEFAULT_TM_DESTINATION = STD_OUT;
 	public static final String DEFAULT_ER_DESTINATION = STD_ERR;
 	public static final String DEFAULT_ST_DESTINATION = null; //no destination
@@ -120,7 +125,8 @@ public class ALMCompilerSettings {
 		settings.put(SOLVER_LOCATION, DEFAULT_SOLVER_LOCATION); 
 		settings.put(SOLVER_TYPE, DEFAULT_SOLVER_TYPE);
 		settings.put(PM_DESTINATION, DEFAULT_PM_DESTINATION);
-		settings.put(AS_DESTINATION, DEFAULT_AS_DESTINATION);  //default is no destination
+		settings.put(PREMODEL_AS_DESTINATION, DEFAULT_INTERMEDIATE_AS_DESTINATION);  //default is no destination
+		settings.put(FINAL_AS_DESTINATION, DEFAULT_FINAL_AS_DESTINATION);
 		settings.put(ER_DESTINATION, DEFAULT_ER_DESTINATION);  //default is std_err
 		settings.put(TM_DESTINATION, DEFAULT_TM_DESTINATION);  //default is standard out
 		settings.put(ST_DESTINATION, DEFAULT_ST_DESTINATION);  //default is no destination.
@@ -131,7 +137,8 @@ public class ALMCompilerSettings {
 	
 	public void debugSettings(){  
 		settings.put(PM_DESTINATION, STD_OUT);  
-		settings.put(AS_DESTINATION, STD_OUT);  
+		settings.put(PREMODEL_AS_DESTINATION, STD_OUT);  
+		settings.put(FINAL_AS_DESTINATION, STD_OUT);  
 		settings.put(ER_DESTINATION, STD_ERR);  
 		settings.put(TM_DESTINATION, STD_OUT);  
 		settings.put(ST_DESTINATION, STD_OUT); 
@@ -173,9 +180,13 @@ public class ALMCompilerSettings {
 		System.out.print("  Provide <filename> to write the pre-model program.");
 		System.out.println("  If absent, the default is to not output the premodel program.\n");
 		
-		System.out.println("("+CL_AS+" |  "+CL_ANSWERSET+") <filename>\n");
+		System.out.println("("+CL_PAS+" |  "+CL_PREMODEL_ANSWERSET+") <filename>\n");
 		System.out.print("  Provide <filename> to write the answerset of the pre-model program.");
 		System.out.println("  If absent, the default is to not output the answerset of the premodel program.\n");
+		
+		System.out.println("("+CL_FAS+" |  "+CL_FINAL_ANSWERSET+") <filename>\n");
+		System.out.print("  Provide <filename> to write the answerset resulting from the application of the TM program.");
+		System.out.println("  If absent, the default destination is standard output.\n");
 
 		System.out.println("("+CL_TM+" |  "+CL_TRANSITIONMODEL+") <filename>\n");
 		System.out.print("  Provide <filename> to write the final transition diagram program.");
@@ -311,7 +322,7 @@ public class ALMCompilerSettings {
 
 
 	public BufferedWriter AnswerSetsDestination() throws IOException {
-		String destination = settings.get(AS_DESTINATION);
+		String destination = settings.get(PREMODEL_AS_DESTINATION);
 		if(destination == null)
 			return null;
 		switch(destination){
@@ -326,8 +337,29 @@ public class ALMCompilerSettings {
 				} catch (Exception ex) {
 					ALMCompiler.PROGRAM_FAILURE("Opening file for output.", "Parent directories could not be created along path: "+destination);
 				}
-				as_destination = new BufferedWriter( new FileWriter(destination));
-				return as_destination;
+				premodel_as_destination = new BufferedWriter( new FileWriter(destination));
+				return premodel_as_destination;
+		}
+	}
+	
+	public BufferedWriter FinalAnswerSetsDestination() throws IOException {
+		String destination = settings.get(FINAL_AS_DESTINATION);
+		if(destination == null)
+			return null;
+		switch(destination) {
+		case STD_ERR : 
+			return new BufferedWriter(new OutputStreamWriter(System.err));
+		case STD_OUT : 
+			return new BufferedWriter(new OutputStreamWriter(System.out));
+			default:
+				//ensure parent directories exist
+				try { 
+					new File(new File(destination).getParent()).mkdirs();
+				} catch (Exception ex) {
+					ALMCompiler.PROGRAM_FAILURE("Opening file for output", "Parent directories could not be created along path: "+destination);
+				}
+				final_as_destination = new BufferedWriter( new FileWriter(destination));
+				return final_as_destination;
 		}
 	}
 
@@ -399,12 +431,19 @@ public class ALMCompilerSettings {
 					printUsageAndExitWithError("Missing value following "+args[i-1]);
 				settings.put(PM_DESTINATION, args[i]);
 				break;
-			case CL_AS:
-			case CL_ANSWERSET: 
+			case CL_PAS:
+			case CL_PREMODEL_ANSWERSET: 
 				i++;
 				if(i > args.length || isCLCommand(args[i]))
 					printUsageAndExitWithError("Missing value following "+args[i-1]);
-				settings.put(AS_DESTINATION, args[i]);
+				settings.put(PREMODEL_AS_DESTINATION, args[i]);
+				break;
+			case CL_FAS:
+			case CL_FINAL_ANSWERSET: 
+				i++;
+				if(i > args.length || isCLCommand(args[i]))
+					printUsageAndExitWithError("Missing value following "+args[i-1]);
+				settings.put(FINAL_AS_DESTINATION, args[i]);
 				break;
 			case CL_TM:
 			case CL_TRANSITIONMODEL: 
@@ -620,7 +659,8 @@ public class ALMCompilerSettings {
 					    	value = value.replaceFirst("<FN>", FN_Replace);
 					    }
 					    switch(key) {
-					    case AS_DESTINATION: 
+					    case PREMODEL_AS_DESTINATION: 
+					    case FINAL_AS_DESTINATION:
 					    case ASPF_DESTINATION:
 					    case TM_DESTINATION:
 					    case ER_DESTINATION:
@@ -838,16 +878,28 @@ public class ALMCompilerSettings {
 			out.write("\n");
 
 
-			out.write("#setting "+AS_DESTINATION+" : <filename>\n");
-			out.write("#Destination for resulting answersets of pre model sparc program.\n");
+			out.write("#setting "+PREMODEL_AS_DESTINATION+" : <filename>\n");
+			out.write("#Destination for pre-model answersets of pre-model sparc program.\n");
 			out.write("#If commented out, default is not to output the answersets.\n");
 			out.write("#uncomment the following to send to standard out. \n");
-			out.write("#"+AS_DESTINATION+ " : "+STD_OUT+"\n");
+			out.write("#"+PREMODEL_AS_DESTINATION+ " : "+STD_OUT+"\n");
 			out.write("#uncomment the following to send to standard err. \n");
-			out.write("#"+AS_DESTINATION+ " : "+STD_ERR+"\n");
-			String current_as_dest = settings.get(AS_DESTINATION);
-			if(current_as_dest != null)
-				out.write(AS_DESTINATION+" : "+current_as_dest+ "\n");
+			out.write("#"+PREMODEL_AS_DESTINATION+ " : "+STD_ERR+"\n");
+			String current_premodel_as_dest = settings.get(PREMODEL_AS_DESTINATION);
+			if(current_premodel_as_dest != null)
+				out.write(PREMODEL_AS_DESTINATION+" : "+current_premodel_as_dest+ "\n");
+			out.write("\n");
+			
+			out.write("#setting "+FINAL_AS_DESTINATION+" : <filename>\n");
+			out.write("#Destination for the answersets resulting from the application of the TM sparc program.\n");
+			out.write("#If commented out, the default destination is standard output.\n");
+			out.write("#uncomment the following to send to standard out. \n");
+			out.write("#"+FINAL_AS_DESTINATION+ " : "+STD_OUT+"\n");
+			out.write("#uncomment the following to send to standard err. \n");
+			out.write("#"+FINAL_AS_DESTINATION+ " : "+STD_ERR+"\n");
+			String current_final_as_dest = settings.get(FINAL_AS_DESTINATION);
+			if(current_final_as_dest != null)
+				out.write(PREMODEL_AS_DESTINATION+" : "+current_final_as_dest+ "\n");
 			out.write("\n");
 			
 			out.flush();
@@ -883,8 +935,10 @@ public class ALMCompilerSettings {
 		case CL_SOLVER:
 		case CL_PM:
 		case CL_PREMODEL:
-		case CL_AS:
-		case CL_ANSWERSET:
+		case CL_PAS:
+		case CL_PREMODEL_ANSWERSET:
+		case CL_FAS:
+		case CL_FINAL_ANSWERSET:
 		case CL_TM:
 		case CL_TRANSITIONMODEL:
 		case CL_ER:
@@ -960,13 +1014,19 @@ public class ALMCompilerSettings {
 	}
 
 
-	public void closeAnswerSetsDestination() throws IOException {
-		if(as_destination != null){
-			as_destination.close();
-			as_destination = null;
+	public void closePremodelAnswerSetsDestination() throws IOException {
+		if(premodel_as_destination != null){
+			premodel_as_destination.close();
+			premodel_as_destination = null;
 		}
 	}
-
+	
+	public void closeFinalAnswerSetsDestination() throws IOException {
+		if(final_as_destination != null){
+			final_as_destination.close();
+			final_as_destination = null;
+		}
+	}
 
 	public void closeTransitionModelDestination() throws IOException {
 		if(tm_destination != null){

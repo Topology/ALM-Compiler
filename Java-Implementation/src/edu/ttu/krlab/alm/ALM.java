@@ -71,6 +71,9 @@ public abstract class ALM {
 	public static final String STRUCTURE_STATIC_FUNCTION_DEFINITIONS = "Structure - Static Function Definitions";
 	public static final String OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET = "Optimization - All Facts Computed By Premodel Program.";
 	public static final String DOM_PREFIX = "dom_";
+	public static final String HISTORY_OBSERVED = "observed";
+	public static final String HISTORY_HAPPENED = "happened";
+	public static final String HISTORY = "History";
 	
 	
 	//literal: atom | '-' atom |  term relation term ;

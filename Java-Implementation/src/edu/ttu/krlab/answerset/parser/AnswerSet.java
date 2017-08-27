@@ -24,10 +24,10 @@ public class AnswerSet {
     		String atom = atoms.get(i);
     		ALMTerm term;
     		if (atom.charAt(0) == '-') {
-    			term = createALMTerm(atom, 1); 
+    			term = parseALMTerm(atom, 1); 
     			term.setSign(ALMTerm.SIGN_NEG);			
     		} else {
-    			term = createALMTerm(atom, 0);
+    			term = parseALMTerm(atom, 0);
     		}
     		List<ALMTerm> previous = hash.get(term.getName());
 
@@ -38,30 +38,77 @@ public class AnswerSet {
     		previous.add(term);
     	}
     }
-    // acreate ALMTerm
-    private ALMTerm createALMTerm (String atom, int start) {
-    	String predicate = stringFromIndexToChar(atom, start, '(');
-    	ALMTerm term = new ALMTerm (predicate, ALMTerm.FUN);
-    	int lastProcessed = predicate.length() + 1 + start;
-    	for (int i = predicate.length() + 1 + start; i < atom.length(); i++) {
-    		if (atom.charAt(i) == ',') {
-    			if (atom.charAt(i - 1) != ')') {
-    				term.addArg(new ALMTerm(stringFromIndexToChar(atom,lastProcessed, ','), ALMTerm.ID));
+    
+    // parse ALMTerm
+    private ALMTerm parseALMTerm (String term, int start) {
+    	int firstOpenParenthesis = term.indexOf('(', start);
+    	if (firstOpenParenthesis < 0) {
+    		//a simple term.  
+    		return new ALMTerm(term, Character.isUpperCase(term.charAt(start))? ALMTerm.VAR:ALMTerm.ID);
+    	}
+    	int lastCloseParenthesis = term.lastIndexOf(')');
+    	if(lastCloseParenthesis < firstOpenParenthesis) {
+			throw new IllegalStateException("The last ')' does not follow the first '(' in the term: "+term);
+    	}
+    	
+    	String predicate = term.substring(start, firstOpenParenthesis);
+    	ALMTerm almTerm = new ALMTerm (predicate, ALMTerm.FUN);
+    	parseALMTermList(term.substring(firstOpenParenthesis+1, lastCloseParenthesis), almTerm.getArgs());
+    	return almTerm;
+    }
+    
+    private void parseALMTermList(String termList, List<ALMTerm> destination) throws IllegalStateException {
+    	int firstComma = termList.indexOf(',');
+    	if(firstComma < 0) {
+    		//no sequence detected, at worst a nesting of unary predicates.   
+    		destination.add(parseALMTerm(termList, 0));
+    		return;
+    	}
+    	//check if there exists an open parenthesis. 
+    	int firstOpenParenthesis = termList.indexOf('(');
+    	if(firstOpenParenthesis < 0) {
+    		//ensure there is no closing parenthesis.  
+    		if(termList.indexOf(')') > 0) {
+    			throw new IllegalStateException("There is a ')' but no '(' in the termList: "+termList);
+    		}
+    		//this is a sequence of simple terms, rapidly popuplate the list and return.
+    		int termStart = 0;
+    		int termEnd = firstComma;
+    		while(termEnd > 0) {
+    			destination.add(new ALMTerm(termList.substring(termStart, termEnd), Character.isUpperCase(termList.charAt(termStart))? ALMTerm.VAR:ALMTerm.ID));
+    			termStart = termEnd+1; //skip comma in next term
+    			termEnd = termList.indexOf(',', termStart);
+    			if(termEnd < 0) {
+    				destination.add(new ALMTerm(termList.substring(termStart), Character.isUpperCase(termList.charAt(termStart))? ALMTerm.VAR:ALMTerm.ID));
     			}
+    		}
+    		return;
+    	}
 
-    			lastProcessed = i + 1;
-    		} else if (atom.charAt(i) == ')') {
-    			term.addArg(new ALMTerm(stringFromIndexToChar(atom,lastProcessed, ')'), ALMTerm.ID));
-    			return term;
-    		} else if (atom.charAt(i) == '(') {
-    			term.addArg(createALMTerm(atom,lastProcessed));
-    			while (atom.charAt(i) != ')') {
-    				i++;
-    			}
-    			lastProcessed = i + 1;
+		//find the location of the closing parenthesis that matches the first.
+		int firstCloseParenthesis = termList.indexOf(')');
+		if(firstCloseParenthesis < firstOpenParenthesis) {
+			throw new IllegalStateException("The first ')' does not follow the first '(' in the termList: "+termList);
+		}
+    	
+    	//There is a sub-termList to parse.  Determine if '(' is before or after the first comma.
+    	if(firstCloseParenthesis < firstComma) {
+    		//the first comma is outside the nested term.
+    		destination.add(parseALMTerm(termList.substring(0, firstComma), 0));
+    		parseALMTermList(termList.substring(firstComma+1), destination);
+    	} else {
+    		//The first comma belongs to the termList between the parenthesis.
+    		//Parse the first term ending with the first closing parenthesis.
+			destination.add(parseALMTerm(termList.substring(0, firstCloseParenthesis+1), 0)); 
+    		
+    		//Is there a first comma after the parenthesis?  
+    		firstComma = termList.indexOf(',', firstCloseParenthesis);
+    		if(firstComma > 0) {
+    			//parse the remainder of the termList
+    			parseALMTermList(termList.substring(firstComma), destination);
     		}
     	}
-    	return term;
+    		
     }
 
     // used for getting predicate and record name strings
