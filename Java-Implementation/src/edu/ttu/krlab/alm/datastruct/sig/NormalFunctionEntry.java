@@ -1,4 +1,5 @@
 package edu.ttu.krlab.alm.datastruct.sig;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.List;
@@ -8,7 +9,7 @@ import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.Location;
 
 public class NormalFunctionEntry implements FunctionEntry {
-	
+
 	private String funName;
 	private List<SortEntry> signature;
 	private Location loc;
@@ -19,13 +20,13 @@ public class NormalFunctionEntry implements FunctionEntry {
 	private boolean isBasic;
 	private boolean isTotal;
 	private boolean isSpecial;
-	
-	public NormalFunctionEntry(String funname, List<SortEntry> signature, Location loc){
+
+	public NormalFunctionEntry(String funname, List<SortEntry> signature, Location loc) {
 		this.funName = funname;
 		this.signature = signature;
-		if(loc == null)
+		if (loc == null)
 			this.loc = new Location();
-		else 
+		else
 			this.loc = loc;
 		isAttribute = false;
 		isStatic = false;
@@ -36,8 +37,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		isSpecial = false;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#setAttribute()
 	 */
 	@Override
@@ -45,8 +47,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		this.isAttribute = true;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#setStatic()
 	 */
 	@Override
@@ -54,8 +57,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		this.isStatic = true;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#setFluent()
 	 */
 	@Override
@@ -63,8 +67,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		this.isFluent = true;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#setBasic()
 	 */
 	@Override
@@ -72,7 +77,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		this.isBasic = true;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#setDefined()
 	 */
 	@Override
@@ -80,18 +87,20 @@ public class NormalFunctionEntry implements FunctionEntry {
 		this.isDefined = true;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#setTotal()
 	 */
 	@Override
 	public void setTotal() {
 		this.isTotal = true;
-		
+
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#setSpecial()
 	 */
 	@Override
@@ -99,11 +108,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		this.isSpecial = true;
 	}
 
-	
-	
-	
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#isAttribute()
 	 */
 	@Override
@@ -111,8 +118,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		return isAttribute;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#isStatic()
 	 */
 	@Override
@@ -120,8 +128,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		return isStatic;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#isFluent()
 	 */
 	@Override
@@ -129,7 +138,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		return isFluent;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#isBasic()
 	 */
 	@Override
@@ -137,8 +148,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		return isBasic;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#isDefined()
 	 */
 	@Override
@@ -146,26 +158,29 @@ public class NormalFunctionEntry implements FunctionEntry {
 		return isDefined;
 	}
 
-	
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#isTotal()
 	 */
 	@Override
 	public boolean isTotal() {
 		return isTotal;
 	}
-	
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#isSpecial()
 	 */
 	@Override
-	public boolean isSpecial(){
+	public boolean isSpecial() {
 		return isSpecial;
 	}
-	
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#getFunctionName()
 	 */
 	@Override
@@ -173,8 +188,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		return this.funName;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#getSignature()
 	 */
 	@Override
@@ -182,8 +198,9 @@ public class NormalFunctionEntry implements FunctionEntry {
 		return this.signature;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#getLocation()
 	 */
 	@Override
@@ -191,84 +208,94 @@ public class NormalFunctionEntry implements FunctionEntry {
 		return this.loc;
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#sigMatch(java.util.List)
 	 */
 	@Override
 	public boolean sigMatch(List<SortEntry> signature) {
-		if(this.signature.size() != signature.size()) return false;
-		for(int i = 0; i < signature.size(); i++){
-			if(this.signature.get(i) != signature.get(i)) return false;
+		if (this.signature.size() != signature.size())
+			return false;
+		for (int i = 0; i < signature.size(); i++) {
+			if (this.signature.get(i) != signature.get(i))
+				return false;
 		}
 		return true;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#writeTo(java.io.BufferedWriter)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#writeTo(java.io.
+	 * BufferedWriter)
 	 */
 	@Override
 	public void writeTo(BufferedWriter out) throws IOException {
-		
-		out.write(this.funName+": ");
+
+		out.write(this.funName + ": ");
 		int length = signature.size();
-		for(int i = 0; i < length -1; i++){
+		for (int i = 0; i < length - 1; i++) {
 			out.write(signature.get(i).getSortName());
-			if(i < signature.size()-2)
+			if (i < signature.size() - 2)
 				out.write(" * ");
 		}
-		if(length == 0)
-			ALMCompiler.PROGRAM_FAILURE("Writing Function Entry", "Length Of Signature is 0 for function ["+this.funName+"]");
+		if (length == 0)
+			ALMCompiler.IMPLEMENTATION_FAILURE("Writing Function Entry",
+					"Length Of Signature is 0 for function [" + this.funName + "]");
 		out.write(" -> ");
-		out.write(signature.get(signature.size()-1).getSortName());
-		out.write(" "+loc.toString()+ " ");
-		
+		out.write(signature.get(signature.size() - 1).getSortName());
+		out.write(" " + loc.toString() + " ");
 
-		if(isTotal())
+		if (isTotal())
 			out.write("total ");
-		if(isAttribute())
+		if (isAttribute())
 			out.write("attribute ");
-		if(isStatic())
+		if (isStatic())
 			out.write("static ");
-		if(isFluent())
+		if (isFluent())
 			out.write("fluent ");
-		if(isDefined())
+		if (isDefined())
 			out.write("defined ");
-		if(isBasic())
+		if (isBasic())
 			out.write("basic ");
-		
+
 		out.write("\n");
-		
+
 		out.flush();
 	}
 
-
-	/* (non-Javadoc)
-	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#getQualifiedFunctionName()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#getQualifiedFunctionName()
 	 */
 	@Override
 	public String getQualifiedFunctionName() {
-				
-		if(isAttribute()){
+
+		if (isAttribute()) {
 			String sortname = this.signature.get(0).getSortName();
-			String funname  = getFunctionName();
-			return sortname+"_"+funname;
-		}else{
+			String funname = getFunctionName();
+			return sortname + "_" + funname;
+		} else {
 			return getFunctionName();
 		}
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#getRangeSort()
 	 */
 	@Override
-	public SortEntry getRangeSort(){
-		return signature.get(signature.size()-1);
+	public SortEntry getRangeSort() {
+		return signature.get(signature.size() - 1);
 	}
 
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see edu.ttu.krlab.alm.datastruct.sig.FunctionEntry#isBoolean()
 	 */
 	@Override
@@ -276,10 +303,5 @@ public class NormalFunctionEntry implements FunctionEntry {
 		SortEntry range = getRangeSort();
 		return range.getSortName() == ALM.SORT_BOOLEANS;
 	}
-	
-	
-
-	
-	
 
 }

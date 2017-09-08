@@ -14,461 +14,594 @@ import edu.ttu.krlab.alm.ALM;
 import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.Location;
+import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
+import edu.ttu.krlab.alm.datastruct.err.SemanticError;
 
-public class SymbolTable{
+public class SymbolTable {
 
-	SortEntry universe;
-	SortEntry actions;
-	SortEntry nodes;
-	SortEntry booleans;
-	SortEntry integers;
-	
-	SortEntry timestep;
-	int maxStep = -1;
-	
-	private Set<String> modes;
-	private HashSet<SortEntry> predefined;
-	private HashMap<String, SortEntry> SEMap;
-	private HashMap<String, ConstantEntry> CEMap;
-	
-	/**
-	 * FunctionEntrys may have the same name but the combination of name and signature must be unique. 
-	 * Looking up by name should return a set of compatible functions
-	 * To look up by signature as well, first lookup by name then look for the function in the set with the matching signature. 
-	 */
-	private HashMap<String, Set<NormalFunctionEntry>> FEMap;
-	private HashMap<NormalFunctionEntry, DOMFunctionEntry> DMap;
-	
-	
-	public SymbolTable(){
-		modes = new HashSet<>();	
-		SEMap = new HashMap<String, SortEntry>();
-		CEMap = new HashMap<String, ConstantEntry>();
-		FEMap = new HashMap<String, Set<NormalFunctionEntry>>();
-		DMap = new HashMap<NormalFunctionEntry, DOMFunctionEntry>();
-		try {
-			initialize();
-		} catch (DuplicateFunctionException | DuplicateSortException e) {
-			e.printStackTrace();
-			ALMCompiler.PROGRAM_FAILURE("Initializing Symbol Table", "Initialize Function Threw An Exception");
-			//this should never happen.
-		}
-	}
-	
-	
-	public SortEntry createSortEntry(String sortname, Location loc) throws DuplicateSortException {
-		// Sort Entries must be uniquely named.
-		SortEntry existing;
-		try {
-			existing = getSortEntry(sortname);
-			throw new DuplicateSortException(existing);
-		} catch (SortNotFoundException e) { 
-			// Add new Sort Entry
-			SortEntry srt = new SortEntry(sortname,loc);
-			SEMap.put(sortname,srt);
-			nodes.addSortInstance(new ALMTerm(srt.getSortName(), ALMTerm.ID));
-			return srt;
-		}
-	}
+    SortEntry universe;
+    SortEntry actions;
+    SortEntry nodes;
+    SortEntry booleans;
+    SortEntry integers;
 
-	public SortEntry getSortEntry(String sortname) throws SortNotFoundException {
-		SortEntry se = SEMap.get(sortname);
-		if(se == null)
-			throw new SortNotFoundException(sortname);
-		return se;
-	}
+    SortEntry timestep;
+    int maxStep = -1;
 
+    private Set<String> modes;
+    private HashSet<SortEntry> predefined;
+    private HashMap<String, SortEntry> SEMap;
 
+    /**
+     * Constant entries are first retrievable by name and then by their argument signature.
+     */
+    private HashMap<String, Set<ConstantEntry>> CEMap;
 
-	public ConstantEntry createConstantEntry(String constname, List<SortEntry> sourceSorts, List<SortEntry> arguments, Location loc) throws DuplicateConstantException {
-		// Constant Entries must be uniquely named
-		ConstantEntry existing = getConstantEntry(constname);
-		if(existing != null)
-			throw new DuplicateConstantException(existing);
-		
-		// Add new Constant Entry
-		ConstantEntry ce = new ConstantEntry(constname, sourceSorts, arguments, loc);
-		Iterator<SortEntry> itS = sourceSorts.iterator();
-		while(itS.hasNext()){
-			SortEntry se = itS.next();
-			se.getInstances().add(new ALMTerm(constname, ALMTerm.ID));
-		}
-		CEMap.put(constname, ce);
-		return ce;
-	}
+    /**
+     * FunctionEntrys may have the same name but the combination of name and signature must be unique. Looking up by
+     * name should return a set of compatible functions To look up by signature as well, first lookup by name then look
+     * for the function in the set with the matching signature.
+     */
+    private HashMap<String, Set<NormalFunctionEntry>> FEMap;
+    private HashMap<NormalFunctionEntry, DOMFunctionEntry> DMap;
 
-	public ConstantEntry getConstantEntry(String constname) {
-		return CEMap.get(constname);
-	}
+    public SymbolTable() {
+        modes = new HashSet<>();
+        SEMap = new HashMap<>();
+        CEMap = new HashMap<>();
+        FEMap = new HashMap<>();
+        DMap = new HashMap<>();
+        try {
+            initialize();
+        } catch (DuplicateFunctionException | DuplicateSortException e) {
+            e.printStackTrace();
+            ALMCompiler.IMPLEMENTATION_FAILURE("Initializing Symbol Table", "Initialize Function Threw An Exception");
+            // this should never happen.
+        }
+    }
 
-	public NormalFunctionEntry createFunctionEntry(String funname, List<SortEntry> signature, Location loc) throws DuplicateFunctionException {
-		// Check conditions for whether or not its safe to declare the functions
-		// Specifically the function to be created does not have the same function name and signature. 
-		FunctionEntry existing = getFunctionEntry(funname, signature);
-		if(existing != null) 
-			throw new DuplicateFunctionException(existing);
-		
-		//safe to create new function entry, add it to the set in the map. 
-		Set<NormalFunctionEntry> set = FEMap.get(funname);
-		if(set == null){
-			set = new HashSet<NormalFunctionEntry>();
-			FEMap.put(funname, set);
-		}
-		NormalFunctionEntry newFun = new NormalFunctionEntry(funname, signature, loc);
-		set.add(newFun );
-		
-		//Set DOMFunctionEntry for NormalFunction.
-		DMap.put(newFun, new DOMFunctionEntry(newFun, booleans));
-		return newFun;
-	}
+    public SortEntry createSortEntry(String sortname, Location loc) throws DuplicateSortException {
+        // Sort Entries must be uniquely named.
+        SortEntry existing;
+        try {
+            existing = getSortEntry(sortname);
+            throw new DuplicateSortException(existing);
+        } catch (SortNotFoundException e) {
+            // Add new Sort Entry
+            SortEntry srt = new SortEntry(sortname, loc);
+            SEMap.put(sortname, srt);
+            nodes.addSortInstance(new ALMTerm(srt.getSortName(), ALMTerm.ID));
+            return srt;
+        }
+    }
 
-	private Set<NormalFunctionEntry> getFunctionEntry(String funname) {
-		return FEMap.get(funname);
-	}
-	
-	private FunctionEntry getFunctionEntry(String funname, List<SortEntry> signature){
-		Set<NormalFunctionEntry> FS = FEMap.get(funname);
-		if(FS == null)return null;
-		Iterator<NormalFunctionEntry> it = FS.iterator();
-		while(it.hasNext()){
-			FunctionEntry fe = it.next();
-			if(fe.sigMatch(signature))
-				return fe;
-		}
-		return null;
-	}
+    public SortEntry getSortEntry(String sortname) throws SortNotFoundException {
+        SortEntry se = SEMap.get(sortname);
+        if (se == null)
+            throw new SortNotFoundException(sortname);
+        return se;
+    }
 
-private  void initialize() throws DuplicateFunctionException, DuplicateSortException{
-	
-		//Before the Hierarchy can be initialized, we need a special sort entry for nodes in the hierarchy. 
-		nodes = new SortEntry(ALM.SPECIAL_SORT_NODES, null);
-		SEMap.put(ALM.SPECIAL_SORT_NODES, nodes);
-	
-		// Add Universe Sort
-		universe = this.createSortEntry(ALM.SORT_UNIVERSE, null);
-		
-		// Add timestep Sort
-		timestep = this.createSortEntry(ALM.SORT_TIMESTEP, null);
-		
-		//Add Actions Sort (child of universe)
-		actions = this.createSortEntry(ALM.SORT_ACTIONS, null);
-		actions.addParentSort(universe);
-				
-		//Add Predefined Sorts
-		predefined = new HashSet<SortEntry>();
-		//boolean
-		booleans = this.createSortEntry(ALM.SORT_BOOLEANS, null);
-		predefined.add(booleans);
-		
-		//integer
-		integers = this.createSortEntry(ALM.SORT_INTEGERS, null);
-		predefined.add(integers);
-		
-		// Add special functions
-		
-		//SIGNATURES 
-		//universe x nodes -> booleans
-		List<SortEntry> universe_nodes_booleans_sig = new ArrayList<SortEntry>();
-		universe_nodes_booleans_sig.add(universe);
-		universe_nodes_booleans_sig.add(nodes);
-		universe_nodes_booleans_sig.add(booleans);
+    /**
+     * Creates a new constant entry for the given {@code constname(arguments)} and registers the constant as belonging
+     * to the sort entries in the list of sourceSorts.
+     * 
+     * @param constname
+     *            the String name of the constant
+     * @param arguments
+     *            the sorts that specify the schema for instantiating the constant.
+     * @param parent_sorts
+     *            The sort entries that will have the constant as a member of their sort.
+     * @param loc
+     *            The syntactic element relating to the declaration of the constants.
+     * @return the ConstantEntry created in the symbol table.
+     * @throws DuplicateConstantException
+     *             if the exact constant has already been declared for one of the parent_sorts.
+     */
+    public ConstantEntry createConstantEntry(String constname, List<SortEntry> arguments, List<SortEntry> parent_sorts,
+            Location loc) throws DuplicateConstantException {
 
-		//nodes x nodes -> booleans
-		List<SortEntry> nodes_nodes_booleans_sig = new ArrayList<SortEntry>();
-		nodes_nodes_booleans_sig.add(nodes);
-		nodes_nodes_booleans_sig.add(nodes);
-		nodes_nodes_booleans_sig.add(booleans);
-		
-		// nodes -> booleans
-		List<SortEntry> nodes_booleans_sig = new ArrayList<SortEntry>();
-		nodes_booleans_sig.add(nodes);
-		nodes_booleans_sig.add(booleans);
-		
-		// actions -> booleans
-		List<SortEntry> actions_booleans_sig = new ArrayList<SortEntry>();
-		actions_booleans_sig.add(actions);
-		actions_booleans_sig.add(booleans);
-		
-		
-		//SPECIAL FUNCTIONS
-		
-		// is_a
-		FunctionEntry is_a = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_IS_A, universe_nodes_booleans_sig, null);
-		is_a.setSpecial();
-		is_a.setStatic();
-		is_a.setTotal();
-		is_a.setDefined();
-		
-		
-		// instance
-		FunctionEntry instance = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_INSTANCE, universe_nodes_booleans_sig, null);
-		instance.setSpecial();
-		instance.setStatic();
-		instance.setTotal();
-		instance.setDefined();
-		
-		// link
-		FunctionEntry link = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_LINK, nodes_nodes_booleans_sig, null);
-		link.setSpecial();
-		link.setStatic();
-		link.setTotal();
-		link.setDefined();
-		
-		// subsort
-		FunctionEntry subsort = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SUBSORT, nodes_nodes_booleans_sig, null);
-		subsort.setSpecial();
-		subsort.setStatic();
-		subsort.setTotal();
-		subsort.setDefined();
-		
-		// has_child
-		FunctionEntry has_child = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_CHILD, nodes_booleans_sig, null);
-		has_child.setSpecial();
-		has_child.setStatic();
-		has_child.setTotal();
-		has_child.setDefined();
-		
-		// has_parent
-		FunctionEntry has_parent = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_PARENT, nodes_booleans_sig, null);
-		has_parent.setSpecial();
-		has_parent.setStatic();
-		has_parent.setTotal();
-		has_parent.setDefined();
-		
-		// sink
-		FunctionEntry sink = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SINK, nodes_booleans_sig, null);
-		sink.setSpecial();
-		sink.setStatic();
-		sink.setTotal();
-		sink.setDefined();
-		
-		// source
-		FunctionEntry source = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SOURCE, nodes_booleans_sig, null);
-		source.setSpecial();
-		source.setStatic();
-		source.setTotal();
-		source.setDefined();
-		
-		// occurs
-		FunctionEntry occurs = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_OCCURS, actions_booleans_sig, null);
-		occurs.setSpecial();
-		occurs.setFluent();
-		occurs.setTotal();
-		occurs.setDefined();
-		
-	}
-	
-	public void writeTo(BufferedWriter out) throws IOException {
-		if(out == null)
-			return;
-		out.write("------------------\n");
-		out.write("-- SYMBOL TABLE --\n");
-		out.write("------------------\n\n");
+        ConstantEntry constEntry = null;
+        // first retrieve any existing matching ConstantEntry.
+        Set<ConstantEntry> constSet = CEMap.get(constname);
+        if (constSet == null) {
+            constSet = new HashSet<>();
+            CEMap.put(constname, constSet);
+        } else {
+            for (ConstantEntry c : constSet) {
+                if (c.getArguments().equals(arguments)) {
+                    constEntry = c;
+                    break;
+                }
+            }
+        }
+        if (constEntry == null) {
+            constEntry = new ConstantEntry(constname, arguments, parent_sorts, loc);
+            constSet.add(constEntry);
+        }
+        // By this point we have a matching constant entry from the set of constant
+        // entries with the same name.
 
-		out.write("-------------------\n");
-		out.write("-- Sort Hierachy --\n");
-		out.write("-------------------\n\n");
-		
+        // we need to register the constant entry with the sorts in the parent_sorts
+        // list.
+        // If it is already registered, we need to throw an exception containing the set
+        // of duplicate declarations.
+        Set<SortEntry> duplicates = null;
+        for (SortEntry sort : parent_sorts) {
+            List<ConstantEntry> constList = sort.getConstants();
+            if (constList.contains(constEntry)) {
+                if (duplicates == null) {
+                    duplicates = new HashSet<>();
+                }
+                duplicates.add(sort);
+            } else {
+                constList.add(constEntry);
+            }
+        }
 
-		Set<SortEntry> printed = new HashSet<SortEntry>();
-		
-		Iterator<String> itS = SEMap.keySet().iterator();
-		while(itS.hasNext()){
-			SortEntry se = SEMap.get(itS.next());
-			se.writeTo(out, printed);
-		}
-		out.write("\n");
-		out.flush();
-		
-		out.write("---------------------------\n");
-		out.write("-- Constant Declarations --\n");
-		out.write("---------------------------\n\n");
-		
-		Iterator<String> itC = CEMap.keySet().iterator();
-		while(itC.hasNext()){
-			ConstantEntry ce = CEMap.get(itC.next());
-			ce.writeTo(out);
-			out.write("\n");
-		}
-		
-		out.flush();
-		
-		out.write("---------------------------\n");
-		out.write("-- Function Declarations --\n");
-		out.write("---------------------------\n\n");
-		
-		Iterator<String> itFS = FEMap.keySet().iterator();
-		while(itFS.hasNext()){
-			Set<NormalFunctionEntry> sfe = FEMap.get(itFS.next());
-			Iterator<NormalFunctionEntry> itF = sfe.iterator();
-			while(itF.hasNext()){
-				FunctionEntry fe = itF.next();
-				fe.writeTo(out);
-				out.write("\n");
-			}
-		}
-		
-		out.flush();
-	}
+        if (duplicates != null) {
+            throw new DuplicateConstantException(constEntry, duplicates);
+        }
 
+        return constEntry;
+    }
 
-	public boolean isPredefinedSort(String sort_text) {
+    /**
+     * Returns the constant entry with the matching constant name and argument signature.
+     * 
+     * @param constname
+     *            The name of the constant
+     * @param arguments
+     *            The list of arguments. may be null or empty list to indicate the constants has no arguments.
+     * @return The matching ConstantEntry if it exists, otherwise null.
+     */
+    public ConstantEntry getConstantEntry(String constname, List<SortEntry> arguments) {
 
-		if(sort_text.compareTo(ALM.SORT_BOOLEANS) == 0)
-			return true;
+        Set<ConstantEntry> matching = CEMap.get(constname);
+        if (matching == null)
+            return null;
+        for (ConstantEntry constEntry : matching) {
+            if (constEntry.getArguments().equals(arguments)) {
+                return constEntry;
+            }
+        }
+        return null;
+    }
 
-		if(sort_text.compareTo(ALM.SORT_INTEGERS) == 0)
-			return true;
+    public NormalFunctionEntry createFunctionEntry(String funname, List<SortEntry> signature, Location loc)
+            throws DuplicateFunctionException {
+        // Check conditions for whether or not its safe to declare the functions
+        // Specifically the function to be created does not have the same function name
+        // and signature.
+        FunctionEntry existing = getFunctionEntry(funname, signature);
+        if (existing != null)
+            throw new DuplicateFunctionException(existing);
 
-		ALMTerm IntegerRange = ALM.ParseIntegerRangeFromString(sort_text);
-		if(IntegerRange != null)
-			return true;
-	
-		return false;
-	}
+        // safe to create new function entry, add it to the set in the map.
+        Set<NormalFunctionEntry> set = FEMap.get(funname);
+        if (set == null) {
+            set = new HashSet<NormalFunctionEntry>();
+            FEMap.put(funname, set);
+        }
+        NormalFunctionEntry newFun = new NormalFunctionEntry(funname, signature, loc);
+        set.add(newFun);
 
+        // Set DOMFunctionEntry for NormalFunction.
+        DMap.put(newFun, new DOMFunctionEntry(newFun, booleans));
+        return newFun;
+    }
 
-	public List<FunctionEntry> getFunctions() {
-		List<FunctionEntry> functions = new ArrayList<FunctionEntry>();
-		for(String fname : FEMap.keySet())
-			for(NormalFunctionEntry fun : FEMap.get(fname))
-				functions.add(fun);
-		return functions;
-	}
+    private Set<NormalFunctionEntry> getFunctionEntry(String funname) {
+        return FEMap.get(funname);
+    }
 
+    private FunctionEntry getFunctionEntry(String funname, List<SortEntry> signature) {
+        Set<NormalFunctionEntry> FS = FEMap.get(funname);
+        if (FS == null)
+            return null;
+        Iterator<NormalFunctionEntry> it = FS.iterator();
+        while (it.hasNext()) {
+            FunctionEntry fe = it.next();
+            if (fe.sigMatch(signature))
+                return fe;
+        }
+        return null;
+    }
 
-	public Collection<SortEntry> getSortEntries() {
-		return this.SEMap.values();
-	}
+    private void initialize() throws DuplicateFunctionException, DuplicateSortException {
 
+        // Before the Hierarchy can be initialized, we need a special sort entry for
+        // nodes in the hierarchy.
+        nodes = new SortEntry(ALM.SPECIAL_SORT_NODES, null);
+        SEMap.put(ALM.SPECIAL_SORT_NODES, nodes);
 
-	public SortEntry getUniverseSortEntry() {
-		
-		return universe;
-	}
-	
-	
-	public SortEntry getTimestepSortEntry() {
-		
-		return timestep;
-	}
-	
-	public SortEntry getActionsSortEntry(){
-		return actions;
-	}
-	
-	public SortEntry getNodesSpecialSortEntry(){
-		return nodes;
-	}
+        // Add Universe Sort
+        universe = this.createSortEntry(ALM.SORT_UNIVERSE, null);
 
+        // Add timestep Sort
+        timestep = this.createSortEntry(ALM.SORT_TIMESTEP, null);
 
-	public SortEntry getBooleansSortEntry() {
-		return booleans;
-	}
+        // Add Actions Sort (child of universe)
+        actions = this.createSortEntry(ALM.SORT_ACTIONS, null);
+        actions.addParentSort(universe);
 
+        // Add Predefined Sorts
+        predefined = new HashSet<SortEntry>();
+        // boolean
+        booleans = this.createSortEntry(ALM.SORT_BOOLEANS, null);
+        predefined.add(booleans);
 
-	public FunctionEntry getFunctionEntry(ALMTerm afun) throws FunctionNotFound {
-		if(afun == null || afun.getType() != ALMTerm.FUN)
-			return null;
-		
-		//This algorithm uses the number of arguments to match functions.  
-		//It might be possible to use type inference, but that would require passing in a variable manager to provide type information.  
-		int num_afun_args = 0;
-		if(afun.getArgs() != null)
-			num_afun_args = afun.getArgs().size();
-		String funName = afun.getName();
-		
-		if(funName.startsWith(ALM.DOM_PREFIX)){
-			String actualFunName = funName.substring(ALM.DOM_PREFIX.length());
-			Set<NormalFunctionEntry> entries = this.getFunctionEntry(actualFunName);
-			if(entries != null)
-				for(FunctionEntry f : entries){
-					if(f.getSignature().size() == num_afun_args+1){  // first function of proper number of arguments is returned.
-						DOMFunctionEntry d = DMap.get(f);
-						if(d == null)
-							throw new FunctionNotFound(afun);
-						return d;
-					}
-				}
-			throw new FunctionNotFound(afun);
-		} else {
-			Set<NormalFunctionEntry> entries = this.getFunctionEntry(funName);
-			if(entries != null)
-				for(FunctionEntry f : entries){
-					if(f.isAttribute()){
-						if(f.getSignature().size() == num_afun_args+1 || num_afun_args == 0)  // first function of proper number of arguments is returned.  
-							return f;
-					}
-					else if(f.getSignature().size() == num_afun_args+1)  // first function of proper number of arguments is returned.  
-						return f;
-				}
-			throw new FunctionNotFound(afun);
-		}
-	}
+        // integer
+        integers = this.createSortEntry(ALM.SORT_INTEGERS, null);
+        predefined.add(integers);
 
+        // Add special functions
 
-	public SortEntry getIntegersSortEntry() {
-		return integers;
-	}
-	
+        // SIGNATURES
+        // universe x nodes -> booleans
+        List<SortEntry> universe_nodes_booleans_sig = new ArrayList<SortEntry>();
+        universe_nodes_booleans_sig.add(universe);
+        universe_nodes_booleans_sig.add(nodes);
+        universe_nodes_booleans_sig.add(booleans);
 
-	public Set<DOMFunctionEntry> getDOMFunctions(){
-		return new HashSet<>(DMap.values());
-	}
-	
-	public DOMFunctionEntry getDOMFunction(FunctionEntry f) {
-		return DMap.get(f);
-	}
+        // nodes x nodes -> booleans
+        List<SortEntry> nodes_nodes_booleans_sig = new ArrayList<SortEntry>();
+        nodes_nodes_booleans_sig.add(nodes);
+        nodes_nodes_booleans_sig.add(nodes);
+        nodes_nodes_booleans_sig.add(booleans);
 
-	/**
-	 * Creates the time step instances i where 0 <= i < {@code upper_boud}
-	 * 
-	 * @param upper_bound The number of time steps.  
-	 */
-	public void setMaxSteps(int upper_bound) {
-		this.timestep.instances.clear();
-		for(int i = 0; i < upper_bound; i++) {
-			timestep.instances.add(new ALMTerm(Integer.toString(i), ALMTerm.INT));
-		}
-		maxStep = upper_bound -1;
-	}
-	
-	public boolean isTimeStep(int i) {
-		return i <= maxStep && i >= 0;
-	}
+        // nodes -> booleans
+        List<SortEntry> nodes_booleans_sig = new ArrayList<SortEntry>();
+        nodes_booleans_sig.add(nodes);
+        nodes_booleans_sig.add(booleans);
 
+        // actions -> booleans
+        List<SortEntry> actions_booleans_sig = new ArrayList<SortEntry>();
+        actions_booleans_sig.add(actions);
+        actions_booleans_sig.add(booleans);
 
-	public boolean modeActive(String mode) {
-		return this.modes.contains(mode);
-	}
-	
-	public void setMode(String mode, boolean setting) {
-		if(setting){
-			this.modes.add(mode);
-		} else {
-			this.modes.remove(mode);
-		}
-	}
+        // SPECIAL FUNCTIONS
 
-	public boolean isAction(ALMTerm action) {
-		return true;
-	}
-	
-	private boolean isInstance(SortEntry sort, ALMTerm instance) {
-		List<ALMTerm> instances = sort.instances;
-		if(instances != null) {
-			for(ALMTerm i : instances) {
-				if(i.toString().compareTo(instance.toString()) == 0) {
-					return true;
-				}
-			}
-		}
-		for(SortEntry child : sort.getChildSorts()) {
-			if(isInstance(child, instance)) {
-				return true;
-			}
-		}
-		return false;
-	}
+        // is_a
+        FunctionEntry is_a = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_IS_A, universe_nodes_booleans_sig, null);
+        is_a.setSpecial();
+        is_a.setStatic();
+        is_a.setTotal();
+        is_a.setDefined();
 
+        // instance
+        FunctionEntry instance = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_INSTANCE, universe_nodes_booleans_sig,
+                null);
+        instance.setSpecial();
+        instance.setStatic();
+        instance.setTotal();
+        instance.setDefined();
+
+        // link
+        FunctionEntry link = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_LINK, nodes_nodes_booleans_sig, null);
+        link.setSpecial();
+        link.setStatic();
+        link.setTotal();
+        link.setDefined();
+
+        // subsort
+        FunctionEntry subsort = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SUBSORT, nodes_nodes_booleans_sig, null);
+        subsort.setSpecial();
+        subsort.setStatic();
+        subsort.setTotal();
+        subsort.setDefined();
+
+        // has_child
+        FunctionEntry has_child = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_CHILD, nodes_booleans_sig, null);
+        has_child.setSpecial();
+        has_child.setStatic();
+        has_child.setTotal();
+        has_child.setDefined();
+
+        // has_parent
+        FunctionEntry has_parent = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_PARENT, nodes_booleans_sig, null);
+        has_parent.setSpecial();
+        has_parent.setStatic();
+        has_parent.setTotal();
+        has_parent.setDefined();
+
+        // sink
+        FunctionEntry sink = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SINK, nodes_booleans_sig, null);
+        sink.setSpecial();
+        sink.setStatic();
+        sink.setTotal();
+        sink.setDefined();
+
+        // source
+        FunctionEntry source = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SOURCE, nodes_booleans_sig, null);
+        source.setSpecial();
+        source.setStatic();
+        source.setTotal();
+        source.setDefined();
+
+        // occurs
+        FunctionEntry occurs = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_OCCURS, actions_booleans_sig, null);
+        occurs.setSpecial();
+        occurs.setFluent();
+        occurs.setTotal();
+        occurs.setDefined();
+
+    }
+
+    public void writeTo(BufferedWriter out) throws IOException {
+        if (out == null)
+            return;
+        out.write("------------------\n");
+        out.write("-- SYMBOL TABLE --\n");
+        out.write("------------------\n\n");
+
+        out.write("-------------------\n");
+        out.write("-- Sort Hierachy --\n");
+        out.write("-------------------\n\n");
+
+        Set<SortEntry> printed = new HashSet<SortEntry>();
+
+        Iterator<String> itS = SEMap.keySet().iterator();
+        while (itS.hasNext()) {
+            SortEntry se = SEMap.get(itS.next());
+            se.writeTo(out, printed);
+        }
+        out.write("\n");
+        out.flush();
+
+        out.write("---------------------------\n");
+        out.write("-- Constant Declarations --\n");
+        out.write("---------------------------\n\n");
+
+        for (Set<ConstantEntry> constSet : CEMap.values()) {
+            for (ConstantEntry ce : constSet) {
+                ce.writeTo(out);
+                out.write("\n");
+            }
+        }
+        out.flush();
+
+        out.write("---------------------------\n");
+        out.write("-- Function Declarations --\n");
+        out.write("---------------------------\n\n");
+
+        Iterator<String> itFS = FEMap.keySet().iterator();
+        while (itFS.hasNext()) {
+            Set<NormalFunctionEntry> sfe = FEMap.get(itFS.next());
+            Iterator<NormalFunctionEntry> itF = sfe.iterator();
+            while (itF.hasNext()) {
+                FunctionEntry fe = itF.next();
+                fe.writeTo(out);
+                out.write("\n");
+            }
+        }
+
+        out.flush();
+    }
+
+    public boolean isPredefinedSort(String sort_text) {
+
+        if (sort_text.compareTo(ALM.SORT_BOOLEANS) == 0)
+            return true;
+
+        if (sort_text.compareTo(ALM.SORT_INTEGERS) == 0)
+            return true;
+
+        ALMTerm IntegerRange = ALM.ParseIntegerRangeFromString(sort_text);
+        if (IntegerRange != null)
+            return true;
+
+        return false;
+    }
+
+    public List<FunctionEntry> getFunctions() {
+        List<FunctionEntry> functions = new ArrayList<FunctionEntry>();
+        for (String fname : FEMap.keySet())
+            for (NormalFunctionEntry fun : FEMap.get(fname))
+                functions.add(fun);
+        return functions;
+    }
+
+    public Collection<SortEntry> getSortEntries() {
+        return this.SEMap.values();
+    }
+
+    public SortEntry getUniverseSortEntry() {
+
+        return universe;
+    }
+
+    public SortEntry getTimestepSortEntry() {
+
+        return timestep;
+    }
+
+    public SortEntry getActionsSortEntry() {
+        return actions;
+    }
+
+    public SortEntry getNodesSpecialSortEntry() {
+        return nodes;
+    }
+
+    public SortEntry getBooleansSortEntry() {
+        return booleans;
+    }
+
+    public Set<FunctionEntry> getFunctionEntries(String fname) {
+        String baseName = fname;
+        if (fname.startsWith(ALM.DOM_PREFIX)) {
+            baseName = fname.substring(ALM.DOM_PREFIX.length());
+        }
+        Set<NormalFunctionEntry> funs = FEMap.get(baseName);
+        if (fname == baseName)
+            return new HashSet<>(funs);
+        else {
+            Set<FunctionEntry> doms = new HashSet<>();
+            for (NormalFunctionEntry f : funs) {
+                doms.add(DMap.get(f));
+            }
+            return doms;
+        }
+    }
+
+    public Set<FunctionEntry> getFunctionEntries(String fname, int numArgs) {
+        String baseName = fname;
+        if (fname.startsWith(ALM.DOM_PREFIX)) {
+            baseName = fname.substring(ALM.DOM_PREFIX.length());
+        }
+        Set<NormalFunctionEntry> nFuns = FEMap.get(baseName);
+        Set<FunctionEntry> funs = new HashSet<>();
+        if (nFuns == null || nFuns.size() == 0)
+            return funs;
+        for (NormalFunctionEntry f : nFuns) {
+            if (f.getSignature().size() - 1 == numArgs) {
+                if (fname == baseName) {
+                    funs.add(f);
+                } else {
+                    funs.add(DMap.get(f));
+                }
+            }
+        }
+        return funs;
+    }
+
+    public SortEntry getIntegersSortEntry() {
+        return integers;
+    }
+
+    public Set<DOMFunctionEntry> getDOMFunctions() {
+        return new HashSet<>(DMap.values());
+    }
+
+    public DOMFunctionEntry getDOMFunction(FunctionEntry f) {
+        return DMap.get(f);
+    }
+
+    /**
+     * Creates the time step instances i where 0 <= i < {@code upper_boud}
+     * 
+     * @param upper_bound
+     *            The number of time steps.
+     */
+    public void setMaxSteps(int upper_bound) {
+        this.timestep.instances.clear();
+        for (int i = 0; i < upper_bound; i++) {
+            timestep.instances.add(new ALMTerm(Integer.toString(i), ALMTerm.INT));
+        }
+        maxStep = upper_bound - 1;
+    }
+
+    public boolean isTimeStep(int i) {
+        return i <= maxStep && i >= 0;
+    }
+
+    public boolean modeActive(String mode) {
+        return this.modes.contains(mode);
+    }
+
+    public void setMode(String mode, boolean setting) {
+        if (setting) {
+            this.modes.add(mode);
+        } else {
+            this.modes.remove(mode);
+        }
+    }
+
+    public boolean isAction(ALMTerm action) {
+        return true;
+    }
+
+    private boolean isInstance(SortEntry sort, ALMTerm instance) {
+        List<ALMTerm> instances = sort.instances;
+        if (instances != null) {
+            for (ALMTerm i : instances) {
+                if (i.toString().compareTo(instance.toString()) == 0) {
+                    return true;
+                }
+            }
+        }
+        for (SortEntry child : sort.getChildSorts()) {
+            if (isInstance(child, instance)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Finds a matching constant entry of the same name. returns null if no such constant entry can be found.
+     * 
+     * @param constTerm
+     *            The ALMTerm whose matching constant entry we are seeking.
+     * @return the matching constant entry if it exists, otherwise null.
+     */
+    public Set<ConstantEntry> getMatchingConstantEntries(ALMTerm constTerm) {
+        int argSize = 0;
+        switch (constTerm.getType()) {
+        case ALMTerm.ID:
+            break;
+        case ALMTerm.FUN:
+            argSize = constTerm.getArgs().size();
+            break;
+        default:
+            return null;
+        }
+        String constName = constTerm.getName();
+        Set<ConstantEntry> constSet = CEMap.get(constName);
+        if (constSet != null) {
+            if (argSize > 0) {
+                Set<ConstantEntry> matching = new HashSet<>();
+                for (ConstantEntry ce : constSet) {
+                    if (ce.getArguments().size() == argSize)
+                        matching.add(ce);
+                }
+                return matching;
+            } else
+                return constSet;
+        }
+        return null;
+    }
+
+    public Set<ConstantEntry> getConstantEntries(String name) {
+        return CEMap.get(name);
+    }
+
+    public Set<ConstantEntry> getConstantEntries(String name, int argSize) {
+        Set<ConstantEntry> constants = CEMap.get(name);
+        if (constants == null)
+            return null;
+        Set<ConstantEntry> matches = new HashSet<>();
+        for (ConstantEntry c : constants) {
+            if (c.getArguments().size() == argSize)
+                matches.add(c);
+        }
+        return matches;
+    }
+
+    public FunctionEntry getFunctionEntry(ALMTerm funTerm, int domSize, SymbolTable st, ErrorReport er) {
+        Set<FunctionEntry> matching = st.getFunctionEntries(funTerm.getName(), domSize);
+        if (matching.size() < 0) {
+            er.newSemanticError(SemanticError.FND003).add(funTerm);
+            return null;
+        } else if (matching.size() > 1) {
+            Iterator<FunctionEntry> funs = matching.iterator();
+            er.newSemanticError(SemanticError.FND009).add(funTerm).add(funs.next()).add(funs.next());
+            return null;
+        }
+        return matching.iterator().next();
+    }
+
+    public ConstantEntry getConstantEntry(ALMTerm constTerm, int argSize, SymbolTable st, ErrorReport er) {
+        Set<ConstantEntry> matching = st.getConstantEntries(constTerm.getName(), argSize);
+        if (matching.size() < 0) {
+            er.newSemanticError(SemanticError.CND008).add(constTerm);
+            return null;
+        } else if (matching.size() > 1) {
+            Iterator<ConstantEntry> funs = matching.iterator();
+            er.newSemanticError(SemanticError.CND007).add(constTerm).add(funs.next()).add(funs.next());
+            return null;
+        }
+        return matching.iterator().next();
+    }
 }

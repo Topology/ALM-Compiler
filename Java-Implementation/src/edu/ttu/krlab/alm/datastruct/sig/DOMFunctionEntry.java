@@ -10,53 +10,53 @@ import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.Location;
 
 public class DOMFunctionEntry implements FunctionEntry {
-	
+
 	private FunctionEntry f;
 	private List<SortEntry> signature;
-	
-	public DOMFunctionEntry(FunctionEntry f, SortEntry booleans){
+
+	public DOMFunctionEntry(FunctionEntry f, SortEntry booleans) {
 		this.f = f;
 		signature = new ArrayList<SortEntry>();
 		List<SortEntry> f_sig = f.getSignature();
-		int sig_size = f_sig.size()-1;
-		for(int i = 0; i < sig_size; i++)
+		int sig_size = f_sig.size() - 1;
+		for (int i = 0; i < sig_size; i++)
 			signature.add(f_sig.get(i));
 		signature.add(booleans);
 	}
 
 	@Override
 	public void setAttribute() {
-		//does nothing, as attribute value is determined by wrapped function.
+		// does nothing, as attribute value is determined by wrapped function.
 	}
 
 	@Override
 	public void setStatic() {
-		//does nothing, as attribute value is determined by wrapped function.
+		// does nothing, as attribute value is determined by wrapped function.
 	}
 
 	@Override
 	public void setFluent() {
-		//does nothing, as attribute value is determined by wrapped function.
+		// does nothing, as attribute value is determined by wrapped function.
 	}
 
 	@Override
 	public void setBasic() {
-		//does nothing, as attribute value is determined by wrapped function.
+		// does nothing, as attribute value is determined by wrapped function.
 	}
 
 	@Override
 	public void setDefined() {
-		//does nothing, as attribute value is determined by wrapped function.
+		// does nothing, as attribute value is determined by wrapped function.
 	}
 
 	@Override
 	public void setTotal() {
-		//does nothing, as attribute value is determined by wrapped function.
+		// does nothing, as attribute value is determined by wrapped function.
 	}
 
 	@Override
 	public void setSpecial() {
-		//does nothing, as attribute value is determined by wrapped function.
+		// does nothing, as attribute value is determined by wrapped function.
 	}
 
 	@Override
@@ -66,7 +66,7 @@ public class DOMFunctionEntry implements FunctionEntry {
 
 	@Override
 	public boolean isStatic() {
-		return	f.isStatic();
+		return f.isStatic();
 	}
 
 	@Override
@@ -96,7 +96,7 @@ public class DOMFunctionEntry implements FunctionEntry {
 
 	@Override
 	public String getFunctionName() {
-		return ALM.DOM_PREFIX+f.getFunctionName();
+		return ALM.DOM_PREFIX + f.getFunctionName();
 	}
 
 	@Override
@@ -112,58 +112,58 @@ public class DOMFunctionEntry implements FunctionEntry {
 	@Override
 	public boolean sigMatch(List<SortEntry> signature) {
 		int sig_size = this.signature.size();
-		if(signature.size() != sig_size)
+		if (signature.size() != sig_size)
 			return false;
-		for(int i = 0; i < sig_size; i++)
-			if(this.signature.get(i) != signature.get(i))
+		for (int i = 0; i < sig_size; i++)
+			if (this.signature.get(i) != signature.get(i))
 				return false;
 		return true;
 	}
 
 	@Override
 	public void writeTo(BufferedWriter out) throws IOException {
-		
-		out.write(this.getFunctionName()+": ");
+
+		out.write(this.getFunctionName() + ": ");
 		int length = signature.size();
-		for(int i = 0; i < length -1; i++){
+		for (int i = 0; i < length - 1; i++) {
 			out.write(signature.get(i).getSortName());
-			if(i < signature.size()-2)
+			if (i < signature.size() - 2)
 				out.write(" * ");
 		}
-		if(length == 0)
-			ALMCompiler.PROGRAM_FAILURE("Writing Function Entry", "Length Of Signature is 0 for function ["+this.getFunctionName()+"]");
+		if (length == 0)
+			ALMCompiler.IMPLEMENTATION_FAILURE("Writing Function Entry",
+					"Length Of Signature is 0 for function [" + this.getFunctionName() + "]");
 		out.write(" -> ");
-		out.write(signature.get(signature.size()-1).getSortName());
-		out.write(" "+f.getLocation().toString()+ " ");
-		
+		out.write(signature.get(signature.size() - 1).getSortName());
+		out.write(" " + f.getLocation().toString() + " ");
 
-		if(isTotal())
+		if (isTotal())
 			out.write("total ");
-		if(isAttribute())
+		if (isAttribute())
 			out.write("attribute ");
-		if(isStatic())
+		if (isStatic())
 			out.write("static ");
-		if(isFluent())
+		if (isFluent())
 			out.write("fluent ");
-		if(isDefined())
+		if (isDefined())
 			out.write("defined ");
-		if(isBasic())
+		if (isBasic())
 			out.write("basic ");
-		
+
 		out.write("\n");
-		
+
 		out.flush();
 
 	}
 
 	@Override
 	public String getQualifiedFunctionName() {
-		return ALM.DOM_PREFIX+f.getQualifiedFunctionName();
+		return ALM.DOM_PREFIX + f.getQualifiedFunctionName();
 	}
 
 	@Override
 	public SortEntry getRangeSort() {
-		return signature.get(signature.size()-1);
+		return signature.get(signature.size() - 1);
 	}
 
 	@Override

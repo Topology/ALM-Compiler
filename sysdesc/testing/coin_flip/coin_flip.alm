@@ -23,7 +23,7 @@ module coin_flip
 			occurs(X) causes -dom_showing(Y) if instance(X, hides), coin_hidden(X) = Y. 
 structure coin_flip
 	instances
-		nickel, dime in coins
+		nickel, dime, quarter in coins
 		flip(X) in flips
 			flipped_coin = X
 		hide(X) in hides
@@ -40,4 +40,3 @@ happened(flip(dime), 2)
 happened(flip(nickel), 2)
 happened(flip(dime), 4)
 happened(flip(nickel), 4) 
-happened(hide(dime), 4)
