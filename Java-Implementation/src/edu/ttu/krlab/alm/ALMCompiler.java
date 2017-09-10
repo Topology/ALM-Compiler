@@ -116,7 +116,6 @@ public class ALMCompiler {
         SortEntry universe = st.getUniverseSortEntry();
 
         PreModelSortHierarchy(universe, pm, st, started, finished);
-        finished.add(universe);
 
         // need to add special sort nodes to pre-model.
         SortEntry nodesentry = st.getNodesSpecialSortEntry();
@@ -147,92 +146,101 @@ public class ALMCompiler {
         }
     }
 
+    /**
+     * Recursively constructs the sort section of the given SPARCProgram ensuring that all dependencies are respected.
+     * <br>
+     * A sort S is dependent on S' under the following conditions:
+     * <ol>
+     * <li>S' is a child sort of S
+     * <li>S' is used in the signature of an attribute function of S.
+     * <li>S' is used as an argument to a descendant ConstantEntry functor.
+     * </ol>
+     * 
+     * 
+     * @param se
+     * @param pm
+     * @param st
+     * @param started
+     * @param finished
+     */
     private static void PreModelSortHierarchy(SortEntry se, SPARCProgram pm, SymbolTable st, Set<SortEntry> started,
             Set<SortEntry> finished) {
 
-        // enumerate sorts which are necessary for attribute functions.
+        //Check to see if this sort is finished.  If so, return. 
+        if (finished.contains(se))
+            return;
+
+        //if se has been started before now, throw an error.  A semantic error should have caught this. 
+        if (started.contains(se))
+            IMPLEMENTATION_FAILURE("Construct PREMODEL SORT SECTION",
+                    "Loop detected in sort heierarchy.  This code path should not execute due to semantic error generation.");
+
+        //Add sort to the started set. 
+        started.add(se);
+
+        //Collect dependencies. 
+        Set<SortEntry> dependencies = new HashSet<>();
+        //1. S' is a child of S
+        dependencies.addAll(se.getChildSorts());
+        //2. S' is used in the signature of the attribute function of S
         for (FunctionEntry attr : se.getAttributes()) {
             List<SortEntry> sig = attr.getSignature();
             int sig_length = sig.size();
-            for (int i = 1; i < sig_length; i++) { // skip the first sort for attributes, always.
+            for (int i = 0; i < sig_length; i++) { // skip the first sort for attributes, always.
                 SortEntry sort = sig.get(i);
-                if (finished.contains(sort))
+                if (finished.contains(sort)) //skip completed dependencies. 
                     continue;
-                if (sort.getSortName().compareTo(se.getSortName()) != 0) { // ignore references to sort of attribute.
-                    if (started.contains(sort))
-                        // This should be caught by a semantic error and premodel should not be
-                        // constructed.
-                        IMPLEMENTATION_FAILURE("Construct Premodel Sorts",
-                                "Loop Detected: attribute [" + attr.getFunctionName() + "] of sort [" + se.getSortName()
-                                        + "] is dependent on sort [" + sort.getSortName()
-                                        + "] which has started but not finished with writing out dependencies.");
-                    // the sort must be written out first since se's attribute depends on it.
-                    started.add(sort);
-                    PreModelSortHierarchy(sort, pm, st, started, finished);
-                    finished.add(sort);
+                if (sort != se) { // ignore references to se.  
+                    dependencies.add(sort);
                 }
             }
         }
+        //3. S' is an argument of a one of the constants that can occur for this sort. 
+        for (ConstantEntry ce : se.getConstants()) {
+            for (SortEntry arg : ce.getArguments()) {
+                if (arg != se)
+                    dependencies.add(arg);
+                else
+                    IMPLEMENTATION_FAILURE("Construct Pre-Model Sort Section",
+                            "Constant [" + ce.getConstName() + "] is an instance of its own argument ["
+                                    + arg.getSortName() + "], creating a circular dependency.");
 
-        // enumerate the remainder of the child sorts in the hierarchy
-        for (SortEntry sort : se.getChildSorts()) {
-            if (finished.contains(sort))
-                continue;
-            if (started.contains(sort))
-                // This should be caught by a semantic error and premodel should not be
-                // constructed.
-                IMPLEMENTATION_FAILURE("Construct Premodel Sorts",
-                        "Loop Detected: sort [" + se.getSortName() + "] is dependent on sort [" + sort.getSortName()
-                                + "] which has started but not finished with writing out dependencies.");
-            // the sort must be written out first since se's attribute depends on it.
-            started.add(sort);
-            PreModelSortHierarchy(sort, pm, st, started, finished);
-            finished.add(sort);
+            }
         }
 
+        //first write out dependencies. 
+        for (SortEntry dependency : dependencies)
+            PreModelSortHierarchy(dependency, pm, st, started, finished);
+
         // writing out dependencies is finished, time to write out this sort.
-        if (se.getChildSorts().size() > 0) {
-            // Not A Source Sort
-            SPARCSort psort = new SPARCSort(se.getSortName());
+        SPARCSort psort = new SPARCSort(se.getSortName());
+        if (se.isSingletonSort()) {
+            //singleton is a leaf sort
+            ConstantEntry ce = se.getSingletonConstant();
+            psort.addInstance(ce.getALMTerm());
+        } else {
+            //add any instances.  
+            for (ALMTerm si : se.getInstances()) {
+                psort.addInstance(si);
+            }
+            // add child sorts
             for (SortEntry sort : se.getChildSorts()) {
                 try {
                     psort.union(pm.getSPARCSort(sort.getSortName()));
                 } catch (SPARCSortNotDefined e) {
-                    e.printStackTrace();
                     IMPLEMENTATION_FAILURE("Construct Premodel Sorts", "Sort was not defined: " + e.getMessage());
                 }
             }
-
-            try {
-                pm.addSPARCSort(psort);
-            } catch (SPARCSortAlreadyDefined e) {
-                // This shouldn't happen as it should generate a semantic error to catch this
-                // situation and not attempt to create the premodel.
-                e.printStackTrace();
-                IMPLEMENTATION_FAILURE("Construct Premodel Sorts", "Sort was defined twice: " + e.getMessage());
-            }
-        } else {
-            // IS A SOURCE SORT
-            SPARCSort psort = new SPARCSort(se.getSortName());
-            psort.addComment("Source Sort");
-            for (ALMTerm si : se.getInstances()) {
-                psort.addInstance(si);
-            }
-            for (ConstantEntry ce : se.getConstants()) {
-                List<SortEntry> args = ce.getArguments();
-                if (args.size() == 0)
-                    psort.addInstance(new ALMTerm(ce.getConstName(), ALMTerm.ID));
-                else
-                    IMPLEMENTATION_FAILURE("Construct Premodel Sorts",
-                            "Need to implement singleton sorts for constants.");
-            }
-            try {
-                pm.addSPARCSort(psort);
-            } catch (SPARCSortAlreadyDefined e) {
-                e.printStackTrace();
-                IMPLEMENTATION_FAILURE("Construct Premodel Sorts", "Sort was defined twice: " + e.getMessage());
-            }
         }
+
+        try {
+            pm.addSPARCSort(psort);
+        } catch (SPARCSortAlreadyDefined e) {
+            IMPLEMENTATION_FAILURE("Construct Premodel Sorts", "Sort was defined twice: " + e.getMessage());
+        }
+
+        //indicate se is finished. 
+        finished.add(se);
     }
 
     private static void PreModelCreatePredicatesSection(SPARCProgram pm, SymbolTable st) {
@@ -837,11 +845,37 @@ public class ALMCompiler {
 
     private static void ConstructFinalProgram(SPARCProgram tm, AnswerSet as, SPARCProgram pm, SymbolTable st,
             ASPfProgram aspf, ALMCompilerSettings s) {
+        PurgeSingletonSorts(pm, as, st);
         CreateFinalSortsSection(tm, pm, as, st);
         CreateFinalPredicatesSection(tm, pm, as);
         CreateFinalProgramRules(tm, st, pm, aspf);
         CreateHistory(tm, st, aspf);
         LoadFactsFromPreModelAnswerSet(tm, as, s);
+    }
+
+    private static void PurgeSingletonSorts(SPARCProgram pm, AnswerSet as, SymbolTable st) {
+        Set<SortEntry> singletons = st.getSingletonSorts();
+        st.purgeSingletonSorts();
+        for (SortEntry singleton : singletons) {
+            String name = singleton.getSortName();
+            pm.removeSPARCSortWithName(name);
+            pm.removePredicatesContaining(name);
+            pm.removeRulesContaining(name);
+            as.purgeLiteralsContaining(name);
+        }
+        //the nodes sort needs to be re-rendered to not contain the singleton sorts as instances.
+        SortEntry nodes = st.getNodesSpecialSortEntry();
+        pm.removeSPARCSortWithName(nodes.getSortName());
+        SPARCSort nodeSort = new SPARCSort(nodes.getSortName());
+        for (ALMTerm inst : nodes.getInstances()) {
+            nodeSort.addInstance(inst);
+        }
+        try {
+            pm.addSPARCSort(nodeSort);
+        } catch (SPARCSortAlreadyDefined e) {
+            IMPLEMENTATION_FAILURE("Purging Singleton Sorts", "purge was not successfull.");
+        }
+
     }
 
     private static void CreateFinalSortsSection(SPARCProgram tm, SPARCProgram pm, AnswerSet as, SymbolTable st) {

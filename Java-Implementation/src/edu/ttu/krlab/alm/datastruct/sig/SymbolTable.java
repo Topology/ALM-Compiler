@@ -31,6 +31,7 @@ public class SymbolTable {
     private Set<String> modes;
     private HashSet<SortEntry> predefined;
     private HashMap<String, SortEntry> SEMap;
+    private HashMap<String, SortEntry> singletons;
 
     /**
      * Constant entries are first retrievable by name and then by their argument signature.
@@ -51,6 +52,7 @@ public class SymbolTable {
         CEMap = new HashMap<>();
         FEMap = new HashMap<>();
         DMap = new HashMap<>();
+        singletons = new HashMap<>();
         try {
             initialize();
         } catch (DuplicateFunctionException | DuplicateSortException e) {
@@ -122,28 +124,69 @@ public class SymbolTable {
         // By this point we have a matching constant entry from the set of constant
         // entries with the same name.
 
-        // we need to register the constant entry with the sorts in the parent_sorts
-        // list.
-        // If it is already registered, we need to throw an exception containing the set
-        // of duplicate declarations.
+        //get or create the singleton sort created specifically to house the constant
+        SortEntry singleton = getSingletonSortForConstantEntry(constEntry);
+
+        //add the singleton sort as sub-sorts to the source-sorts of the constant entry.  
+        //collect any duplicate declarations for an exception. 
+
         Set<SortEntry> duplicates = null;
         for (SortEntry sort : parent_sorts) {
-            List<ConstantEntry> constList = sort.getConstants();
-            if (constList.contains(constEntry)) {
+            if (sort.childSorts.contains(singleton)) {
                 if (duplicates == null) {
                     duplicates = new HashSet<>();
                 }
                 duplicates.add(sort);
             } else {
-                constList.add(constEntry);
+                sort.childSorts.add(singleton);
+                singleton.parentSorts.add(sort);
             }
         }
 
         if (duplicates != null) {
             throw new DuplicateConstantException(constEntry, duplicates);
         }
-
         return constEntry;
+    }
+
+    /**
+     * Retrieves an existing singleton sort entry if it exists or creates a new one to hold the constant entry as its
+     * only instance. The singleton sort entry is marked as a singleton and registered with the constant for later
+     * retrieval.
+     * 
+     * @param ce
+     *            The {@link ConstantEntry ConstantEntry} for which its singleton sort is to be retrieved.
+     * 
+     * @return The {@link SortEntry SortEntry} that is the singleton sort of the constant entry.
+     */
+    private SortEntry getSingletonSortForConstantEntry(ConstantEntry ce) {
+        //The naming convention of the singleton sort should not be easily produced by a user of the ALM system. 
+        //Pattern:  singleton_constName_SortArg1Name_SortArt2Neam_...___  <- three trailing underscores. 
+        //This pattern will be used to easily identify and remove singleton sorts from the premodel sparc program. 
+        String singletonName = "singleton_" + ce.getConstName();
+        for (SortEntry sort : ce.getSourceSorts())
+            singletonName += "_" + sort.getSortName();
+        singletonName += "___";
+
+        //lookup for an existing singleton matching this pattern. 
+        SortEntry singleton = singletons.get(singletonName);
+        if (singleton == null) {
+            //creating the sort entry will add the singleton as a formal node in the hierarchy
+            //this will need to be purged after the premodel is computed.  
+            boolean success = false;
+            while (!success) {
+                try {
+                    singleton = createSortEntry(singletonName, null);
+                    success = true;
+                } catch (DuplicateSortException e) {
+                    singletonName += "_"; //extend the name until a unique name is found.  
+                }
+            }
+            singleton.setSingletonConstant(ce);
+            ce.setSingletonSort(singleton);
+            singletons.put(singletonName, singleton);
+        }
+        return singleton;
     }
 
     /**
@@ -603,5 +646,20 @@ public class SymbolTable {
             return null;
         }
         return matching.iterator().next();
+    }
+
+    public Set<SortEntry> getSingletonSorts() {
+        return new HashSet<>(singletons.values());
+    }
+
+    public void purgeSingletonSorts() {
+        //remove from nodes
+        for (SortEntry singleton : singletons.values()) {
+            for (SortEntry parent : singleton.getParentSorts()) {
+                parent.getChildSorts().remove(singleton);
+            }
+            nodes.removeSortInstanceWithName(singleton.getSortName());
+        }
+        singletons.clear();
     }
 }

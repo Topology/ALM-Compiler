@@ -11,10 +11,12 @@ import edu.ttu.krlab.alm.datastruct.Location;
 
 public class ConstantEntry {
 
+    ALMTerm almTerm = null;
     String constName;
     List<SortEntry> sourceSorts;
     List<SortEntry> arguments;
     Location loc;
+    SortEntry singletonSort = null;
 
     public ConstantEntry(String name, List<SortEntry> arguments, List<SortEntry> sourceSorts, Location loc) {
         this.constName = name;
@@ -110,4 +112,26 @@ public class ConstantEntry {
         return text;
     }
 
+    public void setSingletonSort(SortEntry singleton) {
+        this.singletonSort = singleton;
+    }
+
+    public SortEntry getSingletonSort() {
+        return this.singletonSort;
+    }
+
+    //caches the almTerm. 
+    public ALMTerm getALMTerm() {
+        if (almTerm == null) {
+            if (arguments == null || arguments.size() == 0)
+                almTerm = new ALMTerm(constName, ALMTerm.ID);
+            else {
+                almTerm = new ALMTerm(constName, ALMTerm.FUN);
+                for (SortEntry arg : arguments) {
+                    almTerm.addArg(new ALMTerm(arg.getSortName(), ALMTerm.ID));
+                }
+            }
+        }
+        return almTerm;
+    }
 }
