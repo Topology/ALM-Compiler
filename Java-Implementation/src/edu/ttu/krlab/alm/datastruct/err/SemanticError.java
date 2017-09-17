@@ -80,6 +80,12 @@ public class SemanticError {
     public static final String TYP002 = "TYP002";
     public static final String TYP003 = "TYP003";
     public static final String TYP004 = "TYP004";
+    public static final String CDF001 = "CDF001";
+    public static final String CDF002 = "CDF002";
+    public static final String CDF003 = "CDF003";
+    public static final String CDF004 = "CDF004";
+    public static final String CDF005 = "CDF005";
+    public static final String CDF006 = "CDF006";
 
     String errID;
     String completeMessage;

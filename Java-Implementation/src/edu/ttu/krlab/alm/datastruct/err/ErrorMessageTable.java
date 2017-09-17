@@ -436,6 +436,47 @@ public abstract class ErrorMessageTable {
                 "Determine if the factors that contribute to the expected sort need to change or if the term must change.");
         errorMetaData.put(SemanticError.TYP003, typ003);
 
+        // CDF001
+        ErrorMetaDataBase cdf001 = new ErrorMetaDataBase(SemanticError.CDF001,
+                "For constant definition [1], the term to the left of ‘=’ does not match any declared constants.",
+                "In order to perform constant substitution, a valid constant must be provided.",
+                "Either add a new constant declaration in the theory or change the constant definition to match a valid constant.");
+        errorMetaData.put(SemanticError.CDF001, cdf001);
+
+        // CDF002
+        ErrorMetaDataBase cdf002 = new ErrorMetaDataBase(SemanticError.CDF002,
+                "In constant definition [1], the defining term [2] on the right is itself a constant defined by term [3].",
+                "Indirect constant definitions are not supported in this version of ALM.",
+                "Define the constant directly with its intended final value.");
+        errorMetaData.put(SemanticError.CDF002, cdf002);
+
+        // CDF003
+        ErrorMetaDataBase cdf003 = new ErrorMetaDataBase(SemanticError.CDF003,
+                "In constant definition [1], the term to the left of ‘=’  is not a ground term.",
+                "Constant definitions define substitutions on terms.  This version of ALM only supports simple ground constant substitution.",
+                "Remove the constant definition or change the definition to be for a simple ground constant.");
+        errorMetaData.put(SemanticError.CDF003, cdf003);
+
+        // CDF004
+        ErrorMetaDataBase cdf004 = new ErrorMetaDataBase(SemanticError.CDF004,
+                "In constant definition [1], the term to the right of ‘=’  is not a ground term.",
+                "Constant definitions define substitutions on terms.  This version of ALM only supports substitution with ground terms.",
+                "Ensure that the right hand side of the constant definition is a ground term.");
+        errorMetaData.put(SemanticError.CDF004, cdf004);
+
+        // CDF005
+        ErrorMetaDataBase cdf005 = new ErrorMetaDataBase(SemanticError.CDF005,
+                "Duplicate constant definition [1].  The constant is defined elsewhere as [2].",
+                "Constants can have at most 1 definition.", "Remove one of the constant definitions.");
+        errorMetaData.put(SemanticError.CDF005, cdf005);
+
+        // CDF006
+        ErrorMetaDataBase cdf006 = new ErrorMetaDataBase(SemanticError.CDF006,
+                "Constant definition [1] is not supported in this version of ALM.",
+                "This version of ALM only supports the definition of simple ground constants.",
+                "Remove or change the constant definition to be for a simple ground constant.");
+        errorMetaData.put(SemanticError.CDF006, cdf006);
+
         // PER ERROR ID = new ErrorMetaDataBase("errorid", "message", "explanation",
         // "recommendation");
         // errorMetaData.put("errorid", emd);

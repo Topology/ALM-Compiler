@@ -803,4 +803,62 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                 arg.registerVariables(variables);
             }
     }
+
+    /**
+     * Recursively traverses the ALMTerm looking substructure that matches the pattern to replace with the given
+     * replacement ALMTerm. Variable names are allowed to differ, but variable occurrences are required to match
+     * structurally.
+     * 
+     * @param pattern
+     *            The structure that must match.
+     * @param replacement
+     */
+    public void replaceTerm(ALMTerm pattern, ALMTerm replacement) {
+        if (this.matches(pattern)) {
+            this.name = replacement.getName();
+            this.type = replacement.getType();
+            this.sign = replacement.getSign();
+            getArgs().clear();
+            this.args.addAll(replacement.getArgs());
+            this.prc = replacement.getLocation();
+        } else if (args != null && args.size() > 0) {
+            for (ALMTerm arg : args)
+                arg.replaceTerm(pattern, replacement);
+        }
+    }
+
+    /**
+     * Recursively Compares this ALMTerm to the given pattern allowing for variable name differences. This does not
+     * allow for loose matches where variables can be matched to non-variable ALMTerms.
+     * 
+     * @param pattern
+     *            The pattern to match against.
+     * @return True if there is a structural match, otherwise false is returned.
+     */
+    public boolean matches(ALMTerm pattern) {
+        if (this.type != pattern.type)
+            return false;
+        //type matches
+        switch (this.type) {
+        case ALMTerm.VAR:
+            return true; //the variable name does not matter when matching.
+        }
+        if (!this.name.equals(pattern.name))
+            return false;
+        //name matches
+        if (this.sign != pattern.sign)
+            return false;
+        //sign matches
+        int numArgs = args == null ? 0 : args.size();
+        if (numArgs != pattern.getArgs().size())
+            return false;
+        //size of arguments match
+        for (int i = 0; i < numArgs; i++) {
+            if (!args.get(i).matches(pattern.getArg(i)))
+                return false;
+        }
+        //all arguments match
+        return true;
+    }
+
 }

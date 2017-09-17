@@ -28,6 +28,9 @@ structure coin_flip
 			flipped_coin = X
 		hide(X) in hides
 			coin_hidden = X
+    constant definitions
+        heads = front
+        tails = back
 temporal projection
 max steps 6
 history 

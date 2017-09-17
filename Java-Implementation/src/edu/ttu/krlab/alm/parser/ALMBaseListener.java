@@ -3,7 +3,6 @@
 package edu.ttu.krlab.alm.parser;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -89,8 +88,6 @@ public class ALMBaseListener implements ALMListener {
     private ErrorReport er;
     private ASPfProgram aspf;
     private ALMCompilerSettings s;
-
-    private List<HashMap<ConstantEntry, ALMTerm>> constantMap = new ArrayList<HashMap<ConstantEntry, ALMTerm>>();
 
     // Function Type
     boolean staticType = false;
@@ -2102,22 +2099,6 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void exitStructure(ALMParser.StructureContext ctx) {
-        // Replace in the all of the places that object constant is occurred
-        for (int i = 0; i < constantMap.size(); i++) {
-            Set<ConstantEntry> cntList = constantMap.get(i).keySet();
-            for (ConstantEntry cnt : cntList) {
-                aspf.replaceConstant(ALM.AXIOMS_STATE_CONSTRAINTS, cnt, constantMap.get(0).get(cnt));
-                aspf.replaceConstant(ALM.AXIOMS_DEFINITIONS, cnt, constantMap.get(0).get(cnt));
-                aspf.replaceConstant(ALM.AXIOMS_DYNAMIC_CAUSAL_LAWS, cnt, constantMap.get(0).get(cnt));
-                aspf.replaceConstant(ALM.STRUCTURE_SORT_INSTANCES, cnt, constantMap.get(0).get(cnt));
-                aspf.replaceConstant(ALM.AXIOMS_DEFINITIONS_FLUENT, cnt, constantMap.get(0).get(cnt));
-                aspf.replaceConstant(ALM.STRUCTURE_ATTRIBUTE_DEFINITIONS, cnt, constantMap.get(0).get(cnt));
-                aspf.replaceConstant(ALM.AXIOMS_DEFINITIONS_STATIC, cnt, constantMap.get(0).get(cnt));
-                aspf.replaceConstant(ALM.AXIOMS_STATE_CONSTRAINTS_FLUENT, cnt, constantMap.get(0).get(cnt));
-                aspf.replaceConstant(ALM.AXIOMS_EXECUTABILITY_CONDITIONS, cnt, constantMap.get(0).get(cnt));
-
-            }
-        }
 
     }
 
@@ -2172,22 +2153,53 @@ public class ALMBaseListener implements ALMListener {
         ALMTerm obj_const = ALM.ParseALMTerm(leftObjConstant);
         ALMTerm objConstVal = ALM.ParseTerm(rightTerm);
 
-        // how should we check the type checking, what is the expected sort?
-        // TypeChecker vm = new TypeChecker(st);
-        // obj_const.typeCheck(vm, st, er);
+        // object constant substitutions must be ground.  
+        // The entity on the right must replace the occurrence of the ground term wherever applicable. 
+        // The entity on the right must be added as a sort instance wherever the entity on the left occurs as one. 
+        // The entity on the left must no longer exist as an instance to any of its source sorts.  
+        // rules which match the abstract pattern of the constant on the left must now handle the instance on the right. 
+        // All of this work needs to happen later, in the translation process.  There are still rules which may be 
+        // processed in the structure which the substitution may apply to.  
+        // What we need to do here is store the definition in the symbol table for later recall.  
+        // type checking the ground constant instance must wait until the complete structure is parsed.
 
-        // if(!vm.typeCheckPasses(er))
-        // error_occurred = true;
+        if (!obj_const.isGround()) {
+            error_occurred = true;
+            er.newSemanticError(SemanticError.CDF003).add(obj_const);
+        } else if (obj_const.getType() != ALMTerm.ID || obj_const.getArgs().size() > 0) {
+            //Constant Definition in this version of ALM only supports simple constants. 
+            er.newSemanticError(SemanticError.CDF006).add(obj_const);
+        }
 
-        // TODO
-        // if (!error_occurred) {
-        // ConstantEntry cnt = st.getConstantEntry(obj_const.getName());
-        // HashMap constMap = new HashMap<>();
-        // constMap.put(cnt, objConstVal);
-        // constantMap.add(constMap);
-        //
-        // }
+        if (!objConstVal.isGround()) {
+            error_occurred = true;
+            er.newSemanticError(SemanticError.CDF004).add(objConstVal);
+        }
 
+        if (!error_occurred) {
+            ConstantEntry ce = st.getMatchingConstantEntry(obj_const);
+            if (ce == null) {
+                error_occurred = true;
+                er.newSemanticError(SemanticError.CDF001).add(obj_const);
+            } else {
+                ALMTerm existing = st.getConstantDefinition(obj_const);
+                if (existing == null) {
+                    ConstantEntry check = st.getMatchingConstantEntry(objConstVal);
+                    if (check != null) {
+                        ALMTerm failCheck = st.getConstantDefinition(objConstVal);
+                        if (failCheck != null) {
+                            error_occurred = true;
+                            er.newSemanticError(SemanticError.CDF002).add(obj_const).add(objConstVal).add(failCheck);
+                        }
+                    }
+                    if (!error_occurred)
+                        st.defineConstant(obj_const, objConstVal);
+                } else {
+                    error_occurred = true;
+                    er.newSemanticError(SemanticError.CDF005).add(obj_const).add(existing);
+                }
+            }
+        }
     }
 
     /**

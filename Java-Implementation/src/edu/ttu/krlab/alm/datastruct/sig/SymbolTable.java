@@ -4,10 +4,12 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.ttu.krlab.alm.ALM;
@@ -29,9 +31,9 @@ public class SymbolTable {
     int maxStep = -1;
 
     private Set<String> modes;
-    private HashSet<SortEntry> predefined;
-    private HashMap<String, SortEntry> SEMap;
-    private HashMap<String, SortEntry> singletons;
+    private Set<SortEntry> predefined;
+    private Map<String, SortEntry> SEMap;
+    private Map<String, SortEntry> singletons;
 
     /**
      * Constant entries are first retrievable by name and then by their argument signature.
@@ -43,8 +45,9 @@ public class SymbolTable {
      * name should return a set of compatible functions To look up by signature as well, first lookup by name then look
      * for the function in the set with the matching signature.
      */
-    private HashMap<String, Set<NormalFunctionEntry>> FEMap;
-    private HashMap<NormalFunctionEntry, DOMFunctionEntry> DMap;
+    private Map<String, Set<NormalFunctionEntry>> FEMap;
+    private Map<NormalFunctionEntry, DOMFunctionEntry> DMap;
+    private Map<ALMTerm, ConstantEntry> CDMap;
 
     public SymbolTable() {
         modes = new HashSet<>();
@@ -52,6 +55,7 @@ public class SymbolTable {
         CEMap = new HashMap<>();
         FEMap = new HashMap<>();
         DMap = new HashMap<>();
+        CDMap = new HashMap<>();
         singletons = new HashMap<>();
         try {
             initialize();
@@ -613,7 +617,7 @@ public class SymbolTable {
     public Set<ConstantEntry> getConstantEntries(String name, int argSize) {
         Set<ConstantEntry> constants = CEMap.get(name);
         if (constants == null)
-            return null;
+            return Collections.emptySet();
         Set<ConstantEntry> matches = new HashSet<>();
         for (ConstantEntry c : constants) {
             if (c.getArguments().size() == argSize)
@@ -662,4 +666,38 @@ public class SymbolTable {
         }
         singletons.clear();
     }
+
+    public ConstantEntry getMatchingConstantEntry(ALMTerm obj_const) {
+        if (!obj_const.isGround())
+            ALMCompiler.IMPLEMENTATION_FAILURE("Find ConstantEntry",
+                    "Retrieval of ConstantEntry for non-ground constants is not supported in this version of ALM.");
+        Set<ConstantEntry> matching = getConstantEntries(obj_const.getName(), obj_const.getArgs().size());
+        if (matching.size() > 1)
+            ALMCompiler.IMPLEMENTATION_FAILURE("Find ConstantEntry",
+                    "ConstantEntry overloading is not supported in this version of ALM.");
+        if (matching.size() == 0)
+            return null;
+        return matching.iterator().next();
+    }
+
+    public void defineConstant(ALMTerm obj_const, ALMTerm objConstVal) {
+        ConstantEntry ce = getMatchingConstantEntry(obj_const);
+        ce.setConstantDefinition(obj_const, objConstVal);
+        CDMap.put(obj_const, ce);
+    }
+
+    public ALMTerm getConstantDefinition(ALMTerm obj_const) {
+        if (!obj_const.isGround())
+            ALMCompiler.IMPLEMENTATION_FAILURE("Get Constant Definition",
+                    "Retrieval of Constant Definition for non-ground constants is not supported in this version of ALM.");
+        ConstantEntry ce = CDMap.get(obj_const);
+        if (ce == null)
+            return null;
+        return ce.getConstantDefinition(obj_const);
+    }
+
+    public Map<ALMTerm, ConstantEntry> getDefinedConstants() {
+        return CDMap;
+    }
+
 }

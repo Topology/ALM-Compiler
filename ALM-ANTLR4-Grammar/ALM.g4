@@ -236,7 +236,7 @@ structure: 'structure' structure_name (constant_defs | instance_defs | statics_d
 
 /* CONSTANT DEFINITIONS */
 
-constant_defs: 'constants' (one_constant_def)+;//<constant_defs><remainder_constant_defs>  
+constant_defs: 'constant' 'definitions' (one_constant_def)+;//<constant_defs><remainder_constant_defs>  
 one_constant_def: object_constant '=' term;//<one_constant_def> 
 
 

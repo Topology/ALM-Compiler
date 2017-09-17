@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -1241,6 +1242,38 @@ public class ALMCompiler {
 
     }
 
+    public static void PerformConstantDefinitionSubstitution(SymbolTable st, ASPfProgram aspf, ErrorReport er) {
+
+        Map<ALMTerm, ConstantEntry> definedConstants = st.getDefinedConstants();
+        //This version of ALM only supports simple ground constant definitions.  
+        //When we support complex constant definitions we will need to typecheck their structure here. 
+        //This cannot be done at the time of constant definition since the constant may contain structure declared 
+        //instances as arguments.  Typechecking must happen after processing the complete structure.  
+
+        //TYPE CHECK COMPLEX CONSTANT DEFINITIONS HERE. 
+
+        //Replace simple constants in the ASPf Program
+        for (Map.Entry<ALMTerm, ConstantEntry> entry : definedConstants.entrySet()) {
+            ALMTerm constInstance = entry.getKey();
+            ConstantEntry ce = entry.getValue();
+            ALMTerm definition = ce.getConstantDefinition(constInstance);
+            for (List<ASPfRule> section : aspf.getSections()) {
+                for (ASPfRule rule : section) {
+                    ASPfLiteral head = rule.getHead();
+                    if (head != null) {
+                        head.toALMTerm().replaceTerm(constInstance, definition);
+                    }
+                    List<ASPfLiteral> body = rule.getBody();
+                    if (body != null && body.size() > 0) {
+                        for (ASPfLiteral lit : body) {
+                            lit.toALMTerm().replaceTerm(constInstance, definition);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public static final void Translate(Reader r, ALMCompilerSettings s, SymbolTable st, ErrorReport er,
             ASPfProgram aspf, SPARCProgram pm, List<AnswerSet> as, SPARCProgram tm) throws IOException {
 
@@ -1260,6 +1293,8 @@ public class ALMCompiler {
         foo.removeErrorListeners();
         foo.addErrorListener(new ALMSyntaxErrorListener(er));
         foo.system_description();
+
+        PerformConstantDefinitionSubstitution(st, aspf, er);
 
         st.writeTo(s.SymbolTableDestination());
         s.closeSymbolTableDestination();
