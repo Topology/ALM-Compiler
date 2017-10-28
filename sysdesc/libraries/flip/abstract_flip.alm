@@ -1,0 +1,21 @@
+system description abstract_flip
+    theory abstract_flip
+        import entity.nameable from abstract
+        module core
+            depends on entity.nameable
+            sort declarations
+                sides::named_entities
+                flippable::universe
+                flips::actions
+            constant declarations
+                flip(flippable) : flips
+                sideOne(flippable), sideTwo(flippable) : sides
+            function declarations 
+                fluents
+                    basic 
+                        showing: flippable -> sides
+            axioms 
+                dynamic causal laws
+                    occurs(X) causes showing(Y) = sideOne(Y) if instance(X, flips), X = flip(Y), instance(Y, flippable), showing(Y) = sideTwo(Y).
+                    occurs(X) causes showing(Y) = sideTwo(Y) if instance(X, flips), X = flip(Y), instance(Y, flippable), showing(Y) = sideOne(Y).
+            

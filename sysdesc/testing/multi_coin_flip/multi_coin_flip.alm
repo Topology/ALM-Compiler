@@ -1,0 +1,18 @@
+system description mulit_coin_flip
+    import coin_flip from flip  
+    structure multi_coin_flip
+        instances
+            nickel, dime, quarter in coins
+            flip(X) in flips
+                flipped_coin = X
+    temporal projection
+    max steps 6
+    history 
+    observed(showing(dime), heads, 0)
+    happened(flip(dime), 0)
+    observed(showing(nickel), tails, 0)
+    happened(flip(nickel), 0)
+    happened(flip(dime), 2)
+    happened(flip(nickel), 2)
+    happened(flip(dime), 4)
+    happened(flip(nickel), 4) 

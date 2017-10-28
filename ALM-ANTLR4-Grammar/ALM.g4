@@ -36,8 +36,8 @@ grammar ALM;
 
 WhiteSpace: (' '|'\t'|'\r'|'\n') -> skip; //SKIP WHITESPACE
 
-//EAGERLY CREATE THESE SPECIFIC TOKENS AHEAD OF MORE GENERAL CLASS 
-BOOL: 'true' | 'false'; //Describes <boolean> in the ALM BNF.
+//EAGERLY CREATE THESE SPECIFIC TOKENS AHEAD OF MORE GENERAL CLASS
+MOD: 'mod';
 EQ: '=';// Describes <eq>
 NEQ: '!='; //Describes <neq>
 ARITH_OP: '+' | '-' | '*' | '/' | 'mod' | '^'; //Describes <arithmetic_op>
@@ -53,6 +53,52 @@ SOURCE: 'source'; //prevents the word 'source' from being recognized as an ident
 SINK: 'sink'; //prevents the word 'sink' from being recognized as an identifier
 SUBSORT: 'subsort'; //prevents the word 'subsort' from being recognized as an identifier
 DOM: 'DOM';  //prevents the word 'DOM' from being recognized as an identifier
+SORT: 'sort';
+STATE: 'state';
+CONSTRAINTS: 'constraints';
+FUNCTION: 'function';
+DECLARATIONS: 'declarations';
+DEFINITIONS: 'definitions';
+SYSTEM: 'system';
+DESCRIPTION: 'description';
+THEORY: 'theory';
+MODULE: 'module';
+IMPORT: 'import';
+FROM: 'from';
+DEPENDS: 'depends';
+ON: 'on';
+ATTRIBUTES: 'attributes';
+OBJECT: 'object';
+CONSTANT: 'constant';
+STATICS: 'statics';
+FLUENTS: 'fluents';
+BASIC: 'basic';
+DEFINED: 'defined';
+TOTAL: 'total';
+AXIOMS: 'axioms';
+DYNAMIC: 'dynamic';
+CAUSAL: 'causal';
+LAWS: 'laws';
+EXECUTABILITY: 'executability';
+CONDITIONS: 'conditions';
+CAUSES: 'causes';
+IMPOSSIBLE: 'impossible';
+IF: 'if';
+FALSE: 'false';
+TRUE: 'true';
+STRUCTURE: 'structure';
+IN: 'in';
+WHERE: 'where';
+VALUE: 'value';
+OF: 'of';
+INSTANCES: 'instances';
+TEMPORAL : 'temporal';
+PROJECTION : 'projection';
+MAX: 'max';
+STEPS: 'steps';
+HISTORY : 'history'; 
+OBSERVED: 'observed';
+HAPPENED: 'happened';
 
 //PREDEFINED SORT NAMES, reserved and cannot be any kind of ID
 BOOLEAN: 'booleans';
@@ -61,8 +107,8 @@ UNIVERSE: 'universe';
 ACTIONS: 'actions';
 
 // THESE TOKENS ARE MORE GENERAL AND LESS EAGERLY DETERMINED
-ID: [a-z]('.'?[a-zA-Z0-9_\-])*;  //Describes <identifier> in the ALM BNF, includes <lowercase_letter>, <uppercase_letter>
-VAR: [A-Z]('.'?[a-zA-Z0-9_\-])*; //Describes <variable> in the ALM BNF.
+ID: [a-z]([a-zA-Z0-9_\-])*;  //Describes <identifier> in the ALM BNF, includes <lowercase_letter>, <uppercase_letter>
+VAR: [A-Z]([a-zA-Z0-9_\-])*; //Describes <variable> in the ALM BNF.
 POSINT: [1-9][0-9]*; //Describes <positive_integer>, includes <non_zero_digit>, <digit>
 NEGINT: '-'[1-9][0-9]*;//not explicitly modeled in ALM BNF,  used in 'integer' rule  
 ZERO: [0]+; //TOKEN For ZERO, not a non-terminal in ALM BNF, used in 'integer'  rule
@@ -84,15 +130,27 @@ ZERO: [0]+; //TOKEN For ZERO, not a non-terminal in ALM BNF, used in 'integer'  
  * <comparison_rel> -> COMP_REL
  */
 
+// RECOVER KEYWORDS INTO IDENTIFIER
+
+id : ID | MOD | OCCURS | INSTANCE | IS_A | HAS_CHILD | HAS_PARENT | LINK | SOURCE | SINK | SUBSORT | DOM | SORT 
+| STATE | CONSTRAINTS | FUNCTION | DECLARATIONS | DEFINITIONS | SYSTEM | DESCRIPTION | THEORY | MODULE | IMPORT 
+| FROM | DEPENDS | ON | ATTRIBUTES | OBJECT | CONSTANT | STATICS | FLUENTS | BASIC | DEFINED | TOTAL | AXIOMS 
+| DYNAMIC | CAUSAL | LAWS | EXECUTABILITY | CONDITIONS | CAUSES | IMPOSSIBLE | IF | FALSE | TRUE | STRUCTURE 
+| IN | WHERE | VALUE | OF | INSTANCES | TEMPORAL | PROJECTION  | MAX | STEPS | HISTORY  | OBSERVED | HAPPENED 
+| BOOLEAN | INTEGERS | UNIVERSE  | ACTIONS;
+
+
 /*
  * BASIC PARSER RULES BUILT OUT OF SPECIAL LEXER TOKENS
  */
+
+bool : TRUE | FALSE;
 
 nat_num : ZERO | POSINT; //<natural_number>
 integer : ZERO | POSINT | NEGINT; //<integer>
 relation: EQ | NEQ | COMP_REL; //<arithmetic_rel>
 
-alm_name : ID | VAR;
+alm_name : id | VAR;
 
 /* TERMS 
  * denote objects which populate sorts
@@ -104,10 +162,10 @@ alm_name : ID | VAR;
  * */
 
 
-object_constant: ID ( '(' term (',' term)*   ')')?; //Pattern for any object instance of any sort.
+object_constant: id ( '(' term (',' term)*   ')')?; //Pattern for any object instance of any sort.
 function_term: object_constant;  // the distinction here is that function_terms denote functions even though they have the same syntactic structure as object_constants. 
 
-term: BOOL | VAR | ID | integer | function_term | expression; //terms can appear on either side of EQ operators and denote values of sorts. 
+term: bool | VAR | id | integer | function_term | expression; //terms can appear on either side of EQ operators and denote values of sorts. 
 
 var_or_obj: (object_constant | VAR);
  
@@ -118,7 +176,7 @@ var_or_obj: (object_constant | VAR);
  * factors are individual units which participate in the above operations. 
  */
 expression: expression '+' arithmetic_term | expression '-' arithmetic_term | arithmetic_term;
-arithmetic_term: arithmetic_term '*' factor | arithmetic_term '/' factor | arithmetic_term 'mod' factor | factor '^' factor | factor;
+arithmetic_term: arithmetic_term '*' factor | arithmetic_term '/' factor | arithmetic_term MOD factor | factor '^' factor | factor;
 factor: VAR | '-' VAR  | integer | function_term | '-' function_term | '(' expression ')' | '-' '(' expression ')'; 
 // ('-' integer) is not a factor because integer include NEGINT
 
@@ -149,39 +207,45 @@ occurs_literal:  occurs_atom | '-' occurs_atom;
  
 library_name: alm_name;     
 sys_desc_name: alm_name;
-system_description  : 'system' 'description' sys_desc_name theory structure solver_mode;    //<system_description>
+system_description  : SYSTEM DESCRIPTION sys_desc_name theory (structure solver_mode?)?;    //<system_description>
 
 /* ALM THEORY */
 
 
 theory_name: alm_name; 
-theory: ('theory' theory_name sequence_of_modules) | ('import' theory_name 'from' library_name);//<theory>
+theory: (THEORY theory_name sequence_of_modules) | (IMPORT theory_name FROM library_name);//<theory>
  
 
 /* ALM MODULE */
 
 module_name: alm_name;
 sequence_of_modules: (module)+;//<set_of_modules><remainder_modules>
-module: ('module' module_name module_body) | ('import' theory_name '.' module_name 'from' library_name); //<module> 
-module_body: sort_declarations? constant_declarations? function_declarations? axioms?;//<axioms>,<remainder_axioms>
+module: (MODULE module_name module_body) | (IMPORT theory_name ('.' module_name)? FROM library_name); //<module> 
+module_body: module_dependencies? sort_declarations? constant_declarations? function_declarations? axioms?;//<axioms>,<remainder_axioms>
+
+
+/* ALM MODULE DEPENDENCIES */
+
+module_dependencies: DEPENDS ON one_dependency+;
+one_dependency: (theory_name '.')? module_name;
 
 /* ALM SORT DECLARATIONS */
 
 integer_range: '[' integer '..' integer ']';
 predefined_sorts: BOOLEAN | INTEGERS | integer_range;
-sort_name: predefined_sorts | UNIVERSE | ACTIONS | ID;
+sort_name: predefined_sorts | UNIVERSE | ACTIONS | id;
 
 
-sort_declarations: 'sort' 'declarations'  (one_sort_decl)+ ;//<sort_declaration><remainder_sort_declaration>
-one_sort_decl: ID (',' ID)* '::' sort_name (',' sort_name)* attributes?;  //<one_sort_decl>,<sort_name>,<remainder_sort_names>,<remainder_sorts>
-attributes: 'attributes' (one_attribute_decl)+;//<attributes><remainder_attribute_declarations>
-one_attribute_decl: ID ':' (sort_name (',' sort_name )* RIGHT_ARROW)? sort_name;//<one_attribue_decl>,<arguments>,<remainder_args>
+sort_declarations: SORT DECLARATIONS  (one_sort_decl)+ ;//<sort_declaration><remainder_sort_declaration>
+one_sort_decl: id (',' id)* '::' sort_name (',' sort_name)* attributes?;  //<one_sort_decl>,<sort_name>,<remainder_sort_names>,<remainder_sorts>
+attributes: ATTRIBUTES (one_attribute_decl)+;//<attributes><remainder_attribute_declarations>
+one_attribute_decl: id ':' (sort_name (',' sort_name )* RIGHT_ARROW)? sort_name;//<one_attribue_decl>,<arguments>,<remainder_args>
 
  
  
 /* ALM CONSTANT DECLARATIONS */
   
-constant_declarations: 'object' 'constants' (one_constant_decl)+;//<constant_declaraions><remainder_constant_declarations>
+constant_declarations: CONSTANT DECLARATIONS (one_constant_decl)+;//<constant_declaraions><remainder_constant_declarations>
 one_constant_decl:   object_constant (',' object_constant)*  ':' sort_name (',' sort_name)*;//<one_constant_decl>,<const_params>,<remainder_const_params>
  
  
@@ -189,12 +253,12 @@ one_constant_decl:   object_constant (',' object_constant)*  ':' sort_name (',' 
 /* ALM FUNCTION DECLARATIONS */
 
 function_name:ID;
-function_declarations: 'function' 'declarations' static_declarations? fluent_declarations?;// 
-static_declarations: 'statics' basic_function_declarations? defined_function_declarations?;//<static_declarations>
-fluent_declarations: 'fluents' basic_function_declarations? defined_function_declarations?;//<static_declarations>
-basic_function_declarations: 'basic' (one_function_decl)+;//<basic_function_declarations>,<remainder_function_declarations>
-defined_function_declarations: 'defined' (one_function_decl)+;//<defined_function_declarations>,<remainder_function_declarations> 
-one_function_decl: ('total')? function_name ':' sort_name (('*' sort_name )* RIGHT_ARROW sort_name)?;//<one_function_decl><total_partial><one_f_decl> <remainder_args>
+function_declarations: FUNCTION DECLARATIONS static_declarations? fluent_declarations?;// 
+static_declarations: STATICS basic_function_declarations? defined_function_declarations?;//<static_declarations>
+fluent_declarations: FLUENTS basic_function_declarations? defined_function_declarations?;//<static_declarations>
+basic_function_declarations: BASIC (one_function_decl)+;//<basic_function_declarations>,<remainder_function_declarations>
+defined_function_declarations: DEFINED (one_function_decl)+;//<defined_function_declarations>,<remainder_function_declarations> 
+one_function_decl: (TOTAL)? function_name ':' sort_name (('*' sort_name )* RIGHT_ARROW sort_name)?;//<one_function_decl><total_partial><one_f_decl> <remainder_args>
 
 
 
@@ -204,63 +268,62 @@ fun_def : (pos_fun_def | neg_fun_def);
 
 /* ALM AXIOMS */
 
-axioms: 'axioms' (dynamic_causal_laws | executability_conditions | state_constraints | definitions)* ;//<axioms>,<remainder_axioms>
-dynamic_causal_laws: 'dynamic' 'causal' 'laws' (one_dynamic_causal_law)+;
-executability_conditions: 'executability' 'conditions' (one_executability_condition)+;
-state_constraints: 'state' 'constraints' (one_state_constraint)+;
-definitions: 'function' 'definitions' (one_definition)+;
+axioms: AXIOMS (dynamic_causal_laws | executability_conditions | state_constraints | definitions)* ;//<axioms>,<remainder_axioms>
+dynamic_causal_laws: DYNAMIC CAUSAL LAWS (one_dynamic_causal_law)+;
+executability_conditions: EXECUTABILITY CONDITIONS (one_executability_condition)+;
+state_constraints: STATE CONSTRAINTS (one_state_constraint)+;
+definitions: FUNCTION DEFINITIONS (one_definition)+;
 
  /* DYNAMIC CAUSAL LAW */
  
- one_dynamic_causal_law: occurs_atom 'causes' pos_fun_def 'if' instance_atom (',' literal)* '.'; //<dynamic_causal_law><body>
+ one_dynamic_causal_law: occurs_atom CAUSES pos_fun_def IF instance_atom (',' literal)* '.'; //<dynamic_causal_law><body>
  
  
  /* EXECUTABILITY CONDITION */
  
-one_executability_condition: 'impossible' occurs_atom 'if' instance_atom ( ',' ( occurs_literal| literal))* '.'; //<executability_condition>, <extended body> 
+one_executability_condition: IMPOSSIBLE occurs_atom IF instance_atom ( ',' ( occurs_literal| literal))* '.'; //<executability_condition>, <extended body> 
  
  
  /* STATE CONSTRAINT */
  
- one_state_constraint: fun_def '.' | ('false' | fun_def) 'if' literal (',' literal)* '.'; // 
+ one_state_constraint: fun_def '.' | (FALSE | fun_def) IF literal (',' literal)* '.'; // 
  
  /* DEFINITION */
  
-one_definition: function_term '.' |  function_term 'if' literal (',' literal)* '.';
+one_definition: function_term '.' |  function_term IF literal (',' literal)* '.';
  
 /* ALM STRUCTURE */
 
 structure_name: alm_name;
-structure: 'structure' structure_name (constant_defs | instance_defs | statics_defs)*;//<structure>
+structure: STRUCTURE structure_name (constant_defs | instance_defs | statics_defs)*;//<structure>
  
 
 /* CONSTANT DEFINITIONS */
 
-constant_defs: 'constant' 'definitions' (one_constant_def)+;//<constant_defs><remainder_constant_defs>  
+constant_defs: CONSTANT DEFINITIONS (one_constant_def)+;//<constant_defs><remainder_constant_defs>  
 one_constant_def: object_constant '=' term;//<one_constant_def> 
 
 
 /* INSTANCE DEFINITIONS */
  
-instance_defs: 'instances' (one_instance_def)+;//<instance_defs><remainder_instance_defs> 
-one_instance_def: object_constant (',' object_constant)* 'in' sort_name (',' sort_name)* ('where' literal (',' literal)* )? attribute_defs;//<one_instance_def>
+instance_defs: INSTANCES (one_instance_def)+;//<instance_defs><remainder_instance_defs> 
+one_instance_def: object_constant (',' object_constant)* IN sort_name (',' sort_name)* (WHERE literal (',' literal)* )? attribute_defs;//<one_instance_def>
 attribute_defs: (one_attribute_def)*;
 one_attribute_def: function_term EQ term;
 
 /* STATICS DEFINITIONS */
 
-statics_defs:  'value' 'of' 'statics' (one_static_def)+ ; 
-one_static_def: fun_def ('if' literal (',' literal)*)? '.';
+statics_defs:  VALUE OF STATICS (one_static_def)+ ; 
+one_static_def: fun_def (IF literal (',' literal)*)? '.';
 //<one_static_literal><body>
 
 /* SOLVER MODE */
 
 
-solver_mode : temporal_projection?;
+solver_mode : temporal_projection;
 
-temporal_projection : 'temporal' 'projection' max_steps history;
-max_steps: 'max' 'steps' POSINT;
-history : 'history' (observed | happened)+;
-observed : 'observed' '(' function_term ',' term ',' nat_num ')' ;
-happened : 'happened' '(' object_constant ',' nat_num ')' ;
-
+temporal_projection : TEMPORAL PROJECTION max_steps history;
+max_steps: MAX STEPS  POSINT;
+history : HISTORY (observed | happened)+;
+observed : OBSERVED '(' function_term ',' term ',' nat_num ')' ;
+happened : HAPPENED '(' object_constant ',' nat_num ')' ;

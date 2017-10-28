@@ -40,14 +40,14 @@ public abstract class ErrorMessageTable {
 
         // SRT001
         ErrorMetaDataBase srt001 = new ErrorMetaDataBase(SemanticError.SRT001,
-                "Predefined sort [1] cannot appear on right hand side of â€˜::â€™ token in sort specification",
+                "Predefined sort [1] cannot appear on right hand side of '::' token in sort specification",
                 "Predefined sorts have a fixed interpretation which cannot be extended through specification in the sort-hierarchy.",
-                "Remove the predefined sort from the sort specification.  If you are intending to populate the sort on the left hand side of the â€˜::â€™ token with the values in the predefined sort, you must do so through specifying sort instances in the structure.  ");
+                "Remove the predefined sort from the sort specification.  If you are intending to populate the sort on the left hand side of the '::' token with the values in the predefined sort, you must do so through specifying sort instances in the structure.  ");
         errorMetaData.put(SemanticError.SRT001, srt001);
 
         // SRT002
         ErrorMetaDataBase srt002 = new ErrorMetaDataBase(SemanticError.SRT002,
-                "Sort [1] on the right hand side of the â€˜::â€™ token must occur on the left hand side of the â€˜::â€™ token in an earlier sort declaration. ",
+                "Sort [1] on the right hand side of the '::' token must occur on the left hand side of the '::' token in an earlier sort declaration. ",
                 "The sort hierarchy is a directed acyclic graph where every sort is a sub-sort of the universe.  If the parent of a user defined sort is not the universe and does not have its own parent in the hierarchy, then neither the user defined sort or its parent are a subsort of the universe. ",
                 "Add or move a sort specification for the parent sort earlier in the sort declarations.");
         errorMetaData.put(SemanticError.SRT002, srt002);
@@ -93,6 +93,13 @@ public abstract class ErrorMessageTable {
                 "All functions must have unique signatures.  A function signature is a combination of the name of the function and the sequence of sorts for its domain followed by the range sort. Note: The signature of an attribute function declaration is not complete.  The complete signature includes the sort to which the attribute function belongs as the first sort in the sequence of domain sorts.",
                 "If the pre-existing function declaration has the correct signature, either change the name of the attribute function being declared or change its domain or range sorts.");
         errorMetaData.put(SemanticError.ATF003, atf003);
+
+        // ATF004
+        ErrorMetaDataBase atf004 = new ErrorMetaDataBase(SemanticError.ATF004,
+                "Attribute function [1] has the same name and number of arguments as a previously defined attribute function [2].",
+                "All functions are uniquely identified by function name and number of arguments. There can be at most one function declaration per function name and number of arguments.",
+                "Either change the attribute name for one of the sorts or declare a common ancestor sort and define the function as an attribute of that sort.");
+        errorMetaData.put(SemanticError.ATF004, atf004);
 
         // CND001
         ErrorMetaDataBase cnd001 = new ErrorMetaDataBase(SemanticError.CND001,
@@ -218,7 +225,7 @@ public abstract class ErrorMessageTable {
         ErrorMetaDataBase axm001 = new ErrorMetaDataBase(SemanticError.AXM001,
                 "Variable [1] does not have an associated sort.",
                 "All variables must have a sort which can be determined through sort inference.",
-                "Either the variable must occur within a functionâ€™s arguments, be set to equal a functionâ€™s range or be related to another variable whose sort can be determined through sort inference.");
+                "Either the variable must occur within a function's arguments, be set to equal a function's range or be related to another variable whose sort can be determined through sort inference.");
         errorMetaData.put(SemanticError.AXM001, axm001);
 
         // AXM002
@@ -271,8 +278,8 @@ public abstract class ErrorMessageTable {
 
         // AXM009
         ErrorMetaDataBase axm009 = new ErrorMetaDataBase(SemanticError.AXM009,
-                "For state constraint with function [1] in the head, the right hand side of the â€˜=â€™ [2] is not a variable and not an object constant belonging to the range sort [3] of the function.",
-                "The entity on the right hand side of the â€˜=â€™ in the head of a state constraint must be either a variable or an object constant declared to be in the range sort of the function on the left hand side of â€˜=â€™",
+                "For state constraint with function [1] in the head, the right hand side of the '=' [2] is not a variable and not an object constant belonging to the range sort [3] of the function.",
+                "The entity on the right hand side of the '=' in the head of a state constraint must be either a variable or an object constant declared to be in the range sort of the function on the left hand side of '='",
                 "Either change the right hand side to a variable, or declare the appropriate object constant in the range sort of the function.");
         errorMetaData.put(SemanticError.AXM009, axm009);
 
@@ -391,7 +398,7 @@ public abstract class ErrorMessageTable {
         ErrorMetaDataBase sid003 = new ErrorMetaDataBase(SemanticError.SID003,
                 "Sort Instance [1] must either be  a ground function term or a function term whose arguments are either ground function terms or variables.",
                 "Sort Instances must be string constants (ground function terms) or schemas for string constants (function terms containing only ground function terms or variables).",
-                "Change the sort instanceâ€™s structure to either be a string constant or a schema.");
+                "Change the sort instance's structure to either be a string constant or a schema.");
         errorMetaData.put(SemanticError.SID003, sid003);
 
         // SID004
@@ -410,7 +417,7 @@ public abstract class ErrorMessageTable {
 
         // SFD001
         ErrorMetaDataBase sfd001 = new ErrorMetaDataBase(SemanticError.SFD001,
-                "The function [1] being defined must be a static function. Itâ€™s declaration [2] does not match.",
+                "The function [1] being defined must be a static function. It's declaration [2] does not match.",
                 "Only static functions can be defined in the â€œvalues of staticsâ€� section of the structure.",
                 "Either move the non-static function definition to the axiom section or change the declaration of the function to be static.");
         errorMetaData.put(SemanticError.SFD001, sfd001);

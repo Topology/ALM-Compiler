@@ -3,7 +3,6 @@ package edu.ttu.krlab.alm.datastruct.sig;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,243 +15,128 @@ import edu.ttu.krlab.alm.ALM;
 import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.Location;
-import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
-import edu.ttu.krlab.alm.datastruct.err.SemanticError;
 
 public class SymbolTable {
 
-    SortEntry universe;
-    SortEntry actions;
-    SortEntry nodes;
-    SortEntry booleans;
-    SortEntry integers;
+    /*
+     * STATIC VARIABLES
+     */
+    //This symbol table is the one that holds the function and sort definitions for an empty system description.
+    private static boolean bootstrap = false;
+    private static SymbolTable baseST = null;
 
-    SortEntry timestep;
-    int maxStep = -1;
+    private static SortEntry universe = null;
+    private static SortEntry actions = null;
+    private static SortEntry nodes = null;
+    private static SortEntry booleans = null;
+    private static SortEntry integers = null;
+    private static SortEntry timestep = null;
+    private static int maxStep = -1;
 
-    private Set<String> modes;
-    private Set<SortEntry> predefined;
-    private Map<String, SortEntry> SEMap;
-    private Map<String, SortEntry> singletons;
+    final private static Set<SortEntry> predefined = new HashSet<>();
+    final private static Set<String> modes = new HashSet<>();
+    final private static Map<String, Set<ConstantEntry>> staticCEMap = new HashMap<>();
+    final private static Map<String, SortEntry> singletons = new HashMap<>();
+    final private static Map<ALMTerm, ConstantEntry> CDMap = new HashMap<>();
 
+    /*
+     * STATIC FUNCTIONS
+     */
+    /**
+     * Creates the time step instances i where 0 <= i < {@code upper_boud}
+     * 
+     * @param upper_bound
+     *            The number of time steps.
+     */
+    public static void setMaxSteps(int upper_bound) {
+        timestep.instances.clear();
+        for (int i = 0; i < upper_bound; i++) {
+            timestep.instances.add(new ALMTerm(Integer.toString(i), ALMTerm.INT));
+        }
+        maxStep = upper_bound - 1;
+    }
+
+    public static boolean isTimeStep(int i) {
+        return i <= maxStep && i >= 0;
+    }
+
+    public static boolean modeActive(String mode) {
+        return modes.contains(mode);
+    }
+
+    public static void setMode(String mode, boolean setting) {
+        if (setting) {
+            modes.add(mode);
+        } else {
+            modes.remove(mode);
+        }
+    }
+
+    public static SortEntry getUniverseSortEntry() {
+
+        return universe;
+    }
+
+    public static SortEntry getTimestepSortEntry() {
+
+        return timestep;
+    }
+
+    public static SortEntry getActionsSortEntry() {
+        return actions;
+    }
+
+    public static SortEntry getNodesSpecialSortEntry() {
+        return nodes;
+    }
+
+    public static SortEntry getBooleansSortEntry() {
+        return booleans;
+    }
+
+    public static SortEntry getIntegersSortEntry() {
+        return integers;
+    }
+
+    /*
+     * NON-STATIC VARIABLES
+     */
+    final private String STName;
+    final private Set<SymbolTable> dependencies = new HashSet<>();
+    final private Map<String, SortEntry> SEMap = new HashMap<>();
     /**
      * Constant entries are first retrievable by name and then by their argument signature.
      */
-    private HashMap<String, Set<ConstantEntry>> CEMap;
-
+    final private HashMap<String, Set<ConstantEntry>> CEMap = new HashMap<>();
     /**
      * FunctionEntrys may have the same name but the combination of name and signature must be unique. Looking up by
      * name should return a set of compatible functions To look up by signature as well, first lookup by name then look
      * for the function in the set with the matching signature.
      */
-    private Map<String, Set<NormalFunctionEntry>> FEMap;
-    private Map<NormalFunctionEntry, DOMFunctionEntry> DMap;
-    private Map<ALMTerm, ConstantEntry> CDMap;
-
-    public SymbolTable() {
-        modes = new HashSet<>();
-        SEMap = new HashMap<>();
-        CEMap = new HashMap<>();
-        FEMap = new HashMap<>();
-        DMap = new HashMap<>();
-        CDMap = new HashMap<>();
-        singletons = new HashMap<>();
-        try {
-            initialize();
-        } catch (DuplicateFunctionException | DuplicateSortException e) {
-            e.printStackTrace();
-            ALMCompiler.IMPLEMENTATION_FAILURE("Initializing Symbol Table", "Initialize Function Threw An Exception");
-            // this should never happen.
-        }
-    }
-
-    public SortEntry createSortEntry(String sortname, Location loc) throws DuplicateSortException {
-        // Sort Entries must be uniquely named.
-        SortEntry existing;
-        try {
-            existing = getSortEntry(sortname);
-            throw new DuplicateSortException(existing);
-        } catch (SortNotFoundException e) {
-            // Add new Sort Entry
-            SortEntry srt = new SortEntry(sortname, loc);
-            SEMap.put(sortname, srt);
-            nodes.addSortInstance(new ALMTerm(srt.getSortName(), ALMTerm.ID));
-            return srt;
-        }
-    }
-
-    public SortEntry getSortEntry(String sortname) throws SortNotFoundException {
-        SortEntry se = SEMap.get(sortname);
-        if (se == null)
-            throw new SortNotFoundException(sortname);
-        return se;
-    }
+    final private Map<String, Set<NormalFunctionEntry>> FEMap = new HashMap<>();
+    final private Map<NormalFunctionEntry, DOMFunctionEntry> DMap = new HashMap<>();
 
     /**
-     * Creates a new constant entry for the given {@code constname(arguments)} and registers the constant as belonging
-     * to the sort entries in the list of sourceSorts.
-     * 
-     * @param constname
-     *            the String name of the constant
-     * @param arguments
-     *            the sorts that specify the schema for instantiating the constant.
-     * @param parent_sorts
-     *            The sort entries that will have the constant as a member of their sort.
-     * @param loc
-     *            The syntactic element relating to the declaration of the constants.
-     * @return the ConstantEntry created in the symbol table.
-     * @throws DuplicateConstantException
-     *             if the exact constant has already been declared for one of the parent_sorts.
+     * creates a new symbol table with an initial direct dependency on the base symbol table.
      */
-    public ConstantEntry createConstantEntry(String constname, List<SortEntry> arguments, List<SortEntry> parent_sorts,
-            Location loc) throws DuplicateConstantException {
-
-        ConstantEntry constEntry = null;
-        // first retrieve any existing matching ConstantEntry.
-        Set<ConstantEntry> constSet = CEMap.get(constname);
-        if (constSet == null) {
-            constSet = new HashSet<>();
-            CEMap.put(constname, constSet);
+    public SymbolTable(String STName) {
+        this.STName = STName;
+        if (bootstrap) {
+            try {
+                initialize();
+            } catch (DuplicateFunctionException | DuplicateSortException e) {
+                e.printStackTrace();
+                ALMCompiler.IMPLEMENTATION_FAILURE("Initializing Symbol Table",
+                        "Initialize Function Threw An Exception");
+                // this should never happen.
+            }
+        } else if (baseST == null) {
+            bootstrap = true;
+            baseST = new SymbolTable("base symbol table");
+            bootstrap = false;
         } else {
-            for (ConstantEntry c : constSet) {
-                if (c.getArguments().equals(arguments)) {
-                    constEntry = c;
-                    break;
-                }
-            }
+            dependencies.add(baseST);
         }
-        if (constEntry == null) {
-            constEntry = new ConstantEntry(constname, arguments, parent_sorts, loc);
-            constSet.add(constEntry);
-        }
-        // By this point we have a matching constant entry from the set of constant
-        // entries with the same name.
-
-        //get or create the singleton sort created specifically to house the constant
-        SortEntry singleton = getSingletonSortForConstantEntry(constEntry);
-
-        //add the singleton sort as sub-sorts to the source-sorts of the constant entry.  
-        //collect any duplicate declarations for an exception. 
-
-        Set<SortEntry> duplicates = null;
-        for (SortEntry sort : parent_sorts) {
-            if (sort.childSorts.contains(singleton)) {
-                if (duplicates == null) {
-                    duplicates = new HashSet<>();
-                }
-                duplicates.add(sort);
-            } else {
-                sort.childSorts.add(singleton);
-                singleton.parentSorts.add(sort);
-            }
-        }
-
-        if (duplicates != null) {
-            throw new DuplicateConstantException(constEntry, duplicates);
-        }
-        return constEntry;
-    }
-
-    /**
-     * Retrieves an existing singleton sort entry if it exists or creates a new one to hold the constant entry as its
-     * only instance. The singleton sort entry is marked as a singleton and registered with the constant for later
-     * retrieval.
-     * 
-     * @param ce
-     *            The {@link ConstantEntry ConstantEntry} for which its singleton sort is to be retrieved.
-     * 
-     * @return The {@link SortEntry SortEntry} that is the singleton sort of the constant entry.
-     */
-    private SortEntry getSingletonSortForConstantEntry(ConstantEntry ce) {
-        //The naming convention of the singleton sort should not be easily produced by a user of the ALM system. 
-        //Pattern:  singleton_constName_SortArg1Name_SortArt2Neam_...___  <- three trailing underscores. 
-        //This pattern will be used to easily identify and remove singleton sorts from the premodel sparc program. 
-        String singletonName = "singleton_" + ce.getConstName();
-        for (SortEntry sort : ce.getSourceSorts())
-            singletonName += "_" + sort.getSortName();
-        singletonName += "___";
-
-        //lookup for an existing singleton matching this pattern. 
-        SortEntry singleton = singletons.get(singletonName);
-        if (singleton == null) {
-            //creating the sort entry will add the singleton as a formal node in the hierarchy
-            //this will need to be purged after the premodel is computed.  
-            boolean success = false;
-            while (!success) {
-                try {
-                    singleton = createSortEntry(singletonName, null);
-                    success = true;
-                } catch (DuplicateSortException e) {
-                    singletonName += "_"; //extend the name until a unique name is found.  
-                }
-            }
-            singleton.setSingletonConstant(ce);
-            ce.setSingletonSort(singleton);
-            singletons.put(singletonName, singleton);
-        }
-        return singleton;
-    }
-
-    /**
-     * Returns the constant entry with the matching constant name and argument signature.
-     * 
-     * @param constname
-     *            The name of the constant
-     * @param arguments
-     *            The list of arguments. may be null or empty list to indicate the constants has no arguments.
-     * @return The matching ConstantEntry if it exists, otherwise null.
-     */
-    public ConstantEntry getConstantEntry(String constname, List<SortEntry> arguments) {
-
-        Set<ConstantEntry> matching = CEMap.get(constname);
-        if (matching == null)
-            return null;
-        for (ConstantEntry constEntry : matching) {
-            if (constEntry.getArguments().equals(arguments)) {
-                return constEntry;
-            }
-        }
-        return null;
-    }
-
-    public NormalFunctionEntry createFunctionEntry(String funname, List<SortEntry> signature, Location loc)
-            throws DuplicateFunctionException {
-        // Check conditions for whether or not its safe to declare the functions
-        // Specifically the function to be created does not have the same function name
-        // and signature.
-        FunctionEntry existing = getFunctionEntry(funname, signature);
-        if (existing != null)
-            throw new DuplicateFunctionException(existing);
-
-        // safe to create new function entry, add it to the set in the map.
-        Set<NormalFunctionEntry> set = FEMap.get(funname);
-        if (set == null) {
-            set = new HashSet<NormalFunctionEntry>();
-            FEMap.put(funname, set);
-        }
-        NormalFunctionEntry newFun = new NormalFunctionEntry(funname, signature, loc);
-        set.add(newFun);
-
-        // Set DOMFunctionEntry for NormalFunction.
-        DMap.put(newFun, new DOMFunctionEntry(newFun, booleans));
-        return newFun;
-    }
-
-    private Set<NormalFunctionEntry> getFunctionEntry(String funname) {
-        return FEMap.get(funname);
-    }
-
-    private FunctionEntry getFunctionEntry(String funname, List<SortEntry> signature) {
-        Set<NormalFunctionEntry> FS = FEMap.get(funname);
-        if (FS == null)
-            return null;
-        Iterator<NormalFunctionEntry> it = FS.iterator();
-        while (it.hasNext()) {
-            FunctionEntry fe = it.next();
-            if (fe.sigMatch(signature))
-                return fe;
-        }
-        return null;
     }
 
     private void initialize() throws DuplicateFunctionException, DuplicateSortException {
@@ -272,8 +156,6 @@ public class SymbolTable {
         actions = this.createSortEntry(ALM.SORT_ACTIONS, null);
         actions.addParentSort(universe);
 
-        // Add Predefined Sorts
-        predefined = new HashSet<SortEntry>();
         // boolean
         booleans = this.createSortEntry(ALM.SORT_BOOLEANS, null);
         predefined.add(booleans);
@@ -375,6 +257,291 @@ public class SymbolTable {
 
     }
 
+    public static boolean isPredefinedSort(String sort_text) {
+
+        if (sort_text.compareTo(ALM.SORT_BOOLEANS) == 0)
+            return true;
+
+        if (sort_text.compareTo(ALM.SORT_INTEGERS) == 0)
+            return true;
+
+        ALMTerm IntegerRange = ALM.ParseIntegerRangeFromString(sort_text);
+        if (IntegerRange != null)
+            return true;
+
+        return false;
+    }
+
+    /**
+     * Returns the sort entries in this symbol table and in all dependencies.
+     * 
+     * @return all SortEntries reachable from this Symbol Table.
+     */
+    public Set<SortEntry> getSortEntries() {
+        Set<SortEntry> result = new HashSet<>();
+        for (SymbolTable dependency : dependencies)
+            result.addAll(dependency.getSortEntries());
+        result.addAll(this.SEMap.values());
+        return result;
+    }
+
+    /**
+     * Creates a new SortEntry of the given sortname in this symbol table if the name of the sort does not exist in this
+     * symbol table or any dependent symbol tables.
+     * 
+     * @param sortname
+     *            The name of the sort to create a SortEntry for.
+     * @param loc
+     *            The parsed text location for the sort.
+     * @return the new SortEntry
+     * @throws DuplicateSortException
+     *             if a SortEntry for the given sortname exists already.
+     */
+    public SortEntry createSortEntry(String sortname, Location loc) throws DuplicateSortException {
+        // Sort Entries must be uniquely named.
+        SortEntry existing;
+        try {
+            existing = getSortEntry(sortname);
+            throw new DuplicateSortException(existing);
+        } catch (SortNotFoundException e) {
+            // Add new Sort Entry at this level.  
+            SortEntry srt = new SortEntry(sortname, loc);
+            SEMap.put(sortname, srt);
+            nodes.addSortInstance(new ALMTerm(srt.getSortName(), ALMTerm.ID));
+            return srt;
+        }
+    }
+
+    /**
+     * Retrieves any existing SortEntry for the given sortname that exists in this symbol table or in any of its
+     * dependencies.
+     * 
+     * @param sortname
+     *            The name of the sort
+     * @return The SortEntry for the given sort name.
+     * @throws SortNotFoundException
+     *             if no matching SortEntry could be found.
+     */
+    public SortEntry getSortEntry(String sortname) throws SortNotFoundException {
+        SortEntry sortEntry = getSortEntryHelp(sortname);
+        if (sortEntry != null)
+            return sortEntry;
+        //no sort entry could be found in this symbol table or in any of the dependencies. 
+        throw new SortNotFoundException(sortname);
+    }
+
+    private SortEntry getSortEntryHelp(String sortname) {
+        SortEntry se = SEMap.get(sortname);
+        if (se != null)
+            return se;
+        for (SymbolTable dependency : dependencies) {
+            se = dependency.getSortEntryHelp(sortname);
+            if (se != null)
+                return se;
+        }
+        return null;
+    }
+
+    /**
+     * Retrieves an existing singleton sort entry if it exists or creates a new one to hold the constant entry as its
+     * only instance. The singleton sort entry is marked as a singleton and registered with the constant for later
+     * retrieval.
+     * 
+     * @param ce
+     *            The {@link ConstantEntry ConstantEntry} for which its singleton sort is to be retrieved.
+     * 
+     * @return The {@link SortEntry SortEntry} that is the singleton sort of the constant entry.
+     */
+    private SortEntry getSingletonSortForConstantEntry(ConstantEntry ce) {
+        //The naming convention of the singleton sort should not be easily produced by a user of the ALM system. 
+        //Pattern:  singleton_constName_SortArg1Name_SortArt2Neam_...___  <- three trailing underscores. 
+        //This pattern will be used to easily identify and remove singleton sorts from the premodel sparc program. 
+        String singletonName = "singleton_" + ce.getConstName();
+        for (SortEntry sort : ce.getSourceSorts())
+            singletonName += "_" + sort.getSortName();
+        singletonName += "___";
+
+        //lookup for an existing singleton matching this pattern. 
+        SortEntry singleton = singletons.get(singletonName);
+        if (singleton == null) {
+            //creating the sort entry will add the singleton as a formal node in the hierarchy
+            //this will need to be purged after the premodel is computed.  
+            boolean success = false;
+            while (!success) {
+                try {
+                    singleton = createSortEntry(singletonName, null);
+                    success = true;
+                } catch (DuplicateSortException e) {
+                    singletonName += "_"; //extend the name until a unique name is found.  
+                }
+            }
+            singleton.setSingletonConstant(ce);
+            ce.setSingletonSort(singleton);
+            singletons.put(singletonName, singleton);
+        }
+        return singleton;
+    }
+
+    public Set<SortEntry> getSingletonSorts() {
+        return new HashSet<>(singletons.values());
+    }
+
+    public void purgeSingletonSorts() {
+        //remove from nodes
+        for (SortEntry singleton : singletons.values()) {
+            for (SortEntry parent : singleton.getParentSorts()) {
+                parent.getChildSorts().remove(singleton);
+            }
+            nodes.removeSortInstanceWithName(singleton.getSortName());
+        }
+        singletons.clear();
+    }
+
+    public NormalFunctionEntry createFunctionEntry(String funname, List<SortEntry> signature, Location loc)
+            throws DuplicateFunctionException {
+        // Check conditions for whether or not its safe to declare the functions
+        // Specifically the function to be created does not have the same function name
+        // and signature.
+        FunctionEntry existing = getFunctionEntry(funname, signature);
+        if (existing != null)
+            throw new DuplicateFunctionException(existing);
+
+        // safe to create new function entry, add it to the set in the map.
+        Set<NormalFunctionEntry> set = FEMap.get(funname);
+        if (set == null) {
+            set = new HashSet<NormalFunctionEntry>();
+            FEMap.put(funname, set);
+        }
+        NormalFunctionEntry newFun = new NormalFunctionEntry(funname, signature, loc);
+        set.add(newFun);
+
+        // Set DOMFunctionEntry for NormalFunction.
+        DMap.put(newFun, new DOMFunctionEntry(newFun, booleans));
+        return newFun;
+    }
+
+    /**
+     * Returns all functions with the matching function name from this symbol table and its dependecies.
+     * 
+     * @param funname
+     *            The name of the function to match;
+     * @return The set of all function entries with the same name.
+     */
+    private Set<NormalFunctionEntry> getFunctionEntriesHelp(String funname) {
+        Set<NormalFunctionEntry> matching = new HashSet<>();
+        for (SymbolTable dependency : dependencies) {
+            matching.addAll(dependency.getFunctionEntriesHelp(funname));
+        }
+        Set<NormalFunctionEntry> matches = FEMap.get(funname);
+        if (matches != null)
+            matching.addAll(FEMap.get(funname));
+        return matching;
+    }
+
+    public Set<FunctionEntry> getFunctionEntries(String fname) {
+        String baseName = fname;
+        if (fname.startsWith(ALM.DOM_PREFIX)) {
+            baseName = fname.substring(ALM.DOM_PREFIX.length());
+        }
+        Set<NormalFunctionEntry> funs = getFunctionEntriesHelp(fname);
+        if (fname == baseName)
+            return new HashSet<>(funs);
+        else {
+            Set<FunctionEntry> doms = new HashSet<>();
+            for (NormalFunctionEntry f : funs) {
+                doms.add(DMap.get(f));
+            }
+            return doms;
+        }
+    }
+
+    public Set<FunctionEntry> getFunctionEntries(String fname, int numArgs) {
+        String baseName = fname;
+        if (fname.startsWith(ALM.DOM_PREFIX)) {
+            baseName = fname.substring(ALM.DOM_PREFIX.length());
+        }
+        Set<NormalFunctionEntry> nFuns = getFunctionEntriesHelp(baseName);
+        Set<FunctionEntry> funs = new HashSet<>();
+        if (nFuns == null || nFuns.size() == 0)
+            return funs;
+        for (NormalFunctionEntry f : nFuns) {
+            if (f.getSignature().size() - 1 == numArgs) {
+                if (fname == baseName) {
+                    funs.add(f);
+                } else {
+                    funs.add(DMap.get(f));
+                }
+            }
+        }
+        return funs;
+    }
+
+    /**
+     * Returns all visible normal functions from this symbol table and all dependencies.
+     * 
+     * @return Set of NormalFunctionEntries reachable from this SymbolTable.
+     */
+    public Set<NormalFunctionEntry> getFunctions() {
+        Set<NormalFunctionEntry> result = new HashSet<>();
+        for (SymbolTable dependency : dependencies) {
+            result.addAll(dependency.getFunctions());
+        }
+        for (String fname : FEMap.keySet())
+            result.addAll(getFunctionEntriesHelp(fname));
+        return result;
+    }
+
+    /**
+     * Returns the function matching the same name and the same argument signature
+     * 
+     * @param funname
+     *            The name of the function
+     * @param signature
+     *            The signature of the function.
+     * @return the FunctionEntry matching the name and signature.
+     */
+    private FunctionEntry getFunctionEntry(String funname, List<SortEntry> signature) {
+        Set<NormalFunctionEntry> FSet = getFunctionEntriesHelp(funname);
+        if (FSet == null || FSet.size() == 0)
+            return null;
+        for (FunctionEntry fe : FSet) {
+            if (fe.sigMatch(signature))
+                return fe;
+        }
+        return null;
+    }
+
+    public FunctionEntry getFunctionEntry(String funname, int domSize) {
+        Set<FunctionEntry> matching = getFunctionEntries(funname, domSize);
+        if (matching.size() < 1) {
+            return null;
+        } else if (matching.size() > 1) {
+            return null;
+        }
+        return matching.iterator().next();
+
+    }
+
+    public Set<DOMFunctionEntry> getDOMFunctions() {
+        Set<DOMFunctionEntry> result = new HashSet<>();
+        for (SymbolTable dependency : dependencies)
+            result.addAll(dependency.getDOMFunctions());
+        result.addAll(DMap.values());
+        return result;
+    }
+
+    public DOMFunctionEntry getDOMFunction(FunctionEntry f) {
+        DOMFunctionEntry df = DMap.get(f);
+        if (df != null)
+            return df;
+        for (SymbolTable dependency : dependencies) {
+            df = dependency.getDOMFunction(f);
+            if (df != null)
+                return df;
+        }
+        return null;
+    }
+
     public void writeTo(BufferedWriter out) throws IOException {
         if (out == null)
             return;
@@ -426,154 +593,114 @@ public class SymbolTable {
         out.flush();
     }
 
-    public boolean isPredefinedSort(String sort_text) {
+    /**
+     * Returns the constant entry with the matching constant name and argument signature. This function examines this
+     * symbol table and all dependencies for matching instances.
+     * 
+     * @param constname
+     *            The name of the constant
+     * @param arguments
+     *            The list of arguments. may be null or empty list to indicate the constants has no arguments.
+     * @return The matching ConstantEntry if it exists, otherwise null.
+     */
+    public ConstantEntry getConstantEntry(String constname, List<SortEntry> arguments) {
 
-        if (sort_text.compareTo(ALM.SORT_BOOLEANS) == 0)
-            return true;
-
-        if (sort_text.compareTo(ALM.SORT_INTEGERS) == 0)
-            return true;
-
-        ALMTerm IntegerRange = ALM.ParseIntegerRangeFromString(sort_text);
-        if (IntegerRange != null)
-            return true;
-
-        return false;
-    }
-
-    public List<FunctionEntry> getFunctions() {
-        List<FunctionEntry> functions = new ArrayList<FunctionEntry>();
-        for (String fname : FEMap.keySet())
-            for (NormalFunctionEntry fun : FEMap.get(fname))
-                functions.add(fun);
-        return functions;
-    }
-
-    public Collection<SortEntry> getSortEntries() {
-        return this.SEMap.values();
-    }
-
-    public SortEntry getUniverseSortEntry() {
-
-        return universe;
-    }
-
-    public SortEntry getTimestepSortEntry() {
-
-        return timestep;
-    }
-
-    public SortEntry getActionsSortEntry() {
-        return actions;
-    }
-
-    public SortEntry getNodesSpecialSortEntry() {
-        return nodes;
-    }
-
-    public SortEntry getBooleansSortEntry() {
-        return booleans;
-    }
-
-    public Set<FunctionEntry> getFunctionEntries(String fname) {
-        String baseName = fname;
-        if (fname.startsWith(ALM.DOM_PREFIX)) {
-            baseName = fname.substring(ALM.DOM_PREFIX.length());
-        }
-        Set<NormalFunctionEntry> funs = FEMap.get(baseName);
-        if (fname == baseName)
-            return new HashSet<>(funs);
-        else {
-            Set<FunctionEntry> doms = new HashSet<>();
-            for (NormalFunctionEntry f : funs) {
-                doms.add(DMap.get(f));
-            }
-            return doms;
-        }
-    }
-
-    public Set<FunctionEntry> getFunctionEntries(String fname, int numArgs) {
-        String baseName = fname;
-        if (fname.startsWith(ALM.DOM_PREFIX)) {
-            baseName = fname.substring(ALM.DOM_PREFIX.length());
-        }
-        Set<NormalFunctionEntry> nFuns = FEMap.get(baseName);
-        Set<FunctionEntry> funs = new HashSet<>();
-        if (nFuns == null || nFuns.size() == 0)
-            return funs;
-        for (NormalFunctionEntry f : nFuns) {
-            if (f.getSignature().size() - 1 == numArgs) {
-                if (fname == baseName) {
-                    funs.add(f);
-                } else {
-                    funs.add(DMap.get(f));
-                }
+        Set<ConstantEntry> matching = CEMap.get(constname);
+        if (matching == null)
+            return null;
+        for (ConstantEntry constEntry : matching) {
+            if (constEntry.getArguments().equals(arguments)) {
+                return constEntry;
             }
         }
-        return funs;
-    }
-
-    public SortEntry getIntegersSortEntry() {
-        return integers;
-    }
-
-    public Set<DOMFunctionEntry> getDOMFunctions() {
-        return new HashSet<>(DMap.values());
-    }
-
-    public DOMFunctionEntry getDOMFunction(FunctionEntry f) {
-        return DMap.get(f);
+        //iterate through dependencies until a match is found.
+        for (SymbolTable dependency : dependencies) {
+            ConstantEntry ce = dependency.getConstantEntry(constname, arguments);
+            if (ce != null)
+                return ce;
+        }
+        //no match found
+        return null;
     }
 
     /**
-     * Creates the time step instances i where 0 <= i < {@code upper_boud}
+     * Creates a new constant entry for the given {@code constname(arguments)} and registers the constant as belonging
+     * to the sort entries in the list of sourceSorts.
      * 
-     * @param upper_bound
-     *            The number of time steps.
+     * @param constname
+     *            the String name of the constant
+     * @param arguments
+     *            the sorts that specify the schema for instantiating the constant.
+     * @param parent_sorts
+     *            The sort entries that will have the constant as a member of their sort.
+     * @param loc
+     *            The syntactic element relating to the declaration of the constants.
+     * @return the ConstantEntry created in the symbol table.
+     * @throws DuplicateConstantException
+     *             if the exact constant has already been declared for one of the parent_sorts.
      */
-    public void setMaxSteps(int upper_bound) {
-        this.timestep.instances.clear();
-        for (int i = 0; i < upper_bound; i++) {
-            timestep.instances.add(new ALMTerm(Integer.toString(i), ALMTerm.INT));
-        }
-        maxStep = upper_bound - 1;
-    }
+    public ConstantEntry createConstantEntry(String constname, List<SortEntry> arguments, List<SortEntry> parent_sorts,
+            Location loc) throws DuplicateConstantException {
 
-    public boolean isTimeStep(int i) {
-        return i <= maxStep && i >= 0;
-    }
-
-    public boolean modeActive(String mode) {
-        return this.modes.contains(mode);
-    }
-
-    public void setMode(String mode, boolean setting) {
-        if (setting) {
-            this.modes.add(mode);
+        ConstantEntry constEntry = null;
+        // first retrieve any existing matching ConstantEntry.
+        Set<ConstantEntry> constSet = CEMap.get(constname);
+        if (constSet == null || constSet.size() == 0) {
+            constSet = new HashSet<>();
+            CEMap.put(constname, constSet);
         } else {
-            this.modes.remove(mode);
-        }
-    }
-
-    public boolean isAction(ALMTerm action) {
-        return true;
-    }
-
-    private boolean isInstance(SortEntry sort, ALMTerm instance) {
-        List<ALMTerm> instances = sort.instances;
-        if (instances != null) {
-            for (ALMTerm i : instances) {
-                if (i.toString().compareTo(instance.toString()) == 0) {
-                    return true;
+            for (ConstantEntry c : constSet) {
+                if (c.getArguments().equals(arguments)) {
+                    constEntry = c;
+                    break;
                 }
             }
         }
-        for (SortEntry child : sort.getChildSorts()) {
-            if (isInstance(child, instance)) {
-                return true;
+        //we do not want to duplicate any existing compatible ConstantEntry created by other symbol tables. 
+        if (constEntry == null) {
+            //check global constent entry table
+            Set<ConstantEntry> otherSTEntries = staticCEMap.get(constname);
+            if (otherSTEntries != null)
+                for (ConstantEntry c : otherSTEntries) {
+                    if (c.getArguments().equals(arguments)) {
+                        constEntry = c;
+                        break;
+                    }
+                }
+            if (constEntry == null) {
+                constEntry = new ConstantEntry(constname, arguments, parent_sorts, loc);
+                Set<ConstantEntry> globalSet = staticCEMap.get(constname);
+                if (globalSet == null) {
+                    globalSet = new HashSet<>();
+                    staticCEMap.put(constname, globalSet);
+                }
+                globalSet.add(constEntry);
+            }
+            constSet.add(constEntry);
+        }
+        // By this point we have a matching constant entry from the set of constant
+        // entries with the same name.
+
+        //get or create the singleton sort created specifically to house the constant
+        SortEntry singleton = getSingletonSortForConstantEntry(constEntry);
+
+        //add the singleton sort as sub-sorts to the source-sorts of the constant entry.  
+        //collect any duplicate declarations for an exception. 
+
+        Set<SortEntry> duplicates = new HashSet<>();
+        for (SortEntry sort : parent_sorts) {
+            if (sort.childSorts.contains(singleton)) {
+                duplicates.add(sort);
+            } else {
+                sort.childSorts.add(singleton);
+                singleton.parentSorts.add(sort);
             }
         }
-        return false;
+
+        if (duplicates.size() > 0) {
+            throw new DuplicateConstantException(constEntry, duplicates);
+        }
+        return constEntry;
     }
 
     /**
@@ -595,8 +722,9 @@ public class SymbolTable {
             return null;
         }
         String constName = constTerm.getName();
-        Set<ConstantEntry> constSet = CEMap.get(constName);
-        if (constSet != null) {
+        Set<ConstantEntry> constSet = getConstantEntries(constName);
+
+        if (constSet != null && constSet.size() > 0) {
             if (argSize > 0) {
                 Set<ConstantEntry> matching = new HashSet<>();
                 for (ConstantEntry ce : constSet) {
@@ -611,11 +739,17 @@ public class SymbolTable {
     }
 
     public Set<ConstantEntry> getConstantEntries(String name) {
-        return CEMap.get(name);
+        Set<ConstantEntry> result = new HashSet<>();
+        for (SymbolTable dependency : dependencies)
+            result.addAll(dependency.getConstantEntries(name));
+        Set<ConstantEntry> constants = CEMap.get(name);
+        if (constants != null)
+            result.addAll(constants);
+        return result;
     }
 
     public Set<ConstantEntry> getConstantEntries(String name, int argSize) {
-        Set<ConstantEntry> constants = CEMap.get(name);
+        Set<ConstantEntry> constants = getConstantEntries(name);
         if (constants == null)
             return Collections.emptySet();
         Set<ConstantEntry> matches = new HashSet<>();
@@ -624,47 +758,6 @@ public class SymbolTable {
                 matches.add(c);
         }
         return matches;
-    }
-
-    public FunctionEntry getFunctionEntry(ALMTerm funTerm, int domSize, SymbolTable st, ErrorReport er) {
-        Set<FunctionEntry> matching = st.getFunctionEntries(funTerm.getName(), domSize);
-        if (matching.size() < 0) {
-            er.newSemanticError(SemanticError.FND003).add(funTerm);
-            return null;
-        } else if (matching.size() > 1) {
-            Iterator<FunctionEntry> funs = matching.iterator();
-            er.newSemanticError(SemanticError.FND009).add(funTerm).add(funs.next()).add(funs.next());
-            return null;
-        }
-        return matching.iterator().next();
-    }
-
-    public ConstantEntry getConstantEntry(ALMTerm constTerm, int argSize, SymbolTable st, ErrorReport er) {
-        Set<ConstantEntry> matching = st.getConstantEntries(constTerm.getName(), argSize);
-        if (matching.size() < 0) {
-            er.newSemanticError(SemanticError.CND008).add(constTerm);
-            return null;
-        } else if (matching.size() > 1) {
-            Iterator<ConstantEntry> funs = matching.iterator();
-            er.newSemanticError(SemanticError.CND007).add(constTerm).add(funs.next()).add(funs.next());
-            return null;
-        }
-        return matching.iterator().next();
-    }
-
-    public Set<SortEntry> getSingletonSorts() {
-        return new HashSet<>(singletons.values());
-    }
-
-    public void purgeSingletonSorts() {
-        //remove from nodes
-        for (SortEntry singleton : singletons.values()) {
-            for (SortEntry parent : singleton.getParentSorts()) {
-                parent.getChildSorts().remove(singleton);
-            }
-            nodes.removeSortInstanceWithName(singleton.getSortName());
-        }
-        singletons.clear();
     }
 
     public ConstantEntry getMatchingConstantEntry(ALMTerm obj_const) {
@@ -680,6 +773,12 @@ public class SymbolTable {
         return matching.iterator().next();
     }
 
+    /**
+     * Caller must ensure that obj_const actually resolves to a constant entry.
+     * 
+     * @param obj_const
+     * @param objConstVal
+     */
     public void defineConstant(ALMTerm obj_const, ALMTerm objConstVal) {
         ConstantEntry ce = getMatchingConstantEntry(obj_const);
         ce.setConstantDefinition(obj_const, objConstVal);
@@ -698,6 +797,26 @@ public class SymbolTable {
 
     public Map<ALMTerm, ConstantEntry> getDefinedConstants() {
         return CDMap;
+    }
+
+    public void addDependency(SymbolTable dST) {
+        dependencies.add(dST);
+    }
+
+    public void flatten() {
+        for (SymbolTable dependency : dependencies) {
+            dependency.flatten();
+            this.SEMap.putAll(dependency.SEMap);
+            this.CEMap.putAll(dependency.CEMap);
+            this.FEMap.putAll(dependency.FEMap);
+            this.DMap.putAll(dependency.DMap);
+        }
+        dependencies.clear();
+    }
+
+    @Override
+    public String toString() {
+        return STName;
     }
 
 }

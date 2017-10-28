@@ -3,6 +3,7 @@
 package edu.ttu.krlab.alm.parser;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -32,14 +33,17 @@ import edu.ttu.krlab.alm.datastruct.sig.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
 import edu.ttu.krlab.alm.datastruct.type.TypeChecker;
 import edu.ttu.krlab.alm.parser.ALMParser.AttributesContext;
+import edu.ttu.krlab.alm.parser.ALMParser.BoolContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Fun_defContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Function_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.HappenedContext;
 import edu.ttu.krlab.alm.parser.ALMParser.HistoryContext;
+import edu.ttu.krlab.alm.parser.ALMParser.IdContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Instance_atomContext;
 import edu.ttu.krlab.alm.parser.ALMParser.LiteralContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Max_stepsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.ModuleContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Module_dependenciesContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Nat_numContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Object_constantContext;
 import edu.ttu.krlab.alm.parser.ALMParser.ObservedContext;
@@ -47,6 +51,7 @@ import edu.ttu.krlab.alm.parser.ALMParser.Occurs_atomContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Occurs_literalContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_attribute_declContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_attribute_defContext;
+import edu.ttu.krlab.alm.parser.ALMParser.One_dependencyContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Solver_modeContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Sort_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Temporal_projectionContext;
@@ -60,26 +65,25 @@ import edu.ttu.krlab.alm.parser.ALMParser.TermContext;
 
 /**
  * 
+ *
+ * Organized to target computing Pre-model in SPARC first, then targeting Final SPARC Program.
+ * 
+ * Prior to Constructing Pre-Model SPARC Program: 1) Parse Sort Hierarchy A) Sort Hierarchy into Symbol Table B) ASP{f}
+ * rules for Hierarchy Created and in intermediate ASP{f} Rule Table 2) Parse Function Declarations A) Functions into
+ * Symbol Table 3) Parse Axioms A) Parse Axioms into ASP{f} Rule Table for each type of Axiom 4) Parse Constant
+ * Definitions in Structure A) Constant Definitions modify declared constants in the Symbol Table 5) Parse Sort
+ * Instances A) Sort Instances are added to the symbol table. B) Rules for sort instances added to ASP{f} table of
+ * appropriate type. 6) Parse Function definitions A) Definitions added to ASP{f} rule table of appropriate type.
+ *
+ * Construct Pre-model SPARC Program 1) Initialize Sort Section from SORT Hierarchy in symbol table 2) Define predicates
+ * from function in symbol table. 3) Translate static rules from ASP{f} that contribute to pre-model.
+ * 
+ * Compute Answer Set
+ * 
+ * Construct Final SPARC Program 1) Populate Sort Section from answerset 2) Copy predicate declarations 3) Copy rules 4)
+ * Translate remaining non-static rules from ASP{f} 5) Add facts from Answer Set.
+ *
  * @author Edward Wertz
- *
- *         Organized to target computing Pre-model in SPARC first, then targeting Final SPARC Program.
- * 
- *         Prior to Constructing Pre-Model SPARC Program: 1) Parse Sort Hierarchy A) Sort Hierarchy into Symbol Table B)
- *         ASP{f} rules for Hierarchy Created and in intermediate ASP{f} Rule Table 2) Parse Function Declarations A)
- *         Functions into Symbol Table 3) Parse Axioms A) Parse Axioms into ASP{f} Rule Table for each type of Axiom 4)
- *         Parse Constant Definitions in Structure A) Constant Definitions modify declared constants in the Symbol Table
- *         5) Parse Sort Instances A) Sort Instances are added to the symbol table. B) Rules for sort instances added to
- *         ASP{f} table of appropriate type. 6) Parse Function definitions A) Definitions added to ASP{f} rule table of
- *         appropriate type.
- *
- *         Construct Pre-model SPARC Program 1) Initialize Sort Section from SORT Hierarchy in symbol table 2) Define
- *         predicates from function in symbol table. 3) Translate static rules from ASP{f} that contribute to pre-model.
- * 
- *         Compute Answer Set
- * 
- *         Construct Final SPARC Program 1) Populate Sort Section from answerset 2) Copy predicate declarations 3) Copy
- *         rules 4) Translate remaining non-static rules from ASP{f} 5) Add facts from Answer Set.
- *
  */
 
 public class ALMBaseListener implements ALMListener {
@@ -96,11 +100,11 @@ public class ALMBaseListener implements ALMListener {
     boolean definedType = false;
     boolean totalType = false;
 
-    public ALMBaseListener(ALMCompilerSettings settings, SymbolTable st, ErrorReport er, ASPfProgram aspf) {
+    public ALMBaseListener(ALMCompilerSettings settings, SymbolTable st, ASPfProgram aspf, ErrorReport er) {
         this.s = settings;
         this.st = st;
-        this.er = er;
         this.aspf = aspf;
+        this.er = er;
 
         aspf.createSection(ALM.AXIOMS_DYNAMIC_CAUSAL_LAWS);
         aspf.createSection(ALM.AXIOMS_EXECUTABILITY_CONDITIONS);
@@ -886,7 +890,7 @@ public class ALMBaseListener implements ALMListener {
     public void exitOne_sort_decl(ALMParser.One_sort_declContext ctx) {
 
         // collect lists of parts
-        List<TerminalNode> IDs = ctx.ID();
+        List<IdContext> IDs = ctx.id();
         List<Sort_nameContext> sort_names = ctx.sort_name();
         AttributesContext attributes_section = ctx.attributes();
         List<One_attribute_declContext> attributes = null;
@@ -917,7 +921,7 @@ public class ALMBaseListener implements ALMListener {
         // Create New Sort Entries for IDS, throw semantic error if they exist
         // already.
         List<SortEntry> child_sorts = new ArrayList<SortEntry>();
-        for (TerminalNode ID : IDs)
+        for (IdContext ID : IDs)
             try {
                 child_sorts.add(st.createSortEntry(ID.getText(), new Location(ID)));
             } catch (DuplicateSortException e2) {
@@ -947,7 +951,7 @@ public class ALMBaseListener implements ALMListener {
             for (One_attribute_declContext attribute : attributes) {
 
                 // attribute name
-                String attr_name = attribute.ID().getText();
+                String attr_name = attribute.id().getText();
 
                 // Construct Partial Signature
                 boolean sig_success = true;
@@ -976,36 +980,44 @@ public class ALMBaseListener implements ALMListener {
                         // attempt to create the function entry and if
                         // successful add it to the child.
                         try {
-                            NormalFunctionEntry attr = st.createFunctionEntry(attr_name, full_sig,
-                                    new Location(attribute));
-                            attr.setAttribute();
-                            attr.setStatic();
-                            child.addAttribute(attr);
+                            //Check for other attribute declarations with the same name and number of arguments. 
+                            Set<FunctionEntry> matching = st.getFunctionEntries(attr_name, full_sig.size() - 1);
+                            if (matching != null && matching.size() > 0) {
+                                er.newSemanticError(SemanticError.ATF004).add(attribute)
+                                        .add(matching.iterator().next().getLocation());
+                            } else {
+                                NormalFunctionEntry attr = st.createFunctionEntry(attr_name, full_sig,
+                                        new Location(attribute));
 
-                            // per attribute function, need to add axiom defining dom_f
-                            ALMTerm domf = new ALMTerm(ALM.DOM_PREFIX + attr.getQualifiedFunctionName(), ALMTerm.FUN,
-                                    attribute);
-                            ALMTerm fun = new ALMTerm(attr.getQualifiedFunctionName(), ALMTerm.FUN, attribute);
+                                attr.setAttribute();
+                                attr.setStatic();
+                                child.addAttribute(attr);
 
-                            int num_args = attr.getSignature().size() - 1;
-                            for (int i = 0; i < num_args; i++) {
-                                ALMTerm argi = new ALMTerm("X" + i, ALMTerm.VAR);
-                                domf.addArg(argi);
-                                fun.addArg(argi);
-                                i++;
+                                // per attribute function, need to add axiom defining dom_f
+                                ALMTerm domf = new ALMTerm(ALM.DOM_PREFIX + attr.getQualifiedFunctionName(),
+                                        ALMTerm.FUN, attribute);
+                                ALMTerm fun = new ALMTerm(attr.getQualifiedFunctionName(), ALMTerm.FUN, attribute);
+
+                                int num_args = attr.getSignature().size() - 1;
+                                for (int i = 0; i < num_args; i++) {
+                                    ALMTerm argi = new ALMTerm("X" + i, ALMTerm.VAR);
+                                    domf.addArg(argi);
+                                    fun.addArg(argi);
+                                    i++;
+                                }
+
+                                ALMTerm funRelation = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION);
+                                funRelation.addArg(fun);
+                                funRelation.addArg(new ALMTerm("Y", ALMTerm.VAR));
+
+                                List<ASPfLiteral> body = new ArrayList<ASPfLiteral>();
+                                body.add(funRelation);
+
+                                ASPfRule r = aspf.newRule(ALM.AXIOMS_DEFINITIONS_STATIC, domf, body);
+                                r.addComment("Definition for dom_f being positive when attribute function ["
+                                        + attr.getFunctionName() + "] of sort [" + child.getSortName()
+                                        + "] has a known definition.");
                             }
-
-                            ALMTerm funRelation = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION);
-                            funRelation.addArg(fun);
-                            funRelation.addArg(new ALMTerm("Y", ALMTerm.VAR));
-
-                            List<ASPfLiteral> body = new ArrayList<ASPfLiteral>();
-                            body.add(funRelation);
-
-                            ASPfRule r = aspf.newRule(ALM.AXIOMS_DEFINITIONS_STATIC, domf, body);
-                            r.addComment("Definition for dom_f being positive when attribute function ["
-                                    + attr.getFunctionName() + "] of sort [" + child.getSortName()
-                                    + "] has a known definition.");
                         } catch (DuplicateFunctionException e) {
                             FunctionEntry original = e.getFunctionEntry();
                             er.newSemanticError(SemanticError.ATF003).add(attribute).add(original.getLocation());
@@ -1407,7 +1419,7 @@ public class ALMBaseListener implements ALMListener {
 
         // defined functions must be boolean, otherwise semantic error.
         if (definedType == true) {
-            if (signature.get(signature.size() - 1) != st.getBooleansSortEntry())
+            if (signature.get(signature.size() - 1) != SymbolTable.getBooleansSortEntry())
                 // was not boolean sort
                 er.newSemanticError(SemanticError.FND001).add(ctx);
         }
@@ -1664,6 +1676,19 @@ public class ALMBaseListener implements ALMListener {
     public void enterOne_dynamic_causal_law(ALMParser.One_dynamic_causal_lawContext ctx) {
     }
 
+    private FunctionEntry getFunctionEntry(ALMTerm funTerm, int domSize, SymbolTable st, ErrorReport er) {
+        Set<FunctionEntry> matching = st.getFunctionEntries(funTerm.getName(), domSize);
+        if (matching.size() < 1) {
+            er.newSemanticError(SemanticError.FND003).add(funTerm);
+            return null;
+        } else if (matching.size() > 1) {
+            Iterator<FunctionEntry> funs = matching.iterator();
+            er.newSemanticError(SemanticError.FND009).add(funTerm).add(funs.next()).add(funs.next());
+            return null;
+        }
+        return matching.iterator().next();
+    }
+
     /**
      * {@inheritDoc}
      *
@@ -1697,9 +1722,9 @@ public class ALMBaseListener implements ALMListener {
         FunctionEntry f;
         if (pos_fun_def.getType() == ALMTerm.TERM_RELATION) {
             ALMTerm funTerm = pos_fun_def.getArg(0);
-            f = st.getFunctionEntry(funTerm, funTerm.getArgs().size(), st, er);
+            f = getFunctionEntry(funTerm, funTerm.getArgs().size(), st, er);
         } else
-            f = st.getFunctionEntry(pos_fun_def, pos_fun_def.getArgs().size(), st, er);
+            f = getFunctionEntry(pos_fun_def, pos_fun_def.getArgs().size(), st, er);
         if (f != null) {
             if (f.isSpecial()) {
                 er.newSemanticError(SemanticError.AXM003).add(pos_fun_def);
@@ -1711,7 +1736,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // get sort entry for actions
-        SortEntry actions_sort = st.getActionsSortEntry();
+        SortEntry actions_sort = SymbolTable.getActionsSortEntry();
 
         // instance_atom's sort_name must be a subsort of actions;
         SortEntry inst_sort = null;
@@ -1811,7 +1836,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // get sort entry for actions
-        SortEntry actions_sort = st.getActionsSortEntry();
+        SortEntry actions_sort = SymbolTable.getActionsSortEntry();
 
         // instance_atom's sort_name must be a subsort of actions;
         SortEntry inst_sort = null;
@@ -1913,7 +1938,7 @@ public class ALMBaseListener implements ALMListener {
                 headFunction = head.getArg(0);
             }
 
-            FunctionEntry head_function = st.getFunctionEntry(headFunction, headFunction.getArgs().size(), st, er);
+            FunctionEntry head_function = getFunctionEntry(headFunction, headFunction.getArgs().size(), st, er);
             // head function must be basic
             if (head_function != null) {
                 if (!head_function.isAttribute())
@@ -2014,9 +2039,9 @@ public class ALMBaseListener implements ALMListener {
         FunctionEntry f1 = null;
         if (head.getType() == ALMTerm.TERM_RELATION) {
             ALMTerm headTerm = head.getArg(0);
-            f1 = st.getFunctionEntry(headTerm, headTerm.getArgs().size(), st, er);
+            f1 = getFunctionEntry(headTerm, headTerm.getArgs().size(), st, er);
         } else
-            f1 = st.getFunctionEntry(head, head.getArgs().size(), st, er);
+            f1 = getFunctionEntry(head, head.getArgs().size(), st, er);
         if (f1 != null) {
             if (!f1.isDefined()) {
                 er.newSemanticError(SemanticError.AXM008).add(head);
@@ -2266,7 +2291,7 @@ public class ALMBaseListener implements ALMListener {
         List<SortEntry> sort_entries = new ArrayList<SortEntry>();
         for (ALMParser.Sort_nameContext sort : sorts) {
             String sort_text = sort.getText();
-            if (st.isPredefinedSort(sort_text))
+            if (SymbolTable.isPredefinedSort(sort_text))
                 er.newSemanticError("SID001").add(new Location(sort));
             else {
                 SortEntry se;
@@ -2324,55 +2349,33 @@ public class ALMBaseListener implements ALMListener {
         for (ASPfLiteral lit : lits)
             lit.typeCheck(tc, st, er);
         for (ALMTerm adef : attribute_defs) {
+            //for each attribute definition
+            //type check the attribute function. 
             adef.typeCheck(tc, st, er);
+            ALMTerm range = adef.getArg(1);
             ALMTerm attr = adef.getArg(0);
             String attr_name = attr.getName();
             List<ALMTerm> attr_params = attr.getArgs();
             int param_count = 0;
             if (attr_params != null)
                 param_count = attr_params.size();
-            ALMTerm rangeVar = adef.getArg(1);
-            //TODO: NEED TO VERIFY THIS CODE IS CORRECT. 
-            for (SortEntry s : sort_entries)
-                for (FunctionEntry attr_fun : s.getAttributes())
+            //verify attribute function belongs to the sorts the instance is compatible with.
+            for (SortEntry s : sort_entries) {
+                //for each sort the instance is declared to belong to.
+                for (FunctionEntry attr_fun : s.getAttributes()) {
+                    //for each attribute function of the sort. 
                     if (attr_fun.getFunctionName().compareTo(attr_name) == 0) {
                         // matching attribute function found.
                         List<SortEntry> sig = attr_fun.getSignature();
                         if (param_count + 2 != sig.size()) {
+                            //this error may not be accurate if its possible for a sort to have two attributes
+                            //of the same name but different arguments.  
                             er.newSemanticError("SID005").add(attr.getLocation()).add(attr_fun.getLocation());
                             continue;
-                        } else if (rangeVar.getType() == ALMTerm.ID) {
-                            // if rangeVar is not variable it should be object constant get the function entry of the 
-                            // attribute (the left side)
-                            FunctionEntry attFun = st.getFunctionEntry(attr, attr.getArgs().size() + 1, st, er);
-                            if (attFun != null) {
-                                // get the constant entry of object constant (the right side)
-                                ConstantEntry attCn = st.getConstantEntry(rangeVar, rangeVar.getArgs().size(), st, er);
-                                boolean compatible = true;
-                                if (attCn != null) {
-                                    // get the source sort of the object entry (the right side)
-                                    List<SortEntry> sortList = attCn.getSourceSorts();
-                                    // check the range of the attribute function is subsort of the source sort(s) of
-                                    // the object constant otherwise return false
-                                    for (SortEntry sl : sortList) {
-                                        if (sl.subsortof(attFun.getRangeSort())
-                                                || sl.getSortName() == attFun.getRangeSort().getSortName()) {
-                                            compatible = true;
-                                            break;
-                                        } else
-                                            compatible = false;
-                                    }
-                                } else {
-                                    compatible = false;
-                                }
-                                if (compatible == false)
-                                    er.newSemanticError("SID004");
-
-                            }
-
                         }
-
                     }
+                }
+            }
 
         }
 
@@ -2708,7 +2711,7 @@ public class ALMBaseListener implements ALMListener {
     public void exitMax_steps(Max_stepsContext ctx) {
         TerminalNode max = ctx.POSINT();
         if (max != null) {
-            st.setMaxSteps(Integer.parseInt(max.getText()));
+            SymbolTable.setMaxSteps(Integer.parseInt(max.getText()));
         }
 
     }
@@ -2719,7 +2722,7 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void exitHistory(HistoryContext ctx) {
-        st.setMode(ALM.HISTORY, true);
+        SymbolTable.setMode(ALM.HISTORY, true);
         aspf.createSection(ALM.HISTORY);
     }
 
@@ -2738,10 +2741,10 @@ public class ALMBaseListener implements ALMListener {
         observed.addArg(t);
         observed.addArg(new ALMTerm(Integer.toString(i), ALMTerm.INT));
 
-        FunctionEntry f_ent = st.getFunctionEntry(f, f.getArgs().size(), st, er);
+        FunctionEntry f_ent = getFunctionEntry(f, f.getArgs().size(), st, er);
         if (f_ent != null) {
             if (f_ent.isFluent()) {
-                if (st.isTimeStep(i)) {
+                if (SymbolTable.isTimeStep(i)) {
                     aspf.newRule(ALM.HISTORY, observed, null);
                 } else {
                     // TODO record semantic error
@@ -2774,8 +2777,8 @@ public class ALMBaseListener implements ALMListener {
         happened.addArg(a);
         happened.addArg(new ALMTerm(Integer.toString(i), ALMTerm.INT));
 
-        if (st.isAction(a)) {
-            if (st.isTimeStep(i)) {
+        if (true) { //st.isAction(a) -- need to check but this hasn't been implemented yet. 
+            if (SymbolTable.isTimeStep(i)) {
                 aspf.newRule(ALM.HISTORY, happened, null);
             } else {
                 // TODO record semantic error.
@@ -2797,4 +2800,53 @@ public class ALMBaseListener implements ALMListener {
     @Override
     public void exitNat_num(Nat_numContext ctx) {
     }
+
+    @Override
+    public void enterModule_dependencies(Module_dependenciesContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitModule_dependencies(Module_dependenciesContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterOne_dependency(One_dependencyContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitOne_dependency(One_dependencyContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterId(IdContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitId(IdContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterBool(BoolContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitBool(BoolContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

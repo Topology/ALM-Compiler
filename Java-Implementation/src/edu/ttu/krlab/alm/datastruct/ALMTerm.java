@@ -80,7 +80,6 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     private List<ALMTerm> args;
     private ParserRuleContext prc;
     private TypeChecker typechecker;
-    private SortType sortType = null;
 
     private void defaultInit() {
         this.args = null;
@@ -244,9 +243,9 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         if (typechecker == null)
             typechecker = tc;
         if (INTEGERS_TYPE == null)
-            INTEGERS_TYPE = Type.getSortType(st.getIntegersSortEntry());
+            INTEGERS_TYPE = Type.getSortType(SymbolTable.getIntegersSortEntry());
         if (BOOLEANS_TYPE == null)
-            BOOLEANS_TYPE = Type.getSortType(st.getBooleansSortEntry());
+            BOOLEANS_TYPE = Type.getSortType(SymbolTable.getBooleansSortEntry());
 
         switch (this.type) {
         case ALMTerm.ID:
@@ -378,16 +377,20 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
             }
             return BOOLEANS_TYPE;
         case ALMTerm.ATTR_DEF:
-            //left hand side is missing its sort argument (the first argument)
+            //left hand side is missing its sort argument (the first argument).   Check relevant sort. 
+
             //must manually type check here and cannot use recursion since 
             //there is no matching function.
             ALMTerm fTerm = args.get(0);
             int domSize = fTerm.getArgs().size() + 1;
-            FunctionEntry f = st.getFunctionEntry(fTerm, domSize, st, er);
-            List<SortEntry> sig = f.getSignature();
+            FunctionEntry f = st.getFunctionEntry(fTerm.getName(), domSize);
+            if (f == null)
+                break; //no type check possible without a matching function type.
 
+            List<SortEntry> sig = f.getSignature();
             for (int i = 1; i < domSize; i++)
                 fTerm.getArg(i - 1).typeCheck(tc, st, er, Type.getSortType(sig.get(i)));
+            //type check the right hand the right hand side of the assignment with the expected range sort. 
             SortType left = Type.getSortType(sig.get(domSize));
             SortType right = args.get(1).typeCheck(tc, st, er, left);
             break;
@@ -427,7 +430,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                 return BOOLEANS_TYPE;
             case ALM.SPECIAL_FUNCTION_OCCURS:
                 // Only actions can occur. Type check against actions.
-                args.get(0).typeCheck(tc, st, er, Type.getSortType(st.getActionsSortEntry()));
+                args.get(0).typeCheck(tc, st, er, Type.getSortType(SymbolTable.getActionsSortEntry()));
                 if (!BOOLEANS_TYPE.isSubtypeOf(expected))
                     er.newSemanticError(SemanticError.TYP003).add(this).add(expected).add(BOOLEANS_TYPE);
                 return BOOLEANS_TYPE;
@@ -860,5 +863,4 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         //all arguments match
         return true;
     }
-
 }

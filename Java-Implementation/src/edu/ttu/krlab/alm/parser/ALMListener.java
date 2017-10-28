@@ -10,6 +10,26 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  */
 public interface ALMListener extends ParseTreeListener {
 	/**
+	 * Enter a parse tree produced by {@link ALMParser#id}.
+	 * @param ctx the parse tree
+	 */
+	void enterId(ALMParser.IdContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#id}.
+	 * @param ctx the parse tree
+	 */
+	void exitId(ALMParser.IdContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#bool}.
+	 * @param ctx the parse tree
+	 */
+	void enterBool(ALMParser.BoolContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#bool}.
+	 * @param ctx the parse tree
+	 */
+	void exitBool(ALMParser.BoolContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ALMParser#nat_num}.
 	 * @param ctx the parse tree
 	 */
@@ -329,6 +349,26 @@ public interface ALMListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitModule_body(ALMParser.Module_bodyContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#module_dependencies}.
+	 * @param ctx the parse tree
+	 */
+	void enterModule_dependencies(ALMParser.Module_dependenciesContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#module_dependencies}.
+	 * @param ctx the parse tree
+	 */
+	void exitModule_dependencies(ALMParser.Module_dependenciesContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#one_dependency}.
+	 * @param ctx the parse tree
+	 */
+	void enterOne_dependency(ALMParser.One_dependencyContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#one_dependency}.
+	 * @param ctx the parse tree
+	 */
+	void exitOne_dependency(ALMParser.One_dependencyContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ALMParser#integer_range}.
 	 * @param ctx the parse tree

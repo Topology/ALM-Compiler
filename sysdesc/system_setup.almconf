@@ -24,4 +24,13 @@ SOLVER_LOCATION : C:\programming\logic
 #SOLVER_TYPE : < "clingo" or "dlv" >
 SOLVER_TYPE : clingo
 
+#setting LIBRARY_LOCATION : <path to library directory>
+#Give the path to the root directory of where the library directories are located.
+#The names of the sub-directories of the root directories are names of libraries.
+#The names of .alm files in the library directory are theory names.
+#The names of libraries and theories must contain only alphanumeric characters and '_'.
+#Example path for library directory 'libraries', library 'move', theory 'discrete_movement':
+#<path to sysdesc>/libraries/move/discrete_movement.alm
+#If the next line is commented out, there is no default location for libraries. 
+LIBRARY_LOCATION : C:\Users\Topology\git\ALM-Compiler\sysdesc\libraries
 

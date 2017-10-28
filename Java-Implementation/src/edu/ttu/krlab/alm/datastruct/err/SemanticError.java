@@ -26,6 +26,7 @@ public class SemanticError {
     public static final String ATF001 = "ATF001";
     public static final String ATF002 = "ATF002";
     public static final String ATF003 = "ATF003";
+    public static final String ATF004 = "ATF004";
     public static final String CND001 = "CND001";
     public static final String CND002 = "CND002";
     public static final String CND003 = "CND003";

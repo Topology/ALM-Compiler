@@ -1,12 +1,12 @@
 package edu.ttu.krlab.alm;
 
-public class AlmCompilerPermanentFailure extends RuntimeException {
+public class ALMCompilerPermanentFailure extends RuntimeException {
 
 	private String phase;
 	private String error;
 		
 	
-	public AlmCompilerPermanentFailure(String phase, String error) {
+	public ALMCompilerPermanentFailure(String phase, String error) {
 		this.phase = phase;
 		this.error = error;
 	}
