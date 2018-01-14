@@ -10,7 +10,7 @@ module coin_flip
 		hides :: actions
 			attributes
 				coin_hidden : coins
-	object constants
+	constant declarations
 		heads, tails : sides
 	function declarations
 		fluents 
