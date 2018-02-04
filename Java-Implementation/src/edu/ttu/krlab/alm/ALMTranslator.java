@@ -1176,6 +1176,13 @@ public abstract class ALMTranslator {
         String timestep = ar.newVariable("TS");
         boolean hasFluentFunction = false;
 
+        String timeAdd = "+1";
+        switch (section) {
+        case ALM.AXIOMS_STATE_CONSTRAINTS_FLUENT:
+            timeAdd = "";
+            break;
+        }
+
         TypeChecker tc = ar.getTypeChecker();
         if (tc == null)
             tc = new TypeChecker(st);
@@ -1196,12 +1203,12 @@ public abstract class ALMTranslator {
                     if (!f.isBoolean())
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule", "Non Boolean Function ["
                                 + f.getFunctionName() + "] must be in a Term Relation at head of rule");
-                    // Should be caught by semantic error.
+                    // Should be caught by semantic error.  
                     if (f.isStatic())
                         head = thead;
                     else if (f.isFluent()) {
                         // construct corresponding sparc literal
-                        head = new_SPARCLiteral_Boolean_Fluent(thead.getSign(), f, thead.getArgs(), timestep + "+1");
+                        head = new_SPARCLiteral_Boolean_Fluent(thead.getSign(), f, thead.getArgs(), timestep + timeAdd);
                     } else
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
                                 "Non Static Or Fluent Function [" + f.getFunctionName() + " at head of rule");
