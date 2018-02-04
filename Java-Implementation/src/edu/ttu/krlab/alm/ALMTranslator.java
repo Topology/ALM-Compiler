@@ -58,6 +58,9 @@ public abstract class ALMTranslator {
 
         // add time steps to sorts.
         SortEntry timeSteps = st.getTimestepSortEntry();
+        if (timeSteps.getInstances().isEmpty()) {
+            st.setMaxSteps(2);
+        }
         SPARCSort time = new SPARCSort(timeSteps.getSortName());
         // no instances added for static section.
         try {
@@ -114,9 +117,9 @@ public abstract class ALMTranslator {
                 SortEntry sort = sig.get(i);
                 if (finished.contains(sort) || started.contains(sort)) //skip completed  and started dependencies. 
                     continue;
-                //                if (!sort.subsortof(se)) { // ignore references to se.  
-                //                    dependencies.add(sort);
-                //                }
+                if (!sort.subsortof(se)) { // ignore references to se.  
+                    dependencies.add(sort);
+                }
             }
         }
         //3. S' is an argument of a one of the constants that can occur for this sort. 

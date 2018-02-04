@@ -69,6 +69,7 @@ public class ALMCompiler {
 
         //Render input system description into ANTLR Syntax Parse Tree. 
         try {
+            //Setup Input to Parser. 
             CharStream sysDescCS = CharStreams.fromFileName(s.getSystemDescriptionFileName());
             ALMLexer sdLexer = new ALMLexer(sysDescCS);
             TokenStream sdTS = new BufferedTokenStream(sdLexer);
@@ -77,18 +78,32 @@ public class ALMCompiler {
             sdParser.removeErrorListeners();
             sdParser.addErrorListener(new ALMSyntaxErrorListener(er));
             sdParser.addParseListener(new ALMModuleListener(amm));
+
+            //Create the parse tree for the top-level system description. 
+            //Walk the parse tree, real time, using the ALMModuleListener, populating amm. 
             System_descriptionContext sysDesc = sdParser.system_description();
 
+            //turn module references into parse trees for the modules.
+            //Loads multi-modules into memory. 
             amm.resolveModules();
 
+            //Creates symbol tables for each module then flattens them into st
+            //Populates axioms of each module into aspf. 
             processTheory(s, amm, st, aspf, er);
+
             StructureContext structure = sysDesc.structure();
             if (structure != null) {
+
+                //populate aspf with the rules derived from the structure.
+                //adds constant declarations to st.  
                 processStructure(s, structure, st, aspf, er);
                 Solver_modeContext mode = sysDesc.solver_mode();
-                if (mode != null)
+                if (mode != null) {
+                    //Adds rules to define and solve problems such as histories for temporal projections
                     processSolverMode(s, mode, st, aspf, er);
+                }
                 // Call The Translation Function (Where the magic happens)
+                // Produces the final SPARC program 'tm' and if solving a problem, the final answer set(s) 'as'. 
                 ALMCompiler.Translate(s, st, er, aspf, pm, as, tm);
             } else {
                 System.out.println("The provided system description did not contain a structure.");

@@ -107,7 +107,7 @@ public class AnswerSet {
             firstComma = termList.indexOf(',', firstCloseParenthesis);
             if (firstComma > 0) {
                 //parse the remainder of the termList
-                parseALMTermList(termList.substring(firstComma), destination);
+                parseALMTermList(termList.substring(firstComma + 1), destination);
             }
         }
 
