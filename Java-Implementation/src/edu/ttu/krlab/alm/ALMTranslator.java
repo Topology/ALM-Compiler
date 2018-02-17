@@ -50,7 +50,6 @@ public abstract class ALMTranslator {
         try {
             pm.addSPARCSort(nodes);
         } catch (SPARCSortAlreadyDefined e) {
-            e.printStackTrace();
             ALMCompiler.IMPLEMENTATION_FAILURE("PreModel Creating Sorts Section",
                     "Special Sort For Nodes In Hierarchy Was Already Defined.");
             // This should never happen.
@@ -209,6 +208,7 @@ public abstract class ALMTranslator {
             if (sig == null)
                 ALMCompiler.IMPLEMENTATION_FAILURE("PreModelCreatePredicatesSection", "Function Has No Signature");
 
+            //populate f_pred with the sort of each argument. 
             int dom_length = sig.size() - 1;
             for (int i = 0; i <= dom_length; i++) {
                 SortEntry se = sig.get(i);
@@ -663,7 +663,7 @@ public abstract class ALMTranslator {
                 not_dom_f.setSign(ALMTerm.SIGN_NOT);
 
                 if (fIsBoolean) {
-                    // definition of dom_f when f is boolean
+                    // definition of dom_f when f is positieve boolean
                     // dom_f(X1..Xn) :- f(X1..Xn).
                     ALMTerm pos_f_bool = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN);
                     pos_f_bool.getArgs().addAll(XArgs);
@@ -671,7 +671,18 @@ public abstract class ALMTranslator {
                     body.add(pos_f_bool);
                     r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, pos_dom_f, body);
                     r.addComment("Definition of [" + dom_f.getQualifiedFunctionName() + "] when ["
-                            + f.getQualifiedFunctionName() + "] is a boolean function.");
+                            + f.getQualifiedFunctionName() + "] is a positive boolean function.");
+
+                    // definition of dom_f when f is negative boolean
+                    // dom_f(X1..Xn) :- f(X1..Xn).
+                    ALMTerm neg_f_bool = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN);
+                    neg_f_bool.getArgs().addAll(XArgs);
+                    neg_f_bool.setSign(ALMTerm.SIGN_NEG);
+                    body = new ArrayList<>();
+                    body.add(neg_f_bool);
+                    r = pm.newSPARCRule(ALM.RULES_STATIC_FUNCTIONS, pos_dom_f, body);
+                    r.addComment("Definition of [" + dom_f.getQualifiedFunctionName() + "] when ["
+                            + f.getQualifiedFunctionName() + "] is a positive boolean function.");
 
                 } else {
                     // non-boolean functions need uniqueness constraints to enforce uniqueness of
@@ -776,7 +787,7 @@ public abstract class ALMTranslator {
         CreateFinalPredicatesSection(tm, pm, as);
         CreateFinalProgramRules(tm, st, pm, aspf);
         CreateHistory(tm, st, aspf);
-        LoadFactsFromPreModelAnswerSet(tm, as, s);
+        //LoadFactsFromPreModelAnswerSet(tm, as, s); // TOO NAIVE, NEED TO FILTER FACTS FROM MISSING SORT INSTANCES. 
     }
 
     private static void PurgeSingletonSorts(SPARCProgram pm, AnswerSet as, SymbolTable st) {
@@ -939,14 +950,14 @@ public abstract class ALMTranslator {
                 }
                 List<ALMTerm> args;
 
-                ALMTerm f_I = new ALMTerm(f_name, ALMTerm.FUN);
-                args = f_I.getArgs();
+                ALMTerm f_V_I = new ALMTerm(f_name, ALMTerm.FUN);
+                args = f_V_I.getArgs();
                 args.addAll(domain_args);
                 args.add(V);
                 args.add(I);
 
-                ALMTerm f_Inc = new ALMTerm(f_name, ALMTerm.FUN);
-                args = f_Inc.getArgs();
+                ALMTerm f_V_Inc = new ALMTerm(f_name, ALMTerm.FUN);
+                args = f_V_Inc.getArgs();
                 args.addAll(domain_args);
                 args.add(V);
                 args.add(Inc);
@@ -968,37 +979,105 @@ public abstract class ALMTranslator {
                 args.addAll(domain_args);
                 args.add(Inc);
 
-                // Unique Assignment Constraint
-                // :- f(X1..Xn, V, I), f(X1..Xn, V2, I), V != V2.
-                ALMTerm f_V2_I = new ALMTerm(f_name, ALMTerm.FUN);
-                f_V2_I.getArgs().addAll(domain_args);
-                f_V2_I.addArg(V2);
-                f_V2_I.addArg(I);
-                body = new ArrayList<>();
-                body.add(f_I);
-                body.add(f_V2_I);
-                body.add(V_not_V2);
-                r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, null, body);
-                r.addComment("Unique Assignment Constraint for modeling functions using relations.");
+                ALMTerm f_I = new ALMTerm(f_name, ALMTerm.FUN);
+                args = f_I.getArgs();
+                args.addAll(domain_args);
+                args.add(I);
 
-                // f(X1..Xn, V, I+1) :- f(X1..Xn,V, I), not f(X1..Xn, V2, I+1), V != V2,
-                // dom_f(X1...Xn, I+1).
-                body = new ArrayList<>();
-                body.add(f_I);
-                body.add(not_f_V2_Inc);
-                body.add(V_not_V2);
-                body.add(dom_f_Inc);
-                r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, f_Inc, body);
-                r.addComment("Law Of Inertia for [" + f_name + "].");
+                ALMTerm f_Inc = new ALMTerm(f_name, ALMTerm.FUN);
+                args = f_Inc.getArgs();
+                args.addAll(domain_args);
+                args.add(Inc);
 
-                // dom_f(X1..Xn, I) :- f(X1..Xn,V,I).
+                ALMTerm not_f_Inc = new ALMTerm(f_name, ALMTerm.FUN);
+                not_f_Inc.setSign(ALMTerm.SIGN_NOT);
+                args = not_f_Inc.getArgs();
+                args.addAll(domain_args);
+                args.add(Inc);
+
+                ALMTerm neg_f_I = new ALMTerm(f_name, ALMTerm.FUN);
+                neg_f_I.setSign(ALMTerm.SIGN_NEG);
+                args = neg_f_I.getArgs();
+                args.addAll(domain_args);
+                args.add(I);
+
+                ALMTerm neg_f_Inc = new ALMTerm(f_name, ALMTerm.FUN);
+                neg_f_Inc.setSign(ALMTerm.SIGN_NEG);
+                args = neg_f_Inc.getArgs();
+                args.addAll(domain_args);
+                args.add(Inc);
+
+                ALMTerm not_neg_f_Inc = new ALMTerm(f_name, ALMTerm.FUN);
+                not_neg_f_Inc.setSign(ALMTerm.SIGN_NOT_NEG);
+                args = not_neg_f_Inc.getArgs();
+                args.addAll(domain_args);
+                args.add(Inc);
+
+                if (!f.isBoolean()) {
+                    // Unique Assignment Constraint only applies to non-boolean functions. 
+                    // :- f(X1..Xn, V, I), f(X1..Xn, V2, I), V != V2.
+                    ALMTerm f_V2_I = new ALMTerm(f_name, ALMTerm.FUN);
+                    f_V2_I.getArgs().addAll(domain_args);
+                    f_V2_I.addArg(V2);
+                    f_V2_I.addArg(I);
+                    body = new ArrayList<>();
+                    body.add(f_V_I);
+                    body.add(f_V2_I);
+                    body.add(V_not_V2);
+                    r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, null, body);
+                    r.addComment("Unique Assignment Constraint for modeling non-boolean functions using relations.");
+                }
+
+                if (f.isBoolean()) {
+                    // f(X1..Xn, I+1) :- f(X1..Xn, I), not -f(X1..Xn, I+1), dom_f(X1...Xn, I+1).
+                    body = new ArrayList<>();
+                    body.add(f_I);
+                    body.add(not_neg_f_Inc);
+                    body.add(dom_f_Inc);
+                    r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, f_Inc, body);
+                    r.addComment("Law Of Inertia for positive boolean function [" + f_name + "].");
+
+                    // -f(X1..Xn, I+1) :- -f(X1..Xn, I), not f(X1..Xn, I+1), dom_f(X1...Xn, I+1). 
+                    body = new ArrayList<>();
+                    body.add(neg_f_I);
+                    body.add(not_f_Inc);
+                    body.add(dom_f_Inc);
+                    r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, neg_f_Inc, body);
+                    r.addComment("Law Of Inertia for negative boolean function [" + f_name + "].");
+                } else {
+                    // f(X1..Xn, V, I+1) :- f(X1..Xn,V, I), not f(X1..Xn, V2, I+1), V != V2, dom_f(X1...Xn, I+1).
+                    body = new ArrayList<>();
+                    body.add(f_V_I);
+                    body.add(not_f_V2_Inc);
+                    body.add(V_not_V2);
+                    body.add(dom_f_Inc);
+                    r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, f_V_Inc, body);
+                    r.addComment("Law Of Inertia for non-boolean function [" + f_name + "].");
+                }
+
                 ALMTerm dom_f_I = new ALMTerm(dom_f_name, ALMTerm.FUN);
                 dom_f_I.getArgs().addAll(domain_args);
                 dom_f_I.addArg(I);
-                body = new ArrayList<>();
-                body.add(f_I);
-                r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, dom_f_I, body);
-                r.addComment("Definition of positive [" + dom_f_name + "].");
+
+                if (f.isBoolean()) {
+                    // dom_f(X1..Xn, I) :- f(X1..Xn,I).
+                    body = new ArrayList<>();
+                    body.add(f_I);
+                    r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, dom_f_I, body);
+                    r.addComment("Definition of positive boolean function [" + dom_f_name + "].");
+
+                    // dom_f(X1..Xn, I) :- -f(X1..Xn,I).
+                    body = new ArrayList<>();
+                    body.add(neg_f_I);
+                    r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, dom_f_I, body);
+                    r.addComment("Definition of negative boolean function [" + dom_f_name + "].");
+                } else {
+                    // dom_f(X1..Xn, I) :- f(X1..Xn,V,I).
+                    body = new ArrayList<>();
+                    body.add(f_V_I);
+                    r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, dom_f_I, body);
+                    r.addComment("Definition of positive non-boolean function [" + dom_f_name + "].");
+                }
 
                 // // -dom_f(X1..Xn, I) :- not dom_f(X1 .. Xn, I).
                 // body = new ArrayList<>();
@@ -1145,18 +1224,19 @@ public abstract class ALMTranslator {
         }
     }
 
-    private static void LoadFactsFromPreModelAnswerSet(SPARCProgram tm, AnswerSet as, ALMCompilerSettings s) {
-        tm.createSection(ALM.OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET);
-        if (s.OptimizationAddAllFactsFromPreModelAnswerset())
-            for (List<ALMTerm> lits : as.getAllAlmTerms())
-                for (ALMTerm lit : lits)
-                    tm.newSPARCRule(ALM.OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET, lit, null);
-        else {
-            SPARCRule dummy = tm.newSPARCRule(ALM.OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET, null, null);
-            dummy.addComment("This optimization is turned off.");
-        }
-
-    }
+    //    private static void LoadFactsFromPreModelAnswerSet(SPARCProgram tm, AnswerSet as, ALMCompilerSettings s) {
+    //        tm.createSection(ALM.OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET);
+    //        if (s.OptimizationAddAllFactsFromPreModelAnswerset())
+    //           for (List<ALMTerm> lits : as.getAllAlmTerms())
+    //                for (ALMTerm lit : lits)
+    //                    tm.newSPARCRule(ALM.OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET, lit, null);
+    //        else {
+    //            SPARCRule dummy = tm.newSPARCRule(ALM.OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET, null, null);
+    //            dummy.addComment("This optimization is turned off.");
+    //        }
+    //    }
+    // THIS WAS TOO NAIVE. NEED TO FILTER OUT FACTS THAT ARE DEFINED ON SORT INSTANCES THAT ARE NO LONGER IN SORTS IN THE 
+    // FINAL PROGRAM. 
 
     /***
      * 
@@ -1248,10 +1328,9 @@ public abstract class ALMTranslator {
                         head = new_SPARCLiteral_NonBoolean_Static(ft, left.getArgs(), right);
                     else if (ft.isFluent()) {
                         head = new_SPARCLiteral_NonBoolean_Fluent(ft, left.getArgs(), right, timestep + "+1");
-                    } else
+                    } else // Should never happen
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
                                 "Non Static Or Fluent Function [" + ft.getFunctionName() + "] at head of rule");
-                    // Should never happen
                     // need to determine sign of the predicate
                     if (thead.getName() == ALM.SYMBOL_NEQ)
                         ((ALMTerm) head).setSign(ALMTerm.SIGN_NEG);
@@ -1303,12 +1382,9 @@ public abstract class ALMTranslator {
                     break;
                 case ALMTerm.TERM_RELATION:
                     // A term relation can have any number of functions occurring inside of them
-                    // Each function occurrence shall be replaces with a new variable and a new
-                    // literal
-                    // for the function is added to the body tying the new variable to the value of
-                    // the
-                    // function occurrence. This will be done with recursion to construct a brand
-                    // new
+                    // Each function occurrence shall be replaced with a new variable and a new literal
+                    // for the function is added to the body tying the new variable to the value of the
+                    // function occurrence. This will be done with recursion to construct a brand new
                     // term relation that is free of all function occurrences.
                     ALMTerm new_term_relation = TranslateTermRelation(tlit, body, st, tc, timestep);
                     body.add(new_term_relation);
@@ -1335,6 +1411,23 @@ public abstract class ALMTranslator {
         return termRelation;
     }
 
+    /**
+     * Returns the Normalized ALMTerm to be added to a SPARC program after translating it from the intermediate ALMTerm
+     * representation. Function terms are replaced by variables in the containing term and a new term constraint is
+     * added to the body which binds the new variable to the translated normalization of the nested term.
+     * 
+     * @param term
+     *            The ALMTerm to be translated.
+     * @param body
+     *            The body of rules that is accumulating the translation.
+     * @param st
+     *            The symbol table, used to retrieve the function associated with the term.
+     * @param tc
+     *            The type checker for the rule, used to create new variables within the body of the rule.
+     * @param timestep
+     *            The timestep variable to use for fluents.
+     * @return The translated and normalized version of the outermost ALMTerm in 'term'.
+     */
     private static ALMTerm TranslateTerm(ALMTerm term, List<SPARCLiteral> body, SymbolTable st, TypeChecker tc,
             String timestep) {
         switch (term.getType()) {
@@ -1342,20 +1435,21 @@ public abstract class ALMTranslator {
             FunctionEntry f;
             f = st.getFunctionEntry(term.getName(), term.getArgs().size());
             if (f != null) {
+                //Determine pattern of variables to use in this rule.  
                 String new_var_base = f.getFunctionName().substring(0, 1).toUpperCase() + "O";
                 // Get New Variable
                 ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base), ALMTerm.VAR);
                 // Need To Add the Function To the Body of the rule we are constructing;
                 if (f.isBoolean())
-                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term",
-                            "Boolean function [" + f.getQualifiedFunctionName() + " is occurring nested within a term");
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term", "Boolean function ["
+                            + f.getQualifiedFunctionName() + "] is occurring nested within a term");
                 if (f.isStatic()) {
                     body.add(new_SPARCLiteral_NonBoolean_Static(f, term.getArgs(), new_var));
                 } else if (f.isFluent()) {
                     body.add(new_SPARCLiteral_NonBoolean_Fluent(f, term.getArgs(), new_var, timestep));
                 } else
                     ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term",
-                            "Could not create sparl literal for term [" + term.toString() + "]");
+                            "Could not create sparc literal for term [" + term.toString() + "]");
                 // return the variable as the function's replacement.
                 return new_var;
             } else {
@@ -1384,11 +1478,11 @@ public abstract class ALMTranslator {
     private static SPARCLiteral new_SPARCLiteral_Boolean_Fluent(String sign, FunctionEntry f, List<ALMTerm> args,
             String timestep) {
         ALMTerm slit = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN);
-        if (args != null)
+        if (args != null) {
             for (ALMTerm arg : args)
                 slit.addArg(arg);
+        }
         slit.addArg(new ALMTerm(timestep, ALMTerm.ID));
-        slit.setSign(sign);
         return slit;
     }
 
