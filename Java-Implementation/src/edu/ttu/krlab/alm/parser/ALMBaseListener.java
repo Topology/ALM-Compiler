@@ -158,6 +158,7 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void exitInteger(ALMParser.IntegerContext ctx) {
+        st.addIntegerOccurrence(Integer.parseInt(ctx.toString()));
     }
 
     /**

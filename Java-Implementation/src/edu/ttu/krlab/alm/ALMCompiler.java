@@ -212,7 +212,7 @@ public class ALMCompiler {
         AnswerSets.writeTo(s.AnswerSetsDestination(), as);
         s.closePremodelAnswerSetsDestination();
         if (as.size() == 1) {
-            ALMTranslator.ConstructFinalProgram(tm, as.get(0), pm, st, aspf, s);
+            ALMTranslator.ConstructFinalProgram(tm, as.get(0), pm, st, aspf, s, er);
             tm.writeTo(s.TransitionModelDestination());
             s.closeTransitionModelDestination();
             as = GetAnswerSet(tm, s);

@@ -53,12 +53,24 @@ public class SPARCProgram extends LogicProgramArtifact {
             rank.put(ALM.AXIOMS_STATE_CONSTRAINTS_FLUENT, 1030);
             rank.put(ALM.AXIOMS_DEFINITIONS_FLUENT, 1040);
             rank.put(ALM.HISTORY, 10000);
+            rank.put(ALM.HISTORY_GAMMA_INTIAL_OBSERVATIONS, 10001);
+            rank.put(ALM.HISTORY_GAMMA_NON_INTIAL_OBSERVATIONS, 10002);
+            rank.put(ALM.HISTORY_GAMMA_ACTION_OCCURRENCES, 10003);
+            rank.put(ALM.HISTORY_OMEGA_INTIAL_OBSERVATIONS, 10004);
+            rank.put(ALM.HISTORY_OMEGA_NON_INTIAL_OBSERVATIONS, 10005);
+            rank.put(ALM.HISTORY_OMEGA_ACTION_OCCURRENCES, 10006);
             rank.put(ALM.OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET, 100000);
         }
 
         @Override
         public int compare(String arg0, String arg1) {
-            return rank.get(arg0) - rank.get(arg1);
+            try {
+                return rank.get(arg0) - rank.get(arg1);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                ALMCompiler.IMPLEMENTATION_FAILURE("rank undefined", arg0 + " or " + arg1 + " is undefined.");
+                return -1;
+            }
         }
 
     }

@@ -46,16 +46,20 @@ public abstract class ALM {
     public static final String SYMBOL_MOD = "mod";
     public static final String SYMBOL_OPEN_PAREN = "(";
     public static final String SYMBOL_CLOSE_PAREN = ")";
+    public static final String BOOLEAN_TRUE = "true";
+    public static final String BOOLEAN_FALSE = "false";
 
     public static final String SORT_UNKNOWN = null;
     public static final String SORT_INTEGERS = "integers";
 
     public static final String SORT_TIMESTEP = "timeStep";
 
+    public static final String SORT_FLUENT_FUNCTIONS = "fluent_functions";
+
     public static final String SORT_BOOLEANS = "booleans";
     public static final String SORT_UNIVERSE = "universe";
     public static final String SORT_ACTIONS = "actions";
-    public static final String SORT_INTEGER_RANGE = "integer range";
+    public static final String SORT_INTEGER_RANGE = "integer_range";
     public static final String SPECIAL_SORT_NODES = "sort_hierarchy_nodes_";
     public static final String SPECIAL_FUNCTION_IS_A = "is_a";
     public static final String SPECIAL_FUNCTION_INSTANCE = "instance";
@@ -83,8 +87,15 @@ public abstract class ALM {
     public static final String STRUCTURE_STATIC_FUNCTION_DEFINITIONS = "Structure - Static Function Definitions";
     public static final String OPTIMIZATION_ADD_FACTS_FROM_PRE_MODEL_ANSWERSET = "Optimization - All Facts Computed By Premodel Program.";
     public static final String DOM_PREFIX = "dom_";
-    public static final String HISTORY_OBSERVED = "observed";
+    public static final String HISTORY_GAMMA_INTIAL_OBSERVATIONS = "History - Gamma - Initial Observations : observed(fluent(domain_args),range_value, 0).";
+    public static final String HISTORY_GAMMA_NON_INTIAL_OBSERVATIONS = "History - Gamma - Non-Initial Observations : observed(fluent(domain_args),range_value, T>0). ";
+    public static final String HISTORY_GAMMA_ACTION_OCCURRENCES = "History - Gamma - Action Occurrences : happened(action, timestep).";
+    public static final String HISTORY_OMEGA_INTIAL_OBSERVATIONS = "History - Omega - Initial Observations : Assigning values of fluents at time step 0.";
+    public static final String HISTORY_OMEGA_NON_INTIAL_OBSERVATIONS = "History - Omega - Non-Initial Observations : Adding state constraints to require consistency with observations.";
+    public static final String HISTORY_OMEGA_ACTION_OCCURRENCES = "History - Omega - Action Occurrences : occurrs(action, timestep) :- happened(action, timestep).";
+    public static final String HISTORY_OMEGA_RULES = "History - Omega Rules : Translation of Gamma into Initial Conditions, Action Occurrences, and State Constraints.";
     public static final String HISTORY_HAPPENED = "happened";
+    public static final String HISTORY_OBSERVED = "observed";
     public static final String HISTORY = "History";
 
     // literal: atom | '-' atom | term relation term ;

@@ -102,27 +102,36 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         }
     }
 
-    public ALMTerm(String name, String type) {
+    public ALMTerm(String name, String type, ALMTerm... arguments) {
         this.name = name;
         this.type = type;
         this.prc = null;
         defaultInit();
+        for (ALMTerm arg : arguments) {
+            this.addArg(arg);
+        }
 
     }
 
-    public ALMTerm(String name, String type, ParserRuleContext prc) {
+    public ALMTerm(String name, String type, ParserRuleContext prc, ALMTerm... arguments) {
         this.name = name;
         this.type = type;
         this.prc = prc;
         defaultInit();
+        for (ALMTerm arg : arguments) {
+            this.addArg(arg);
+        }
 
     }
 
-    public ALMTerm(String name, String type, Location loc) {
+    public ALMTerm(String name, String type, Location loc, ALMTerm... arguments) {
         this.name = name;
         this.type = type;
         this.prc = loc.getParserRuleContext();
         defaultInit();
+        for (ALMTerm arg : arguments) {
+            this.addArg(arg);
+        }
     }
 
     public String getName() {
@@ -724,13 +733,13 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
 
     public static ALMTerm BOOLEAN_TRUE() {
         if (ALMTerm.BOOLEAN_TRUE == null)
-            ALMTerm.BOOLEAN_TRUE = new ALMTerm("true", ALMTerm.BOOL);
+            ALMTerm.BOOLEAN_TRUE = new ALMTerm(ALM.BOOLEAN_TRUE, ALMTerm.BOOL);
         return ALMTerm.BOOLEAN_TRUE;
     }
 
     public static ALMTerm BOOLEAN_FALSE() {
         if (ALMTerm.BOOLEAN_FALSE == null)
-            ALMTerm.BOOLEAN_FALSE = new ALMTerm("false", ALMTerm.BOOL);
+            ALMTerm.BOOLEAN_FALSE = new ALMTerm(ALM.BOOLEAN_FALSE, ALMTerm.BOOL);
         return ALMTerm.BOOLEAN_FALSE;
     }
 

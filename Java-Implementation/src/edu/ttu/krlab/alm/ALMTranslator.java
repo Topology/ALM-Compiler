@@ -10,6 +10,7 @@ import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.aspf.ASPfLiteral;
 import edu.ttu.krlab.alm.datastruct.aspf.ASPfProgram;
 import edu.ttu.krlab.alm.datastruct.aspf.ASPfRule;
+import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
 import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
 import edu.ttu.krlab.alm.datastruct.sig.DOMFunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
@@ -781,12 +782,12 @@ public abstract class ALMTranslator {
     }
 
     public static void ConstructFinalProgram(SPARCProgram tm, AnswerSet as, SPARCProgram pm, SymbolTable st,
-            ASPfProgram aspf, ALMCompilerSettings s) {
+            ASPfProgram aspf, ALMCompilerSettings s, ErrorReport er) {
         PurgeSingletonSorts(pm, as, st);
         CreateFinalSortsSection(tm, pm, as, st);
         CreateFinalPredicatesSection(tm, pm, as);
         CreateFinalProgramRules(tm, st, pm, aspf);
-        CreateHistory(tm, st, aspf);
+        CreateHistory(tm, st, aspf, er);
         //LoadFactsFromPreModelAnswerSet(tm, as, s); // TOO NAIVE, NEED TO FILTER FACTS FROM MISSING SORT INSTANCES. 
     }
 
@@ -1178,48 +1179,200 @@ public abstract class ALMTranslator {
      * @param aspf
      *            The ASPf Program containing the History section parsed from the system description.
      */
-    private static void CreateHistory(SPARCProgram tm, SymbolTable st, ASPfProgram aspf) {
-        if (!st.modeActive(ALM.HISTORY)) {
+    private static void CreateHistory(SPARCProgram tm, SymbolTable st, ASPfProgram aspf, ErrorReport er) {
+        if (!SymbolTable.modeActive(ALM.HISTORY)) {
             return;
         }
+
+        //Create Sort For All Fluent Functions
+        SPARCSort fluents_sort = new SPARCSort(ALM.SORT_FLUENT_FUNCTIONS);
+        for (FunctionEntry fluent : st.getFluentFunctions()) {
+            ALMTerm functor = new ALMTerm(fluent.getFunctionName(), ALMTerm.FUN);
+            List<SortEntry> sig = fluent.getSignature();
+            int len = sig.size();
+            for (int i = 0; i < len - 1; i++) {
+                SortEntry sorti = sig.get(i);
+                functor.addArg(new ALMTerm(sorti.getSortName(), ALMTerm.ID));
+            }
+            fluents_sort.addInstance(functor);
+        }
+        try {
+            tm.addSPARCSort(fluents_sort);
+        } catch (SPARCSortAlreadyDefined e) {
+            ALMCompiler.IMPLEMENTATION_FAILURE("Creating History",
+                    "Incompatible Fluent Sort name.  This should never happen.");
+        }
+
+        //Create Sort For Booleans
+        SPARCSort booleans_sort;
+        try {
+            booleans_sort = tm.getSPARCSort(ALM.SORT_BOOLEANS);
+        } catch (SPARCSortNotDefined e) {
+            booleans_sort = new SPARCSort(ALM.SORT_BOOLEANS);
+            booleans_sort.addInstance(new ALMTerm(ALM.BOOLEAN_TRUE, ALMTerm.ID));
+            booleans_sort.addInstance(new ALMTerm(ALM.BOOLEAN_FALSE, ALMTerm.ID));
+            tm.getSorts().add(0, booleans_sort);
+        }
+        try {
+            SPARCSort universe = tm.getSPARCSort(ALM.SORT_UNIVERSE);
+            universe.union(booleans_sort);
+        } catch (SPARCSortNotDefined e) {
+            ALMCompiler.IMPLEMENTATION_FAILURE("Creating History",
+                    "Universe Sort Undefined.  This should never happen.");
+        }
+
+        //Create Observed Predicate Declaration. 
+        SPARCPredicate observed_predicate = new SPARCPredicate(ALM.HISTORY_OBSERVED);
+        try {
+            observed_predicate.addSPARCSort(fluents_sort);
+            observed_predicate.addSPARCSort(tm.getSPARCSort(ALM.SORT_UNIVERSE));
+            observed_predicate.addSPARCSort(tm.getSPARCSort(ALM.SORT_TIMESTEP));
+            tm.addSPARCPredicate(observed_predicate);
+
+            //Create Happened Predicate Declaration.
+            SPARCPredicate happened_predicate = new SPARCPredicate(ALM.HISTORY_HAPPENED);
+            happened_predicate.addSPARCSort(tm.getSPARCSort(ALM.SORT_ACTIONS));
+            happened_predicate.addSPARCSort(tm.getSPARCSort(ALM.SORT_TIMESTEP));
+            tm.addSPARCPredicate(happened_predicate);
+        } catch (SPARCSortNotDefined | PredicateAlreadyDeclared e) {
+            ALMCompiler.IMPLEMENTATION_FAILURE("Creating History", "Retrieving fundamental sorts. ");
+        }
+        /*
+         * Due to the signatures of observed and happened, the automatic grounding of the rules in OMEGA would create
+         * unnecessary instances of the rules. This implementation only adds ground versions of the rules in Definition
+         * 15 based on the actual history provided in GAMMA.
+         */
+        //PART 1 (actions) occurs(a,i) <-- happened(a,i),
+        //PART 2 (non-boolean): f(t, 0) = v <-- observed(f(t), v, 0)  for all non-boolean fluent functions f.
+        //PART 2 (positive-boolean): f(t, 0) <-- observed(f(t), true, 0)  for all boolean fluent functions f.
+        //PART 2 (negative-boolean): -f(t, 0) <-- observed(f(t), false, 0)  for all boolean fluent functions f.
+        //PART 3 (non-boolean): <-- observed(f(t), v, i), dom_f(t, i), f(t, i) != v.
+        //PART 3 (positive-boolean): <-- observed(f(t), true, i), dom_f(t, i), -f(t, i).
+        //PART 3 (negative-boolean): <-- observed(f(t), false, i), dom_f(t, i), f(t, i). 
+
+        //Definition of common variables and ALMTerms.
+        SPARCRule r;
+        List<SPARCLiteral> body;
+
         for (ASPfRule history_rule : aspf.getRules(ALM.HISTORY)) {
             ALMTerm head = history_rule.getHead().toALMTerm();
+
+            body = new ArrayList<>();
+            body.add(head);
+
             if (ALM.HISTORY_HAPPENED.equals(head.getName())) {
-                ALMTerm action = head.getArg(0);
+                //GAMMA contains happened(a, i).  Add fact to final program. 
+                r = tm.newSPARCRule(ALM.HISTORY_GAMMA_ACTION_OCCURRENCES, head, null);
+
+                //DEFINITION 15 PART 1: OMEGA contains rules occurs(a, i) :- happened(a,i).
+                ALMTerm A = head.getArg(0);
                 ALMTerm I = head.getArg(1);
-
-                ALMTerm occurs = new ALMTerm(ALM.SPECIAL_FUNCTION_OCCURS, ALMTerm.FUN);
-                occurs.addArg(action);
-                occurs.addArg(I);
-
-                SPARCRule r = tm.newSPARCRule(ALM.HISTORY, occurs, null);
-                r.addComment("HISTORY: " + head.toString());
+                ALMTerm occurs = new ALMTerm(ALM.SPECIAL_FUNCTION_OCCURS, ALMTerm.FUN, A, I);
+                r = tm.newSPARCRule(ALM.HISTORY_OMEGA_ACTION_OCCURRENCES, occurs, body);
+                r.addComment("History Translation to create occurrences of actions that happened.");
             } else if (ALM.HISTORY_OBSERVED.equals(head.getName())) {
+                //GAMMA contains observed(f(t), v, I). 
                 ALMTerm f = head.getArg(0);
                 ALMTerm v = head.getArg(1);
                 ALMTerm I = head.getArg(2);
 
-                ALMTerm f_ext = new ALMTerm(f.getName(), ALMTerm.FUN);
-                f_ext.getArgs().addAll(f.getArgs());
-                f_ext.addArg(v);
-                f_ext.addArg(I);
-
-                if (Integer.parseInt(I.toString()) == 0) {
-                    SPARCRule r = tm.newSPARCRule(ALM.HISTORY, f_ext, null);
-                    r.addComment("HISTORY: " + head.toString());
-                } else {
-                    ALMTerm dom_f = new ALMTerm(ALM.DOM_PREFIX + f.getName(), ALMTerm.FUN);
-                    dom_f.getArgs().addAll(f.getArgs());
-                    dom_f.addArg(I);
-
-                    f_ext.setSign(ALMTerm.SIGN_NOT);
-
-                    List<SPARCLiteral> body = new ArrayList<>();
-                    body.add(dom_f);
-                    body.add(f_ext);
-                    SPARCRule r = tm.newSPARCRule(ALM.HISTORY, null, body);
-                    r.addComment("HISTORY: " + head.toString());
+                //verify I is an integer. 
+                int i = 0;
+                try {
+                    i = Integer.parseInt(I.toString());
+                } catch (NumberFormatException ex) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Processing History",
+                            "Need Semantic Error for when time variable is not an integer.");
                 }
+
+                //verify f resolves to a fluent function entry. 
+                String f_name = f.getName();
+                int num_args = f.getArgs().size();
+                FunctionEntry fe = st.getFunctionEntry(f_name, num_args);
+                if (fe == null) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Processing History",
+                            "Need semantic error indicating that function is not recognized.");
+                } else if (!fe.isFluent()) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Processing History",
+                            "Need semantic error indicating that funtion is not fluent.");
+                }
+
+                //check if observation is of initial condition or a later constraint. 
+                if (i == 0) {
+                    //GAMMA contains observed(f(args), v, 0). Add fact to final program. 
+                    r = tm.newSPARCRule(ALM.HISTORY_GAMMA_INTIAL_OBSERVATIONS, head, null);
+
+                    //DEFINITION 15 PART 2: OMEGA contains f(args, 0) = v <-- observed(f(args), v, 0). 
+                    //Boolean translation requires adding proper sign to f. 
+                    if (fe.isBoolean()) {
+                        //boolean, translate to: sign(v) f(args, 0) <-- observed(f(args), v, 0).
+                        ALMTerm f_0 = new ALMTerm(f.getName(), ALMTerm.FUN);
+                        f_0.getArgs().addAll(f.getArgs());
+                        f_0.addArg(I);
+                        if (v.getName().equals(ALM.BOOLEAN_FALSE)) {
+                            f_0.setSign(ALMTerm.SIGN_NEG);
+                        } else if (!v.getName().equals(ALM.BOOLEAN_TRUE)) { //semantic error when boolean fluent assigned non-bool value. 
+                            ALMCompiler.IMPLEMENTATION_FAILURE("Processing History",
+                                    "Need semantic error indicating that a boolean is not assigned true or false.");
+                        } //no sign to add if boolean value is true.  
+                        r = tm.newSPARCRule(ALM.HISTORY_OMEGA_INTIAL_OBSERVATIONS, f_0, body);
+                        r.addComment("History translation for initial observation of boolean fluent");
+                    } else {
+                        //non-boolean create term constraint at head: f(args, v, 0) <-- observed(f(args), v, 0). 
+                        ALMTerm f_ext = new ALMTerm(f.getName(), ALMTerm.FUN);
+                        f_ext.getArgs().addAll(f.getArgs());
+                        f_ext.addArg(v);
+                        f_ext.addArg(I);
+
+                        r = tm.newSPARCRule(ALM.HISTORY_OMEGA_INTIAL_OBSERVATIONS, f_ext, body);
+                        r.addComment("History translation for initial observation of non-boolean fluent");
+                    }
+
+                } else {
+                    //GAMMA contains observed(f(args), v, t) where t> 0, add fact to final program. 
+                    r = tm.newSPARCRule(ALM.HISTORY_GAMMA_NON_INTIAL_OBSERVATIONS, head, null);
+
+                    //DEFINITION 15 PART 3: OMEGA contains <-- observed(f(args), v, I), dom_f(args, I),  f(args, I) != v. 
+                    ALMTerm f_I = new ALMTerm(f.getName(), ALMTerm.FUN);
+                    f_I.getArgs().addAll(f.getArgs());
+                    f_I.addArg(I);
+
+                    ALMTerm dom_f_I = new ALMTerm(ALM.DOM_PREFIX + f.getName(), ALMTerm.FUN);
+                    dom_f_I.getArgs().addAll(f.getArgs());
+                    dom_f_I.addArg(I);
+
+                    body.add(dom_f_I);
+                    if (fe.isBoolean()) {
+                        //boolean case <-- observed(f(args), v, I), dom_f(args, I),  flipped_sign(v) f(args, I). 
+                        if (v.getName().equals(ALM.BOOLEAN_TRUE)) {
+                            f_I.setSign(ALMTerm.SIGN_NEG);
+                        } else if (!v.getName().equals(ALM.BOOLEAN_FALSE)) {
+                            f_I.setSign(ALMTerm.SIGN_NOT_NEG);
+                        } else {
+                            ALMCompiler.IMPLEMENTATION_FAILURE("Processing History",
+                                    "Need semantic error that a boolean fluent is not assigned true or false.");
+                        } // when v = false, no sign to add to f. 
+                        body.add(f_I);
+                        r = tm.newSPARCRule(ALM.HISTORY_OMEGA_NON_INTIAL_OBSERVATIONS, null, body);
+                        r.addComment("HISTORY: " + head.toString());
+                    } else {
+                        //non boolean case : <-- observed(f(args), v, I), dom_f(args, I),  not f(args, v, I). 
+                        ALMTerm f_ext = new ALMTerm(f.getName(), ALMTerm.FUN);
+                        f_ext.getArgs().addAll(f.getArgs());
+                        f_ext.addArg(v);
+                        f_ext.addArg(I);
+
+                        f_ext.setSign(ALMTerm.SIGN_NOT);
+
+                        body.add(f_ext);
+                        r = tm.newSPARCRule(ALM.HISTORY_OMEGA_NON_INTIAL_OBSERVATIONS, null, body);
+                        r.addComment("HISTORY: " + head.toString());
+                    }
+                }
+            } else {
+                ALMCompiler.IMPLEMENTATION_FAILURE("Processing History",
+                        "This is likely a syntax error, otherwise we need semantic error for unrecognized "
+                                + "literal in the history section.");
             }
         }
     }

@@ -420,6 +420,18 @@ public class SymbolTable {
         return newFun;
     }
 
+    public Set<FunctionEntry> getFluentFunctions() {
+        Set<FunctionEntry> fluentFunctions = new HashSet<>();
+        for (Set<NormalFunctionEntry> sameNameFunctions : FEMap.values()) {
+            for (FunctionEntry f : sameNameFunctions) {
+                if (f.isFluent()) {
+                    fluentFunctions.add(f);
+                }
+            }
+        }
+        return fluentFunctions;
+    }
+
     /**
      * Returns all functions with the matching function name from this symbol table and its dependecies.
      * 
@@ -817,6 +829,11 @@ public class SymbolTable {
     @Override
     public String toString() {
         return STName;
+    }
+
+    public void addIntegerOccurrence(int parseInt) {
+        // TODO Auto-generated method stub
+
     }
 
 }
