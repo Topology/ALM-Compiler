@@ -1,0 +1,6 @@
+system description name
+    theory name
+        module core
+            sort declarations
+                names :: universe
+            
