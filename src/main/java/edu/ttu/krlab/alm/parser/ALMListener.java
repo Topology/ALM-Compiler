@@ -1,7 +1,5 @@
-// Generated from ALM.g4 by ANTLR 4.7
-
-    package edu.ttu.krlab.alm.parser;
-
+package edu.ttu.krlab.alm.parser;
+// Generated from ALM.g4 by ANTLR 4.7.1
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -760,16 +758,6 @@ public interface ALMListener extends ParseTreeListener {
 	 */
 	void exitSolver_mode(ALMParser.Solver_modeContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link ALMParser#temporal_projection}.
-	 * @param ctx the parse tree
-	 */
-	void enterTemporal_projection(ALMParser.Temporal_projectionContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link ALMParser#temporal_projection}.
-	 * @param ctx the parse tree
-	 */
-	void exitTemporal_projection(ALMParser.Temporal_projectionContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link ALMParser#max_steps}.
 	 * @param ctx the parse tree
 	 */
@@ -809,4 +797,114 @@ public interface ALMListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitHappened(ALMParser.HappenedContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#added_constraints}.
+	 * @param ctx the parse tree
+	 */
+	void enterAdded_constraints(ALMParser.Added_constraintsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#added_constraints}.
+	 * @param ctx the parse tree
+	 */
+	void exitAdded_constraints(ALMParser.Added_constraintsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#one_added_constraint}.
+	 * @param ctx the parse tree
+	 */
+	void enterOne_added_constraint(ALMParser.One_added_constraintContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#one_added_constraint}.
+	 * @param ctx the parse tree
+	 */
+	void exitOne_added_constraint(ALMParser.One_added_constraintContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#action_conditions}.
+	 * @param ctx the parse tree
+	 */
+	void enterAction_conditions(ALMParser.Action_conditionsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#action_conditions}.
+	 * @param ctx the parse tree
+	 */
+	void exitAction_conditions(ALMParser.Action_conditionsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#one_action_condition}.
+	 * @param ctx the parse tree
+	 */
+	void enterOne_action_condition(ALMParser.One_action_conditionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#one_action_condition}.
+	 * @param ctx the parse tree
+	 */
+	void exitOne_action_condition(ALMParser.One_action_conditionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#temporal_projection}.
+	 * @param ctx the parse tree
+	 */
+	void enterTemporal_projection(ALMParser.Temporal_projectionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#temporal_projection}.
+	 * @param ctx the parse tree
+	 */
+	void exitTemporal_projection(ALMParser.Temporal_projectionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#planning_problem}.
+	 * @param ctx the parse tree
+	 */
+	void enterPlanning_problem(ALMParser.Planning_problemContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#planning_problem}.
+	 * @param ctx the parse tree
+	 */
+	void exitPlanning_problem(ALMParser.Planning_problemContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#goal_state}.
+	 * @param ctx the parse tree
+	 */
+	void enterGoal_state(ALMParser.Goal_stateContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#goal_state}.
+	 * @param ctx the parse tree
+	 */
+	void exitGoal_state(ALMParser.Goal_stateContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#diagnostic_problem}.
+	 * @param ctx the parse tree
+	 */
+	void enterDiagnostic_problem(ALMParser.Diagnostic_problemContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#diagnostic_problem}.
+	 * @param ctx the parse tree
+	 */
+	void exitDiagnostic_problem(ALMParser.Diagnostic_problemContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#normal_conditions}.
+	 * @param ctx the parse tree
+	 */
+	void enterNormal_conditions(ALMParser.Normal_conditionsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#normal_conditions}.
+	 * @param ctx the parse tree
+	 */
+	void exitNormal_conditions(ALMParser.Normal_conditionsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#one_normal_condition}.
+	 * @param ctx the parse tree
+	 */
+	void enterOne_normal_condition(ALMParser.One_normal_conditionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#one_normal_condition}.
+	 * @param ctx the parse tree
+	 */
+	void exitOne_normal_condition(ALMParser.One_normal_conditionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#current_state}.
+	 * @param ctx the parse tree
+	 */
+	void enterCurrent_state(ALMParser.Current_stateContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#current_state}.
+	 * @param ctx the parse tree
+	 */
+	void exitCurrent_state(ALMParser.Current_stateContext ctx);
 }

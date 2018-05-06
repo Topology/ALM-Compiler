@@ -91,6 +91,20 @@ STEPS: 'steps';
 HISTORY : 'history'; 
 OBSERVED: 'observed';
 HAPPENED: 'happened';
+PLANNING: 'planning';
+PROBLEM: 'problem';
+DIAGNOSTIC: 'diagnostic';
+GOAL : 'goal';
+SITUATION : 'situation';
+WHEN : 'when';
+NORMAL: 'normal';
+ACTION: 'action';
+ADDITIONAL: 'additional';
+RESTRICTIONS : 'restrictions';
+PERMISSIONS : 'permissions';
+POSSIBLE: 'possible';
+AVOID: 'avoid';
+
 
 //PREDEFINED SORT NAMES, reserved and cannot be any kind of ID
 BOOLEAN: 'booleans';
@@ -309,14 +323,9 @@ statics_defs:  VALUE OF STATICS (one_static_def)+ ;
 one_static_def: fun_def (IF literal (',' literal)*)? '.';
 //<one_static_literal><body>
 
-/* SOLVER MODE */
+/* SOLVER MODES */
 
-
-solver_mode : temporal_projection    /* | planning_problem | diagnostic_problem*/;
-
-temporal_projection : TEMPORAL PROJECTION max_steps history;
-//planning_problem : PLANNING PROBLEM max_steps history goal_statement action_conditions? constraints?;
-//diagnostic_problem : DIAGNOSTIC PROBLEM max_steps history situation_statement action_conditions? normal_conditions
+solver_mode : (temporal_projection  | planning_problem | diagnostic_problem) added_constraints? action_conditions?;
 
 /* SOLVER MODE COMMON PARTS */
 
@@ -325,8 +334,27 @@ history : HISTORY (observed | happened)+;
 observed : OBSERVED '(' function_term ',' term ',' nat_num ')' ;
 happened : HAPPENED '(' object_constant ',' nat_num ')' ;
 
- 
+/* SOLVER MODE ADDITIONAL CONSTRAINTS */
 
+added_constraints: ADDITIONAL CONSTRAINTS (one_added_constraint)+;
+one_added_constraint: (IMPOSSIBLE | AVOID) literal (',' literal)*;
 
+action_conditions: ACTION (RESTRICTIONS | PERMISSIONS) (one_action_condition)+;
+one_action_condition: (POSSIBLE | IMPOSSIBLE | AVOID) function_term  WHEN literal (',' literal)*;
 
+/* TEMPORAL PROJECTION SPECIFIC */
+
+temporal_projection : TEMPORAL PROJECTION max_steps history;
+
+/* PLANNING PROBLEM SPECIFIC */
+
+planning_problem : PLANNING PROBLEM max_steps history goal_state;
+goal_state: GOAL EQ '{' literal (',' literal)* '}';
+
+/* DIAGNOSTIC PROBLEM SPECIFIC */
+
+diagnostic_problem : DIAGNOSTIC PROBLEM max_steps history normal_conditions? current_state;
+normal_conditions: NORMAL CONDITIONS (one_normal_condition)+;
+one_normal_condition : literal ('when' literal (',' literal)*)?;  
+current_state: SITUATION EQ '{' literal (',' literal)* '}';
 

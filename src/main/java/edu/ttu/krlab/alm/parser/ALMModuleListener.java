@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.ALMModuleManager;
 import edu.ttu.krlab.alm.DuplicateModuleException;
+import edu.ttu.krlab.alm.parser.ALMParser.Action_conditionsContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Added_constraintsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Alm_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Arithmetic_termContext;
 import edu.ttu.krlab.alm.parser.ALMParser.AtomContext;
@@ -17,8 +19,10 @@ import edu.ttu.krlab.alm.parser.ALMParser.Basic_function_declarationsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.BoolContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Constant_declarationsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Constant_defsContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Current_stateContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Defined_function_declarationsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.DefinitionsContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Diagnostic_problemContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Dynamic_causal_lawsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Executability_conditionsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.ExpressionContext;
@@ -28,6 +32,7 @@ import edu.ttu.krlab.alm.parser.ALMParser.Fun_defContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Function_declarationsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Function_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Function_termContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Goal_stateContext;
 import edu.ttu.krlab.alm.parser.ALMParser.HappenedContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Has_child_atomContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Has_parent_atomContext;
@@ -48,10 +53,13 @@ import edu.ttu.krlab.alm.parser.ALMParser.Module_dependenciesContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Module_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Nat_numContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Neg_fun_defContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Normal_conditionsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Object_constantContext;
 import edu.ttu.krlab.alm.parser.ALMParser.ObservedContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Occurs_atomContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Occurs_literalContext;
+import edu.ttu.krlab.alm.parser.ALMParser.One_action_conditionContext;
+import edu.ttu.krlab.alm.parser.ALMParser.One_added_constraintContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_attribute_declContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_attribute_defContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_constant_declContext;
@@ -62,9 +70,11 @@ import edu.ttu.krlab.alm.parser.ALMParser.One_dynamic_causal_lawContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_executability_conditionContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_function_declContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_instance_defContext;
+import edu.ttu.krlab.alm.parser.ALMParser.One_normal_conditionContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_sort_declContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_state_constraintContext;
 import edu.ttu.krlab.alm.parser.ALMParser.One_static_defContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Planning_problemContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Pos_fun_defContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Predefined_sortsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.RelationContext;
@@ -446,8 +456,9 @@ public class ALMModuleListener implements ALMListener {
     @Override
     public void exitTheory_name(Theory_nameContext ctx) {
         //The theory name of the current system description is the only theory name that occures outside of a module. 
-        if (!insideModule)
+        if (!insideModule) {
             this.currentTheoryName = ctx.alm_name().getText();
+        }
     }
 
     @Override
@@ -1124,6 +1135,126 @@ public class ALMModuleListener implements ALMListener {
 
     @Override
     public void exitBool(BoolContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterOne_action_condition(One_action_conditionContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitOne_action_condition(One_action_conditionContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterOne_added_constraint(One_added_constraintContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitOne_added_constraint(One_added_constraintContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterAdded_constraints(Added_constraintsContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitAdded_constraints(Added_constraintsContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterPlanning_problem(Planning_problemContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitPlanning_problem(Planning_problemContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterGoal_state(Goal_stateContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitGoal_state(Goal_stateContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterNormal_conditions(Normal_conditionsContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitNormal_conditions(Normal_conditionsContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterAction_conditions(Action_conditionsContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitAction_conditions(Action_conditionsContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterCurrent_state(Current_stateContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitCurrent_state(Current_stateContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterOne_normal_condition(One_normal_conditionContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitOne_normal_condition(One_normal_conditionContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void enterDiagnostic_problem(Diagnostic_problemContext ctx) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void exitDiagnostic_problem(Diagnostic_problemContext ctx) {
         // TODO Auto-generated method stub
 
     }
