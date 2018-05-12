@@ -45,8 +45,9 @@ public abstract class ALMTranslator {
         // need to add special sort nodes to pre-model.
         SortEntry nodesentry = st.getNodesSpecialSortEntry();
         SPARCSort nodes = new SPARCSort(nodesentry.getSortName());
-        for (ALMTerm si : nodesentry.getInstances())
+        for (ALMTerm si : nodesentry.getInstances()) {
             nodes.addInstance(si);
+        }
 
         try {
             pm.addSPARCSort(nodes);
@@ -74,7 +75,8 @@ public abstract class ALMTranslator {
     }
 
     /**
-     * Recursively constructs the sort section of the given SPARCProgram ensuring that all dependencies are respected.
+     * Recursively constructs the sort section of the given SPARCProgram
+     * ensuring that all dependencies are respected.
      * <br>
      * A sort S is dependent on S' under the following conditions:
      * <ol>
@@ -82,8 +84,8 @@ public abstract class ALMTranslator {
      * <li>S' is used in the signature of an attribute function of S.
      * <li>S' is used as an argument to a descendant ConstantEntry functor.
      * </ol>
-     * 
-     * 
+     *
+     *
      * @param se
      * @param pm
      * @param st
@@ -94,13 +96,15 @@ public abstract class ALMTranslator {
             Set<SortEntry> finished) {
 
         //Check to see if this sort is finished.  If so, return. 
-        if (finished.contains(se))
+        if (finished.contains(se)) {
             return;
+        }
 
         //if se has been started before now, throw an error.  A semantic error should have caught this. 
-        if (started.contains(se))
+        if (started.contains(se)) {
             ALMCompiler.IMPLEMENTATION_FAILURE("Construct PREMODEL SORT SECTION",
                     "Loop detected in sort heierarchy.  This code path should not execute due to semantic error generation.");
+        }
 
         //Add sort to the started set. 
         started.add(se);
@@ -116,7 +120,9 @@ public abstract class ALMTranslator {
             for (int i = 0; i < sig_length; i++) { // skip the first sort for attributes, always.
                 SortEntry sort = sig.get(i);
                 if (finished.contains(sort) || started.contains(sort)) //skip completed  and started dependencies. 
+                {
                     continue;
+                }
                 if (!sort.subsortof(se)) { // ignore references to se.  
                     dependencies.add(sort);
                 }
@@ -125,19 +131,21 @@ public abstract class ALMTranslator {
         //3. S' is an argument of a one of the constants that can occur for this sort. 
         for (ConstantEntry ce : se.getConstants()) {
             for (SortEntry arg : ce.getArguments()) {
-                if (arg != se)
+                if (arg != se) {
                     dependencies.add(arg);
-                else
+                } else {
                     ALMCompiler.IMPLEMENTATION_FAILURE("Construct Pre-Model Sort Section",
                             "Constant [" + ce.getConstName() + "] is an instance of its own argument ["
-                                    + arg.getSortName() + "], creating a circular dependency.");
+                            + arg.getSortName() + "], creating a circular dependency.");
+                }
 
             }
         }
 
         //first write out dependencies. 
-        for (SortEntry dependency : dependencies)
+        for (SortEntry dependency : dependencies) {
             PreModelSortHierarchy(dependency, pm, st, started, finished);
+        }
 
         // writing out dependencies is finished, time to write out this sort.
         SPARCSort psort = new SPARCSort(se.getSortName());
@@ -188,7 +196,7 @@ public abstract class ALMTranslator {
                 dom_f_pred = new SPARCPredicate(dom_f.getQualifiedFunctionName());
                 dom_f_pred.addComment(
                         "Domain Function [" + dom_f.getQualifiedFunctionName() + "] for attribute function [" + f_name
-                                + "] of sort [" + f.getSignature().get(0).getSortName() + "].");
+                        + "] of sort [" + f.getSignature().get(0).getSortName() + "].");
             } else {
                 f_pred = new SPARCPredicate(f_name);
                 dom_f_pred = new SPARCPredicate(dom_f_name);
@@ -206,8 +214,9 @@ public abstract class ALMTranslator {
             // need to add signature to predicate, leaving off boolean if that is the range
             // sort.
             List<SortEntry> sig = f.getSignature();
-            if (sig == null)
+            if (sig == null) {
                 ALMCompiler.IMPLEMENTATION_FAILURE("PreModelCreatePredicatesSection", "Function Has No Signature");
+            }
 
             //populate f_pred with the sort of each argument. 
             int dom_length = sig.size() - 1;
@@ -224,7 +233,7 @@ public abstract class ALMTranslator {
                     } catch (SPARCSortNotDefined e) {
                         ALMCompiler.IMPLEMENTATION_FAILURE("PreModelCreatePredicatesSection",
                                 "SPARC Sort [" + se.getSortName() + "] Not defined in pre model program for function ["
-                                        + f.getFunctionName() + "].");
+                                + f.getFunctionName() + "].");
                     }
                 }
             }
@@ -275,8 +284,8 @@ public abstract class ALMTranslator {
         // Link Function -- requires recursive enumeration over sort hierarchy
         SortEntry universe = st.getUniverseSortEntry();
         PreModelRecursivelyAddRulesForLink(pm, st, universe, new HashSet<SortEntry>()); // the set is to mark when the
-                                                                                        // sorts have had their links
-                                                                                        // written out.
+        // sorts have had their links
+        // written out.
 
         // Is_A Function -- uses structure to generate the rules from sort instance
         // declarations.
@@ -307,8 +316,9 @@ public abstract class ALMTranslator {
 
     private static void PreModelRecursivelyAddRulesForLink(SPARCProgram pm, SymbolTable st, SortEntry parent,
             Set<SortEntry> finished) {
-        if (finished.contains(parent))
+        if (finished.contains(parent)) {
             return;
+        }
         Set<SortEntry> children = parent.getChildSorts();
         if (children != null && children.size() > 0) {
             for (SortEntry child : children) {
@@ -339,8 +349,9 @@ public abstract class ALMTranslator {
             List<SPARCLiteral> body = null;
             if (aspf_body != null) {
                 body = new ArrayList<SPARCLiteral>();
-                for (ASPfLiteral aspf_lit : aspf_body)
+                for (ASPfLiteral aspf_lit : aspf_body) {
                     body.add((ALMTerm) aspf_lit);
+                }
             }
 
             SPARCRule instance_rule = pm.newSPARCRule(ALM.SPECIAL_FUNCTION_IS_A, head, body);
@@ -594,32 +605,33 @@ public abstract class ALMTranslator {
     }
 
     /**
-     * Static Functions have predicates declared in the predicate section, These rules are described in the ALM paper as
-     * needing to be added per type of function
+     * Static Functions have predicates declared in the predicate section, These
+     * rules are described in the ALM paper as needing to be added per type of
+     * function
      * <p>
      * defined functions need the closed world assumption. <br>
      * -f(X1..Xn) :- not f(X1..Xn).
      * <p>
-     * non-boolean functions need uniqueness constraints to enforce uniqueness of assignment. <br>
+     * non-boolean functions need uniqueness constraints to enforce uniqueness
+     * of assignment. <br>
      * :- f(X1..Xn, V), f(X1..Xn, V2), V != V2. 3)
      * <p>
      * dom_f needs its axioms added: <br>
      * dom_f(X1..Xn) :- f(X1..Xn). when f's range is boolean. <br>
      * dom_f(X1..Xn) :- f(X1..Xn, V). when f's range is not boolean. <br>
-     * -dom_f(X1..Xn) :- not dom_f(X1..Xn). closed world assumption on domain of static functions. <br>
+     * -dom_f(X1..Xn) :- not dom_f(X1..Xn). closed world assumption on domain of
+     * static functions. <br>
      * :- -dom_f(X1..Xn). when f is total.
-     * 
-     * @param pm
-     *            The SPARCProgram to compute the pre-model.
-     * @param st
-     *            The SymbolTable
+     *
+     * @param pm The SPARCProgram to compute the pre-model.
+     * @param st The SymbolTable
      */
     private static void PreModelRulesStaticFunctions(SPARCProgram pm, SymbolTable st) {
         for (FunctionEntry f : st.getFunctions()) {
             if (f.isStatic()) {
                 DOMFunctionEntry dom_f = st.getDOMFunction(f);
                 List<SortEntry> sig = f.getSignature();
-                boolean fIsBoolean = SymbolTable.getBooleansSortEntry().equals(sig.get(sig.size() - 1));
+                boolean fIsBoolean = st.getBooleansSortEntry().equals(sig.get(sig.size() - 1));
                 int dom_size = sig.size() - 1;
                 int count;
                 String XVar = "X";
@@ -736,7 +748,6 @@ public abstract class ALMTranslator {
 
         // Any other rules related to simply the existence of static functions should go
         // here.
-
     }
 
     private static void PreModelStaticStateConstraintAxioms(SPARCProgram pm, SymbolTable st, ASPfProgram aspf) {
@@ -766,19 +777,22 @@ public abstract class ALMTranslator {
     private static void PreModelSortInstancesAndAttributeDefinitions(SPARCProgram pm, SymbolTable st,
             ASPfProgram aspf) {
         pm.createSection(ALM.STRUCTURE_SORT_INSTANCES);
-        for (ASPfRule ar : aspf.getRules(ALM.STRUCTURE_SORT_INSTANCES))
+        for (ASPfRule ar : aspf.getRules(ALM.STRUCTURE_SORT_INSTANCES)) {
             TranslateRule(ar, st, pm, ALM.STRUCTURE_SORT_INSTANCES);
+        }
 
         pm.createSection(ALM.STRUCTURE_ATTRIBUTE_DEFINITIONS);
-        for (ASPfRule ar : aspf.getRules(ALM.STRUCTURE_ATTRIBUTE_DEFINITIONS))
+        for (ASPfRule ar : aspf.getRules(ALM.STRUCTURE_ATTRIBUTE_DEFINITIONS)) {
             TranslateRule(ar, st, pm, ALM.STRUCTURE_ATTRIBUTE_DEFINITIONS);
+        }
 
     }
 
     private static void PreModelStructureStaticFunctionDefinitions(SPARCProgram pm, SymbolTable st, ASPfProgram aspf) {
         pm.createSection(ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS);
-        for (ASPfRule ar : aspf.getRules(ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS))
+        for (ASPfRule ar : aspf.getRules(ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS)) {
             TranslateRule(ar, st, pm, ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS);
+        }
     }
 
     public static void ConstructFinalProgram(SPARCProgram tm, AnswerSet as, SPARCProgram pm, SymbolTable st,
@@ -787,7 +801,14 @@ public abstract class ALMTranslator {
         CreateFinalSortsSection(tm, pm, as, st);
         CreateFinalPredicatesSection(tm, pm, as);
         CreateFinalProgramRules(tm, st, pm, aspf);
-        CreateHistory(tm, st, aspf, er);
+        if (st.isModeActive(ALM.SOLVER_MODE)) {
+            if (st.isModeActive(ALM.HISTORY)) {
+                CreateHistory(tm, st, aspf, er);
+            }
+            if(st.isModeActive(ALM.SOLVER_MODE_PP)){
+                
+            }
+        }
         //LoadFactsFromPreModelAnswerSet(tm, as, s); // TOO NAIVE, NEED TO FILTER FACTS FROM MISSING SORT INSTANCES. 
     }
 
@@ -867,7 +888,7 @@ public abstract class ALMTranslator {
     }
 
     private static void CreateFinalPredicatesSection(SPARCProgram tm, SPARCProgram pm, AnswerSet as) {
-        for (SPARCPredicate pred : pm.getPredicates())
+        for (SPARCPredicate pred : pm.getPredicates()) {
             try {
                 tm.addSPARCPredicate(pred);
             } catch (PredicateAlreadyDeclared e) {
@@ -876,6 +897,7 @@ public abstract class ALMTranslator {
                 ALMCompiler.IMPLEMENTATION_FAILURE("Final Program Predicates",
                         "Redundant Predicate Error In Final Program.");
             }
+        }
     }
 
     private static void CreateFinalProgramRules(SPARCProgram tm, SymbolTable st, SPARCProgram pm, ASPfProgram aspf) {
@@ -898,15 +920,19 @@ public abstract class ALMTranslator {
     /**
      * Fluent functions need the following axioms:
      * <ol>
-     * <li>-f(X1..Xn, I) :- not f(X1..Xn, I) defined fluents receive the closed world assumption.
-     * <li>:- f(X1..Xn, V, I), f(X1..Xn, V2, I), V != V2. (Unique Assignment Constraint)
-     * <li>f(X1..Xn, V, I+1) :- f(X1..Xn, V, I), not f(X1..Xn, V2, I), V != V2, dom_f(X1...Xn, I+1). (Law Of Inertia for
-     * f).
+     * <li>-f(X1..Xn, I) :- not f(X1..Xn, I) defined fluents receive the closed
+     * world assumption.
+     * <li>:- f(X1..Xn, V, I), f(X1..Xn, V2, I), V != V2. (Unique Assignment
+     * Constraint)
+     * <li>f(X1..Xn, V, I+1) :- f(X1..Xn, V, I), not f(X1..Xn, V2, I), V != V2,
+     * dom_f(X1...Xn, I+1). (Law Of Inertia for f).
      * <li>dom_f(X1..Xn, I) :- f(X1..Xn,V,I). 5) (Definition of positive dom_f)
-     * <li>dom_f(X1..Xn, I+1) :- dom_f(X1..Xn, I), not -dom_f(X1..Xn, I+1). (Positive Law Of Inertia for dom_f)
-     * <li>-dom_f(X1..Xn, I+1) :- -dom_f(X1..Xn,I), not dom_f(X1..Xn, I+1). (Negative Law Of Inertia for dom_f)
+     * <li>dom_f(X1..Xn, I+1) :- dom_f(X1..Xn, I), not -dom_f(X1..Xn, I+1).
+     * (Positive Law Of Inertia for dom_f)
+     * <li>-dom_f(X1..Xn, I+1) :- -dom_f(X1..Xn,I), not dom_f(X1..Xn, I+1).
+     * (Negative Law Of Inertia for dom_f)
      * </ol>
-     * 
+     *
      * @param tm
      * @param st
      */
@@ -1091,7 +1117,6 @@ public abstract class ALMTranslator {
                 // r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, neg_dom_f_I, body);
                 // r.addComment("Definition of negative [" + dom_f_name + "] (Closed World
                 // Assumption).");
-
                 // dom_f(X1..Xn, I+1) :- dom_f(X1..Xn, I), not -dom_f(X1..Xn, I+1).
                 body = new ArrayList<>();
                 body.add(dom_f_I);
@@ -1171,19 +1196,13 @@ public abstract class ALMTranslator {
 
     /**
      * Translates the observed history into rules of the program.
-     * 
-     * @param tm
-     *            SPARCProgram that rules from facts of history will be added to.
-     * @param st
-     *            The SymbolTable of the ALMCompiler.
-     * @param aspf
-     *            The ASPf Program containing the History section parsed from the system description.
+     *
+     * @param tm SPARCProgram that rules from facts of history will be added to.
+     * @param st The SymbolTable of the ALMCompiler.
+     * @param aspf The ASPf Program containing the History section parsed from
+     * the system description.
      */
     private static void CreateHistory(SPARCProgram tm, SymbolTable st, ASPfProgram aspf, ErrorReport er) {
-        if (!SymbolTable.modeActive(ALM.HISTORY)) {
-            return;
-        }
-
         //Create Sort For All Fluent Functions
         SPARCSort fluents_sort = new SPARCSort(ALM.SORT_FLUENT_FUNCTIONS);
         for (FunctionEntry fluent : st.getFluentFunctions()) {
@@ -1372,7 +1391,7 @@ public abstract class ALMTranslator {
             } else {
                 ALMCompiler.IMPLEMENTATION_FAILURE("Processing History",
                         "This is likely a syntax error, otherwise we need semantic error for unrecognized "
-                                + "literal in the history section.");
+                        + "literal in the history section.");
             }
         }
     }
@@ -1390,20 +1409,20 @@ public abstract class ALMTranslator {
     //    }
     // THIS WAS TOO NAIVE. NEED TO FILTER OUT FACTS THAT ARE DEFINED ON SORT INSTANCES THAT ARE NO LONGER IN SORTS IN THE 
     // FINAL PROGRAM. 
-
-    /***
-     * 
+    /**
+     * *
+     *
      * @param ar
-     * @param body
-     *            (the new body)
+     * @param body (the new body)
      * @param st
      * @return (the head of the rule)
-     * 
-     *         This function is the meat of the endeavor. Based on the type of literal there are different translations
-     *         case: function at top subcase: static boolean function -- no change subcase: fluent boolean function --
-     *         add time dimension at end of predicate. case: term relation replace each type of function occurrence in
-     *         the term with a variable. Add a new literal to the body with the variable added and a time component if
-     *         it is basic.
+     *
+     * This function is the meat of the endeavor. Based on the type of literal
+     * there are different translations case: function at top subcase: static
+     * boolean function -- no change subcase: fluent boolean function -- add
+     * time dimension at end of predicate. case: term relation replace each type
+     * of function occurrence in the term with a variable. Add a new literal to
+     * the body with the variable added and a time component if it is basic.
      */
     private static void TranslateRule(ASPfRule ar, SymbolTable st, SPARCProgram pm, String section) {
         String timestep = ar.newVariable("TS");
@@ -1411,96 +1430,105 @@ public abstract class ALMTranslator {
 
         String timeAdd = "+1";
         switch (section) {
-        case ALM.AXIOMS_STATE_CONSTRAINTS_FLUENT:
-            timeAdd = "";
-            break;
+            case ALM.AXIOMS_STATE_CONSTRAINTS_FLUENT:
+                timeAdd = "";
+                break;
         }
 
         TypeChecker tc = ar.getTypeChecker();
-        if (tc == null)
+        if (tc == null) {
             tc = new TypeChecker(st);
+        }
 
         // Translate HEAD
         SPARCLiteral head = null;
         ASPfLiteral ahead = ar.getHead();
         if (ahead != null) {
             ALMTerm thead = (ALMTerm) ahead;
-            if (thead.hasFluentFunction(st))
+            if (thead.hasFluentFunction(st)) {
                 hasFluentFunction = true;
+            }
             switch (thead.getType()) {
-            case ALMTerm.FUN:
-                FunctionEntry f = null;
-                //translating only happens without any errors, no need for an ErrorReport here. 
-                f = st.getFunctionEntry(thead.getName(), thead.getArgs().size());
-                if (f != null) {
-                    if (!f.isBoolean())
-                        ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule", "Non Boolean Function ["
-                                + f.getFunctionName() + "] must be in a Term Relation at head of rule");
-                    // Should be caught by semantic error.  
-                    if (f.isStatic())
-                        head = thead;
-                    else if (f.isFluent()) {
-                        // construct corresponding sparc literal
-                        head = new_SPARCLiteral_Boolean_Fluent(thead.getSign(), f, thead.getArgs(), timestep + timeAdd);
-                    } else
+                case ALMTerm.FUN:
+                    FunctionEntry f = null;
+                    //translating only happens without any errors, no need for an ErrorReport here. 
+                    f = st.getFunctionEntry(thead.getName(), thead.getArgs().size());
+                    if (f != null) {
+                        if (!f.isBoolean()) {
+                            ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule", "Non Boolean Function ["
+                                    + f.getFunctionName() + "] must be in a Term Relation at head of rule");
+                        }
+                        // Should be caught by semantic error.  
+                        if (f.isStatic()) {
+                            head = thead;
+                        } else if (f.isFluent()) {
+                            // construct corresponding sparc literal
+                            head = new_SPARCLiteral_Boolean_Fluent(thead.getSign(), f, thead.getArgs(), timestep + timeAdd);
+                        } else {
+                            ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
+                                    "Non Static Or Fluent Function [" + f.getFunctionName() + " at head of rule");
+                        }
+                        // Should never happen
+                    } else {
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                                "Non Static Or Fluent Function [" + f.getFunctionName() + " at head of rule");
-                    // Should never happen
-                } else {
-                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                            "Function  [" + thead.toString() + "] Is Not In The Symbol Table");
-                    // Should be caught by semantic error.
-                }
-                break;
-            case ALMTerm.TERM_RELATION:
-                // must be = or != relation with function on left and variable or ID on right.
-                ALMTerm left = thead.getArg(0);
-                ALMTerm right = thead.getArg(1);
-                if (thead.getName() != ALM.SYMBOL_EQ && thead.getName() != ALM.SYMBOL_NEQ)
-                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                            "Term relation at head of rule must be = or !=");
-                // Should be caught by syntax error.
-                // if(right.getType() != ALMTerm.ID && right.getType() != ALMTerm.VAR)//the
-                // object constant can be occur on the right and it is fun
-                // PROGRAM_FAILURE("Translate Rule", "Right hand side of term relation must be
-                // ID or VAR in head of rule.");
-                // Should be caught by syntax error.
-                if (left.getType() != ALMTerm.FUN)
-                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                            "Only a function can appear on the left hand side of a term relation at the head of a rule.");
-                // Should be caught by syntax error.
-                FunctionEntry ft;
-                //translating only happens without any errors, no need for an ErrorReport here. 
-                ft = st.getFunctionEntry(left.getName(), left.getArgs().size());
-                if (ft != null) {
-                    if (ft.isBoolean())
+                                "Function  [" + thead.toString() + "] Is Not In The Symbol Table");
+                        // Should be caught by semantic error.
+                    }
+                    break;
+                case ALMTerm.TERM_RELATION:
+                    // must be = or != relation with function on left and variable or ID on right.
+                    ALMTerm left = thead.getArg(0);
+                    ALMTerm right = thead.getArg(1);
+                    if (thead.getName() != ALM.SYMBOL_EQ && thead.getName() != ALM.SYMBOL_NEQ) {
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                                "Boolean Function cannot be in a Term Relation at head of rule");
-                    // Should be caught by semantic error.
-                    if (ft.isStatic())
-                        head = new_SPARCLiteral_NonBoolean_Static(ft, left.getArgs(), right);
-                    else if (ft.isFluent()) {
-                        head = new_SPARCLiteral_NonBoolean_Fluent(ft, left.getArgs(), right, timestep + "+1");
-                    } else // Should never happen
+                                "Term relation at head of rule must be = or !=");
+                    }
+                    // Should be caught by syntax error.
+                    // if(right.getType() != ALMTerm.ID && right.getType() != ALMTerm.VAR)//the
+                    // object constant can be occur on the right and it is fun
+                    // PROGRAM_FAILURE("Translate Rule", "Right hand side of term relation must be
+                    // ID or VAR in head of rule.");
+                    // Should be caught by syntax error.
+                    if (left.getType() != ALMTerm.FUN) {
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                                "Non Static Or Fluent Function [" + ft.getFunctionName() + "] at head of rule");
-                    // need to determine sign of the predicate
-                    if (thead.getName() == ALM.SYMBOL_NEQ)
-                        ((ALMTerm) head).setSign(ALMTerm.SIGN_NEG);
-                } else {
+                                "Only a function can appear on the left hand side of a term relation at the head of a rule.");
+                    }
+                    // Should be caught by syntax error.
+                    FunctionEntry ft;
+                    //translating only happens without any errors, no need for an ErrorReport here. 
+                    ft = st.getFunctionEntry(left.getName(), left.getArgs().size());
+                    if (ft != null) {
+                        if (ft.isBoolean()) {
+                            ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
+                                    "Boolean Function cannot be in a Term Relation at head of rule");
+                        }
+                        // Should be caught by semantic error.
+                        if (ft.isStatic()) {
+                            head = new_SPARCLiteral_NonBoolean_Static(ft, left.getArgs(), right);
+                        } else if (ft.isFluent()) {
+                            head = new_SPARCLiteral_NonBoolean_Fluent(ft, left.getArgs(), right, timestep + "+1");
+                        } else // Should never happen
+                        {
+                            ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
+                                    "Non Static Or Fluent Function [" + ft.getFunctionName() + "] at head of rule");
+                        }
+                        // need to determine sign of the predicate
+                        if (thead.getName() == ALM.SYMBOL_NEQ) {
+                            ((ALMTerm) head).setSign(ALMTerm.SIGN_NEG);
+                        }
+                    } else {
+                        ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
+                                "Function  [" + left.toString() + "] Is Not In The Symbol Table");
+                        // Should be caught by semantic error.
+                    }
+                    break;
+                default:
                     ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                            "Function  [" + left.toString() + "] Is Not In The Symbol Table");
-                    // Should be caught by semantic error.
-                }
-                break;
-            default:
-                ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                        "Head [" + thead.toString() + "] existed in ASPF but could not create head for SPARC");
+                            "Head [" + thead.toString() + "] existed in ASPF but could not create head for SPARC");
             }
         }
 
         // END CONSTRUCTION OF HEAD LITERAL
-
         // START CONSTRUCTION OF BODY
         List<SPARCLiteral> body = null;
         List<ASPfLiteral> abody = ar.getBody();
@@ -1509,42 +1537,44 @@ public abstract class ALMTranslator {
             for (ASPfLiteral alit : abody) {
                 ALMTerm tlit = (ALMTerm) alit;
                 switch (tlit.getType()) {
-                case ALMTerm.FUN:
-                    FunctionEntry f;
-                    //translating only happens without any errors, no need for an ErrorReport here. 
-                    f = st.getFunctionEntry(tlit.getName(), tlit.getArgs().size());
-                    if (f != null) {
-                        if (!f.isBoolean())
-                            ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule", "Non Boolean Function ["
-                                    + tlit.toString() + "] must be in a Term Relation in body of rule");
-                        // Should be caught by semantic error.
-                        if (f.isStatic())
-                            body.add(tlit);
-                        else if (f.isFluent()) {
-                            // construct corresponding sparc literal
-                            body.add(new_SPARCLiteral_Boolean_Fluent(tlit.getSign(), f, tlit.getArgs(), timestep));
-                        } else
+                    case ALMTerm.FUN:
+                        FunctionEntry f;
+                        //translating only happens without any errors, no need for an ErrorReport here. 
+                        f = st.getFunctionEntry(tlit.getName(), tlit.getArgs().size());
+                        if (f != null) {
+                            if (!f.isBoolean()) {
+                                ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule", "Non Boolean Function ["
+                                        + tlit.toString() + "] must be in a Term Relation in body of rule");
+                            }
+                            // Should be caught by semantic error.
+                            if (f.isStatic()) {
+                                body.add(tlit);
+                            } else if (f.isFluent()) {
+                                // construct corresponding sparc literal
+                                body.add(new_SPARCLiteral_Boolean_Fluent(tlit.getSign(), f, tlit.getArgs(), timestep));
+                            } else {
+                                ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
+                                        "Non Static Or Fluent Function [" + f.getFunctionName() + "] in body of rule");
+                            }
+                            // Should never happen
+                        } else {
                             ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                                    "Non Static Or Fluent Function [" + f.getFunctionName() + "] in body of rule");
-                        // Should never happen
-                    } else {
+                                    "Function  [" + tlit.toString() + "] Is Not In The Symbol Table");
+                            // Should be caught by semantic error.
+                        }
+                        break;
+                    case ALMTerm.TERM_RELATION:
+                        // A term relation can have any number of functions occurring inside of them
+                        // Each function occurrence shall be replaced with a new variable and a new literal
+                        // for the function is added to the body tying the new variable to the value of the
+                        // function occurrence. This will be done with recursion to construct a brand new
+                        // term relation that is free of all function occurrences.
+                        ALMTerm new_term_relation = TranslateTermRelation(tlit, body, st, tc, timestep);
+                        body.add(new_term_relation);
+                        break;
+                    default:
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                                "Function  [" + tlit.toString() + "] Is Not In The Symbol Table");
-                        // Should be caught by semantic error.
-                    }
-                    break;
-                case ALMTerm.TERM_RELATION:
-                    // A term relation can have any number of functions occurring inside of them
-                    // Each function occurrence shall be replaced with a new variable and a new literal
-                    // for the function is added to the body tying the new variable to the value of the
-                    // function occurrence. This will be done with recursion to construct a brand new
-                    // term relation that is free of all function occurrences.
-                    ALMTerm new_term_relation = TranslateTermRelation(tlit, body, st, tc, timestep);
-                    body.add(new_term_relation);
-                    break;
-                default:
-                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                            "Could Not Translate Literal [" + tlit.toString() + "] from ASPf in body of rule");
+                                "Could Not Translate Literal [" + tlit.toString() + "] from ASPf in body of rule");
                 }
             }
 
@@ -1552,8 +1582,9 @@ public abstract class ALMTranslator {
 
         SPARCRule r = pm.newSPARCRule(section, head, body);
         r.copyComments(ar);
-        if (hasFluentFunction)
+        if (hasFluentFunction) {
             r.addComment(timestep + " is the Time Step Variable.");
+        }
     }
 
     private static ALMTerm TranslateTermRelation(ALMTerm tlit, List<SPARCLiteral> body, SymbolTable st, TypeChecker tc,
@@ -1565,65 +1596,71 @@ public abstract class ALMTranslator {
     }
 
     /**
-     * Returns the Normalized ALMTerm to be added to a SPARC program after translating it from the intermediate ALMTerm
-     * representation. Function terms are replaced by variables in the containing term and a new term constraint is
-     * added to the body which binds the new variable to the translated normalization of the nested term.
-     * 
-     * @param term
-     *            The ALMTerm to be translated.
-     * @param body
-     *            The body of rules that is accumulating the translation.
-     * @param st
-     *            The symbol table, used to retrieve the function associated with the term.
-     * @param tc
-     *            The type checker for the rule, used to create new variables within the body of the rule.
-     * @param timestep
-     *            The timestep variable to use for fluents.
-     * @return The translated and normalized version of the outermost ALMTerm in 'term'.
+     * Returns the Normalized ALMTerm to be added to a SPARC program after
+     * translating it from the intermediate ALMTerm representation. Function
+     * terms are replaced by variables in the containing term and a new term
+     * constraint is added to the body which binds the new variable to the
+     * translated normalization of the nested term.
+     *
+     * @param term The ALMTerm to be translated.
+     * @param body The body of rules that is accumulating the translation.
+     * @param st The symbol table, used to retrieve the function associated with
+     * the term.
+     * @param tc The type checker for the rule, used to create new variables
+     * within the body of the rule.
+     * @param timestep The timestep variable to use for fluents.
+     * @return The translated and normalized version of the outermost ALMTerm in
+     * 'term'.
      */
     private static ALMTerm TranslateTerm(ALMTerm term, List<SPARCLiteral> body, SymbolTable st, TypeChecker tc,
             String timestep) {
         switch (term.getType()) {
-        case ALMTerm.FUN:
-            FunctionEntry f;
-            f = st.getFunctionEntry(term.getName(), term.getArgs().size());
-            if (f != null) {
-                //Determine pattern of variables to use in this rule.  
-                String new_var_base = f.getFunctionName().substring(0, 1).toUpperCase() + "O";
-                // Get New Variable
-                ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base), ALMTerm.VAR);
-                // Need To Add the Function To the Body of the rule we are constructing;
-                if (f.isBoolean())
-                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term", "Boolean function ["
-                            + f.getQualifiedFunctionName() + "] is occurring nested within a term");
-                if (f.isStatic()) {
-                    body.add(new_SPARCLiteral_NonBoolean_Static(f, term.getArgs(), new_var));
-                } else if (f.isFluent()) {
-                    body.add(new_SPARCLiteral_NonBoolean_Fluent(f, term.getArgs(), new_var, timestep));
-                } else
-                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term",
-                            "Could not create sparc literal for term [" + term.toString() + "]");
-                // return the variable as the function's replacement.
-                return new_var;
-            } else {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                        "Term  [" + term.toString() + "] Is Not In The Symbol Table");
-                // Should be caught by semantic error.
-            }
-        default:
-            ALMTerm copy = new ALMTerm(term.getName(), term.getType());
-            if (term.getArgs() != null)
-                for (ALMTerm arg : term.getArgs())
-                    copy.addArg(TranslateTerm(arg, body, st, tc, timestep));
-            return copy;
+            case ALMTerm.FUN:
+                FunctionEntry f;
+                f = st.getFunctionEntry(term.getName(), term.getArgs().size());
+                if (f != null) {
+                    //Determine pattern of variables to use in this rule.  
+                    String new_var_base = f.getFunctionName().substring(0, 1).toUpperCase() + "O";
+                    // Get New Variable
+                    ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base), ALMTerm.VAR);
+                    // Need To Add the Function To the Body of the rule we are constructing;
+                    if (f.isBoolean()) {
+                        ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term", "Boolean function ["
+                                + f.getQualifiedFunctionName() + "] is occurring nested within a term");
+                    }
+                    if (f.isStatic()) {
+                        body.add(new_SPARCLiteral_NonBoolean_Static(f, term.getArgs(), new_var));
+                    } else if (f.isFluent()) {
+                        body.add(new_SPARCLiteral_NonBoolean_Fluent(f, term.getArgs(), new_var, timestep));
+                    } else {
+                        ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term",
+                                "Could not create sparc literal for term [" + term.toString() + "]");
+                    }
+                    // return the variable as the function's replacement.
+                    return new_var;
+                } else {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
+                            "Term  [" + term.toString() + "] Is Not In The Symbol Table");
+                    // Should be caught by semantic error.
+                }
+            default:
+                ALMTerm copy = new ALMTerm(term.getName(), term.getType());
+                if (term.getArgs() != null) {
+                    for (ALMTerm arg : term.getArgs()) {
+                        copy.addArg(TranslateTerm(arg, body, st, tc, timestep));
+                    }
+                }
+                return copy;
         }
     }
 
     private static SPARCLiteral new_SPARCLiteral_NonBoolean_Static(FunctionEntry f, List<ALMTerm> args, ALMTerm range) {
         ALMTerm slit = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN);
-        if (args != null)
-            for (ALMTerm arg : args)
+        if (args != null) {
+            for (ALMTerm arg : args) {
                 slit.addArg(arg);
+            }
+        }
         slit.addArg(range);
         return slit;
     }
@@ -1632,8 +1669,9 @@ public abstract class ALMTranslator {
             String timestep) {
         ALMTerm slit = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN);
         if (args != null) {
-            for (ALMTerm arg : args)
+            for (ALMTerm arg : args) {
                 slit.addArg(arg);
+            }
         }
         slit.addArg(new ALMTerm(timestep, ALMTerm.ID));
         return slit;
@@ -1642,9 +1680,11 @@ public abstract class ALMTranslator {
     private static SPARCLiteral new_SPARCLiteral_NonBoolean_Fluent(FunctionEntry f, List<ALMTerm> args, ALMTerm range,
             String timestep) {
         ALMTerm slit = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN);
-        if (args != null)
-            for (ALMTerm arg : args)
+        if (args != null) {
+            for (ALMTerm arg : args) {
                 slit.addArg(arg);
+            }
+        }
         slit.addArg(range);
         slit.addArg(new ALMTerm(timestep, ALMTerm.ID));
         return slit;

@@ -1439,7 +1439,7 @@ public class ALMBaseListener implements ALMListener {
 
         // defined functions must be boolean, otherwise semantic error.
         if (definedType == true) {
-            if (signature.get(signature.size() - 1) != SymbolTable.getBooleansSortEntry()) // was not boolean sort
+            if (signature.get(signature.size() - 1) != st.getBooleansSortEntry()) // was not boolean sort
             {
                 er.newSemanticError(SemanticError.FND001).add(ctx);
             }
@@ -1762,7 +1762,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // get sort entry for actions
-        SortEntry actions_sort = SymbolTable.getActionsSortEntry();
+        SortEntry actions_sort = st.getActionsSortEntry();
 
         // instance_atom's sort_name must be a subsort of actions;
         SortEntry inst_sort = null;
@@ -1867,7 +1867,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // get sort entry for actions
-        SortEntry actions_sort = SymbolTable.getActionsSortEntry();
+        SortEntry actions_sort = st.getActionsSortEntry();
 
         // instance_atom's sort_name must be a subsort of actions;
         SortEntry inst_sort = null;
@@ -2347,7 +2347,7 @@ public class ALMBaseListener implements ALMListener {
         List<SortEntry> sort_entries = new ArrayList<SortEntry>();
         for (ALMParser.Sort_nameContext sort : sorts) {
             String sort_text = sort.getText();
-            if (SymbolTable.isPredefinedSort(sort_text)) {
+            if (st.isPredefinedSort(sort_text)) {
                 er.newSemanticError("SID001").add(new Location(sort));
             } else {
                 SortEntry se;
@@ -2442,7 +2442,7 @@ public class ALMBaseListener implements ALMListener {
 
         // If Type Check passes, add sort instance declaration.
         if (tc.typeCheckPasses(er)) {
-            // Register Instances With SortEntries in SymbolTable
+            // Register Instances With SortEntries in st
             for (SortEntry se : sort_entries) {
                 for (ALMTerm si : sort_instances) {
                     se.addSortInstance(si);
@@ -2751,6 +2751,7 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void enterSolver_mode(Solver_modeContext ctx) {
+        st.setModeActive(ALM.SOLVER_MODE, true);
     }
 
     @Override
@@ -2759,7 +2760,7 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void enterTemporal_projection(Temporal_projectionContext ctx) {
-
+        st.setModeActive(ALM.SOLVER_MODE_TP, true);
     }
 
     @Override
@@ -2768,26 +2769,24 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void enterMax_steps(Max_stepsContext ctx) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void exitMax_steps(Max_stepsContext ctx) {
         TerminalNode max = ctx.POSINT();
         if (max != null) {
-            SymbolTable.setMaxSteps(Integer.parseInt(max.getText()));
+            st.setMaxSteps(Integer.parseInt(max.getText()));
         }
 
     }
 
     @Override
     public void enterHistory(HistoryContext ctx) {
+        st.setModeActive(ALM.HISTORY, true);
     }
 
     @Override
     public void exitHistory(HistoryContext ctx) {
-        SymbolTable.setMode(ALM.HISTORY, true);
         aspf.createSection(ALM.HISTORY);
     }
 
@@ -2809,7 +2808,7 @@ public class ALMBaseListener implements ALMListener {
         FunctionEntry f_ent = getFunctionEntry(f, f.getArgs().size(), st, er);
         if (f_ent != null) {
             if (f_ent.isFluent()) {
-                if (SymbolTable.isTimeStep(i)) {
+                if (st.isTimeStep(i)) {
                     aspf.newRule(ALM.HISTORY, observed, null);
                 } else {
                     // TODO record semantic error
@@ -2843,7 +2842,7 @@ public class ALMBaseListener implements ALMListener {
         happened.addArg(new ALMTerm(Integer.toString(i), ALMTerm.INT));
 
         if (true) { //st.isAction(a) -- need to check but this hasn't been implemented yet. 
-            if (SymbolTable.isTimeStep(i)) {
+            if (st.isTimeStep(i)) {
                 aspf.newRule(ALM.HISTORY, happened, null);
             } else {
                 // TODO record semantic error.
@@ -2952,7 +2951,7 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void enterPlanning_problem(Planning_problemContext ctx) {
-        // TODO Auto-generated method stub
+        st.setModeActive(ALM.SOLVER_MODE_PP, true);
 
     }
 
@@ -3024,7 +3023,7 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void enterDiagnostic_problem(Diagnostic_problemContext ctx) {
-        // TODO Auto-generated method stub
+        st.setModeActive(ALM.SOLVER_MODE_DP, true);
 
     }
 

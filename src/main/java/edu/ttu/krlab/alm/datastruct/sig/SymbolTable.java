@@ -44,27 +44,30 @@ public class SymbolTable {
      */
     /**
      * Creates the time step instances i where 0 <= i < {@code upper_boud}
-     * 
-     * @param upper_bound
-     *            The number of time steps.
+     *
+     * @param upper_bound The number of time steps.
      */
-    public static void setMaxSteps(int upper_bound) {
+    public void setMaxSteps(int upper_bound) {
         timestep.instances.clear();
         for (int i = 0; i < upper_bound; i++) {
             timestep.instances.add(new ALMTerm(Integer.toString(i), ALMTerm.INT));
         }
         maxStep = upper_bound - 1;
     }
+    
+    public int getMaxSteps(){
+        return maxStep;
+    }
 
-    public static boolean isTimeStep(int i) {
+    public boolean isTimeStep(int i) {
         return i <= maxStep && i >= 0;
     }
 
-    public static boolean modeActive(String mode) {
+    public boolean isModeActive(String mode) {
         return modes.contains(mode);
     }
 
-    public static void setMode(String mode, boolean setting) {
+    public void setModeActive(String mode, boolean setting) {
         if (setting) {
             modes.add(mode);
         } else {
@@ -72,29 +75,29 @@ public class SymbolTable {
         }
     }
 
-    public static SortEntry getUniverseSortEntry() {
+    public SortEntry getUniverseSortEntry() {
 
         return universe;
     }
 
-    public static SortEntry getTimestepSortEntry() {
+    public SortEntry getTimestepSortEntry() {
 
         return timestep;
     }
 
-    public static SortEntry getActionsSortEntry() {
+    public  SortEntry getActionsSortEntry() {
         return actions;
     }
 
-    public static SortEntry getNodesSpecialSortEntry() {
+    public  SortEntry getNodesSpecialSortEntry() {
         return nodes;
     }
 
-    public static SortEntry getBooleansSortEntry() {
+    public  SortEntry getBooleansSortEntry() {
         return booleans;
     }
 
-    public static SortEntry getIntegersSortEntry() {
+    public SortEntry getIntegersSortEntry() {
         return integers;
     }
 
@@ -105,19 +108,22 @@ public class SymbolTable {
     final private Set<SymbolTable> dependencies = new HashSet<>();
     final private Map<String, SortEntry> SEMap = new HashMap<>();
     /**
-     * Constant entries are first retrievable by name and then by their argument signature.
+     * Constant entries are first retrievable by name and then by their argument
+     * signature.
      */
     final private HashMap<String, Set<ConstantEntry>> CEMap = new HashMap<>();
     /**
-     * FunctionEntrys may have the same name but the combination of name and signature must be unique. Looking up by
-     * name should return a set of compatible functions To look up by signature as well, first lookup by name then look
-     * for the function in the set with the matching signature.
+     * FunctionEntrys may have the same name but the combination of name and
+     * signature must be unique. Looking up by name should return a set of
+     * compatible functions To look up by signature as well, first lookup by
+     * name then look for the function in the set with the matching signature.
      */
     final private Map<String, Set<NormalFunctionEntry>> FEMap = new HashMap<>();
     final private Map<NormalFunctionEntry, DOMFunctionEntry> DMap = new HashMap<>();
 
     /**
-     * creates a new symbol table with an initial direct dependency on the base symbol table.
+     * creates a new symbol table with an initial direct dependency on the base
+     * symbol table.
      */
     public SymbolTable(String STName) {
         this.STName = STName;
@@ -165,7 +171,6 @@ public class SymbolTable {
         predefined.add(integers);
 
         // Add special functions
-
         // SIGNATURES
         // universe x nodes -> booleans
         List<SortEntry> universe_nodes_booleans_sig = new ArrayList<SortEntry>();
@@ -190,7 +195,6 @@ public class SymbolTable {
         actions_booleans_sig.add(booleans);
 
         // SPECIAL FUNCTIONS
-
         // is_a
         FunctionEntry is_a = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_IS_A, universe_nodes_booleans_sig, null);
         is_a.setSpecial();
@@ -257,45 +261,48 @@ public class SymbolTable {
 
     }
 
-    public static boolean isPredefinedSort(String sort_text) {
+    public boolean isPredefinedSort(String sort_text) {
 
-        if (sort_text.compareTo(ALM.SORT_BOOLEANS) == 0)
+        if (sort_text.compareTo(ALM.SORT_BOOLEANS) == 0) {
             return true;
+        }
 
-        if (sort_text.compareTo(ALM.SORT_INTEGERS) == 0)
+        if (sort_text.compareTo(ALM.SORT_INTEGERS) == 0) {
             return true;
+        }
 
         ALMTerm IntegerRange = ALM.ParseIntegerRangeFromString(sort_text);
-        if (IntegerRange != null)
+        if (IntegerRange != null) {
             return true;
+        }
 
         return false;
     }
 
     /**
      * Returns the sort entries in this symbol table and in all dependencies.
-     * 
+     *
      * @return all SortEntries reachable from this Symbol Table.
      */
     public Set<SortEntry> getSortEntries() {
         Set<SortEntry> result = new HashSet<>();
-        for (SymbolTable dependency : dependencies)
+        for (SymbolTable dependency : dependencies) {
             result.addAll(dependency.getSortEntries());
+        }
         result.addAll(this.SEMap.values());
         return result;
     }
 
     /**
-     * Creates a new SortEntry of the given sortname in this symbol table if the name of the sort does not exist in this
-     * symbol table or any dependent symbol tables.
-     * 
-     * @param sortname
-     *            The name of the sort to create a SortEntry for.
-     * @param loc
-     *            The parsed text location for the sort.
+     * Creates a new SortEntry of the given sortname in this symbol table if the
+     * name of the sort does not exist in this symbol table or any dependent
+     * symbol tables.
+     *
+     * @param sortname The name of the sort to create a SortEntry for.
+     * @param loc The parsed text location for the sort.
      * @return the new SortEntry
-     * @throws DuplicateSortException
-     *             if a SortEntry for the given sortname exists already.
+     * @throws DuplicateSortException if a SortEntry for the given sortname
+     * exists already.
      */
     public SortEntry createSortEntry(String sortname, Location loc) throws DuplicateSortException {
         // Sort Entries must be uniquely named.
@@ -313,52 +320,56 @@ public class SymbolTable {
     }
 
     /**
-     * Retrieves any existing SortEntry for the given sortname that exists in this symbol table or in any of its
-     * dependencies.
-     * 
-     * @param sortname
-     *            The name of the sort
+     * Retrieves any existing SortEntry for the given sortname that exists in
+     * this symbol table or in any of its dependencies.
+     *
+     * @param sortname The name of the sort
      * @return The SortEntry for the given sort name.
-     * @throws SortNotFoundException
-     *             if no matching SortEntry could be found.
+     * @throws SortNotFoundException if no matching SortEntry could be found.
      */
     public SortEntry getSortEntry(String sortname) throws SortNotFoundException {
         SortEntry sortEntry = getSortEntryHelp(sortname);
-        if (sortEntry != null)
+        if (sortEntry != null) {
             return sortEntry;
+        }
         //no sort entry could be found in this symbol table or in any of the dependencies. 
         throw new SortNotFoundException(sortname);
     }
 
     private SortEntry getSortEntryHelp(String sortname) {
         SortEntry se = SEMap.get(sortname);
-        if (se != null)
+        if (se != null) {
             return se;
+        }
         for (SymbolTable dependency : dependencies) {
             se = dependency.getSortEntryHelp(sortname);
-            if (se != null)
+            if (se != null) {
                 return se;
+            }
         }
         return null;
     }
 
     /**
-     * Retrieves an existing singleton sort entry if it exists or creates a new one to hold the constant entry as its
-     * only instance. The singleton sort entry is marked as a singleton and registered with the constant for later
+     * Retrieves an existing singleton sort entry if it exists or creates a new
+     * one to hold the constant entry as its only instance. The singleton sort
+     * entry is marked as a singleton and registered with the constant for later
      * retrieval.
-     * 
-     * @param ce
-     *            The {@link ConstantEntry ConstantEntry} for which its singleton sort is to be retrieved.
-     * 
-     * @return The {@link SortEntry SortEntry} that is the singleton sort of the constant entry.
+     *
+     * @param ce The {@link ConstantEntry ConstantEntry} for which its singleton
+     * sort is to be retrieved.
+     *
+     * @return The {@link SortEntry SortEntry} that is the singleton sort of the
+     * constant entry.
      */
     private SortEntry getSingletonSortForConstantEntry(ConstantEntry ce) {
         //The naming convention of the singleton sort should not be easily produced by a user of the ALM system. 
         //Pattern:  singleton_constName_SortArg1Name_SortArt2Neam_...___  <- three trailing underscores. 
         //This pattern will be used to easily identify and remove singleton sorts from the premodel sparc program. 
         String singletonName = "singleton_" + ce.getConstName();
-        for (SortEntry sort : ce.getSourceSorts())
+        for (SortEntry sort : ce.getSourceSorts()) {
             singletonName += "_" + sort.getSortName();
+        }
         singletonName += "___";
 
         //lookup for an existing singleton matching this pattern. 
@@ -403,8 +414,9 @@ public class SymbolTable {
         // Specifically the function to be created does not have the same function name
         // and signature.
         FunctionEntry existing = getFunctionEntry(funname, signature);
-        if (existing != null)
+        if (existing != null) {
             throw new DuplicateFunctionException(existing);
+        }
 
         // safe to create new function entry, add it to the set in the map.
         Set<NormalFunctionEntry> set = FEMap.get(funname);
@@ -433,10 +445,10 @@ public class SymbolTable {
     }
 
     /**
-     * Returns all functions with the matching function name from this symbol table and its dependecies.
-     * 
-     * @param funname
-     *            The name of the function to match;
+     * Returns all functions with the matching function name from this symbol
+     * table and its dependecies.
+     *
+     * @param funname The name of the function to match;
      * @return The set of all function entries with the same name.
      */
     private Set<NormalFunctionEntry> getFunctionEntriesHelp(String funname) {
@@ -445,8 +457,9 @@ public class SymbolTable {
             matching.addAll(dependency.getFunctionEntriesHelp(funname));
         }
         Set<NormalFunctionEntry> matches = FEMap.get(funname);
-        if (matches != null)
+        if (matches != null) {
             matching.addAll(FEMap.get(funname));
+        }
         return matching;
     }
 
@@ -456,9 +469,9 @@ public class SymbolTable {
             baseName = fname.substring(ALM.DOM_PREFIX.length());
         }
         Set<NormalFunctionEntry> funs = getFunctionEntriesHelp(fname);
-        if (fname == baseName)
+        if (fname == baseName) {
             return new HashSet<>(funs);
-        else {
+        } else {
             Set<FunctionEntry> doms = new HashSet<>();
             for (NormalFunctionEntry f : funs) {
                 doms.add(DMap.get(f));
@@ -474,8 +487,9 @@ public class SymbolTable {
         }
         Set<NormalFunctionEntry> nFuns = getFunctionEntriesHelp(baseName);
         Set<FunctionEntry> funs = new HashSet<>();
-        if (nFuns == null || nFuns.size() == 0)
+        if (nFuns == null || nFuns.size() == 0) {
             return funs;
+        }
         for (NormalFunctionEntry f : nFuns) {
             if (f.getSignature().size() - 1 == numArgs) {
                 if (fname == baseName) {
@@ -489,8 +503,9 @@ public class SymbolTable {
     }
 
     /**
-     * Returns all visible normal functions from this symbol table and all dependencies.
-     * 
+     * Returns all visible normal functions from this symbol table and all
+     * dependencies.
+     *
      * @return Set of NormalFunctionEntries reachable from this SymbolTable.
      */
     public Set<NormalFunctionEntry> getFunctions() {
@@ -498,27 +513,29 @@ public class SymbolTable {
         for (SymbolTable dependency : dependencies) {
             result.addAll(dependency.getFunctions());
         }
-        for (String fname : FEMap.keySet())
+        for (String fname : FEMap.keySet()) {
             result.addAll(getFunctionEntriesHelp(fname));
+        }
         return result;
     }
 
     /**
-     * Returns the function matching the same name and the same argument signature
-     * 
-     * @param funname
-     *            The name of the function
-     * @param signature
-     *            The signature of the function.
+     * Returns the function matching the same name and the same argument
+     * signature
+     *
+     * @param funname The name of the function
+     * @param signature The signature of the function.
      * @return the FunctionEntry matching the name and signature.
      */
     private FunctionEntry getFunctionEntry(String funname, List<SortEntry> signature) {
         Set<NormalFunctionEntry> FSet = getFunctionEntriesHelp(funname);
-        if (FSet == null || FSet.size() == 0)
+        if (FSet == null || FSet.size() == 0) {
             return null;
+        }
         for (FunctionEntry fe : FSet) {
-            if (fe.sigMatch(signature))
+            if (fe.sigMatch(signature)) {
                 return fe;
+            }
         }
         return null;
     }
@@ -536,27 +553,31 @@ public class SymbolTable {
 
     public Set<DOMFunctionEntry> getDOMFunctions() {
         Set<DOMFunctionEntry> result = new HashSet<>();
-        for (SymbolTable dependency : dependencies)
+        for (SymbolTable dependency : dependencies) {
             result.addAll(dependency.getDOMFunctions());
+        }
         result.addAll(DMap.values());
         return result;
     }
 
     public DOMFunctionEntry getDOMFunction(FunctionEntry f) {
         DOMFunctionEntry df = DMap.get(f);
-        if (df != null)
+        if (df != null) {
             return df;
+        }
         for (SymbolTable dependency : dependencies) {
             df = dependency.getDOMFunction(f);
-            if (df != null)
+            if (df != null) {
                 return df;
+            }
         }
         return null;
     }
 
     public void writeTo(BufferedWriter out) throws IOException {
-        if (out == null)
+        if (out == null) {
             return;
+        }
         out.write("------------------\n");
         out.write("-- SYMBOL TABLE --\n");
         out.write("------------------\n\n");
@@ -606,20 +627,21 @@ public class SymbolTable {
     }
 
     /**
-     * Returns the constant entry with the matching constant name and argument signature. This function examines this
-     * symbol table and all dependencies for matching instances.
-     * 
-     * @param constname
-     *            The name of the constant
-     * @param arguments
-     *            The list of arguments. may be null or empty list to indicate the constants has no arguments.
+     * Returns the constant entry with the matching constant name and argument
+     * signature. This function examines this symbol table and all dependencies
+     * for matching instances.
+     *
+     * @param constname The name of the constant
+     * @param arguments The list of arguments. may be null or empty list to
+     * indicate the constants has no arguments.
      * @return The matching ConstantEntry if it exists, otherwise null.
      */
     public ConstantEntry getConstantEntry(String constname, List<SortEntry> arguments) {
 
         Set<ConstantEntry> matching = CEMap.get(constname);
-        if (matching == null)
+        if (matching == null) {
             return null;
+        }
         for (ConstantEntry constEntry : matching) {
             if (constEntry.getArguments().equals(arguments)) {
                 return constEntry;
@@ -628,28 +650,29 @@ public class SymbolTable {
         //iterate through dependencies until a match is found.
         for (SymbolTable dependency : dependencies) {
             ConstantEntry ce = dependency.getConstantEntry(constname, arguments);
-            if (ce != null)
+            if (ce != null) {
                 return ce;
+            }
         }
         //no match found
         return null;
     }
 
     /**
-     * Creates a new constant entry for the given {@code constname(arguments)} and registers the constant as belonging
-     * to the sort entries in the list of sourceSorts.
-     * 
-     * @param constname
-     *            the String name of the constant
-     * @param arguments
-     *            the sorts that specify the schema for instantiating the constant.
-     * @param parent_sorts
-     *            The sort entries that will have the constant as a member of their sort.
-     * @param loc
-     *            The syntactic element relating to the declaration of the constants.
+     * Creates a new constant entry for the given {@code constname(arguments)}
+     * and registers the constant as belonging to the sort entries in the list
+     * of sourceSorts.
+     *
+     * @param constname the String name of the constant
+     * @param arguments the sorts that specify the schema for instantiating the
+     * constant.
+     * @param parent_sorts The sort entries that will have the constant as a
+     * member of their sort.
+     * @param loc The syntactic element relating to the declaration of the
+     * constants.
      * @return the ConstantEntry created in the symbol table.
-     * @throws DuplicateConstantException
-     *             if the exact constant has already been declared for one of the parent_sorts.
+     * @throws DuplicateConstantException if the exact constant has already been
+     * declared for one of the parent_sorts.
      */
     public ConstantEntry createConstantEntry(String constname, List<SortEntry> arguments, List<SortEntry> parent_sorts,
             Location loc) throws DuplicateConstantException {
@@ -672,13 +695,14 @@ public class SymbolTable {
         if (constEntry == null) {
             //check global constent entry table
             Set<ConstantEntry> otherSTEntries = staticCEMap.get(constname);
-            if (otherSTEntries != null)
+            if (otherSTEntries != null) {
                 for (ConstantEntry c : otherSTEntries) {
                     if (c.getArguments().equals(arguments)) {
                         constEntry = c;
                         break;
                     }
                 }
+            }
             if (constEntry == null) {
                 constEntry = new ConstantEntry(constname, arguments, parent_sorts, loc);
                 Set<ConstantEntry> globalSet = staticCEMap.get(constname);
@@ -698,7 +722,6 @@ public class SymbolTable {
 
         //add the singleton sort as sub-sorts to the source-sorts of the constant entry.  
         //collect any duplicate declarations for an exception. 
-
         Set<SortEntry> duplicates = new HashSet<>();
         for (SortEntry sort : parent_sorts) {
             if (sort.childSorts.contains(singleton)) {
@@ -716,22 +739,23 @@ public class SymbolTable {
     }
 
     /**
-     * Finds a matching constant entry of the same name. returns null if no such constant entry can be found.
-     * 
-     * @param constTerm
-     *            The ALMTerm whose matching constant entry we are seeking.
+     * Finds a matching constant entry of the same name. returns null if no such
+     * constant entry can be found.
+     *
+     * @param constTerm The ALMTerm whose matching constant entry we are
+     * seeking.
      * @return the matching constant entry if it exists, otherwise null.
      */
     public Set<ConstantEntry> getMatchingConstantEntries(ALMTerm constTerm) {
         int argSize = 0;
         switch (constTerm.getType()) {
-        case ALMTerm.ID:
-            break;
-        case ALMTerm.FUN:
-            argSize = constTerm.getArgs().size();
-            break;
-        default:
-            return null;
+            case ALMTerm.ID:
+                break;
+            case ALMTerm.FUN:
+                argSize = constTerm.getArgs().size();
+                break;
+            default:
+                return null;
         }
         String constName = constTerm.getName();
         Set<ConstantEntry> constSet = getConstantEntries(constName);
@@ -740,54 +764,63 @@ public class SymbolTable {
             if (argSize > 0) {
                 Set<ConstantEntry> matching = new HashSet<>();
                 for (ConstantEntry ce : constSet) {
-                    if (ce.getArguments().size() == argSize)
+                    if (ce.getArguments().size() == argSize) {
                         matching.add(ce);
+                    }
                 }
                 return matching;
-            } else
+            } else {
                 return constSet;
+            }
         }
         return null;
     }
 
     public Set<ConstantEntry> getConstantEntries(String name) {
         Set<ConstantEntry> result = new HashSet<>();
-        for (SymbolTable dependency : dependencies)
+        for (SymbolTable dependency : dependencies) {
             result.addAll(dependency.getConstantEntries(name));
+        }
         Set<ConstantEntry> constants = CEMap.get(name);
-        if (constants != null)
+        if (constants != null) {
             result.addAll(constants);
+        }
         return result;
     }
 
     public Set<ConstantEntry> getConstantEntries(String name, int argSize) {
         Set<ConstantEntry> constants = getConstantEntries(name);
-        if (constants == null)
+        if (constants == null) {
             return Collections.emptySet();
+        }
         Set<ConstantEntry> matches = new HashSet<>();
         for (ConstantEntry c : constants) {
-            if (c.getArguments().size() == argSize)
+            if (c.getArguments().size() == argSize) {
                 matches.add(c);
+            }
         }
         return matches;
     }
 
     public ConstantEntry getMatchingConstantEntry(ALMTerm obj_const) {
-        if (!obj_const.isGround())
+        if (!obj_const.isGround()) {
             ALMCompiler.IMPLEMENTATION_FAILURE("Find ConstantEntry",
                     "Retrieval of ConstantEntry for non-ground constants is not supported in this version of ALM.");
+        }
         Set<ConstantEntry> matching = getConstantEntries(obj_const.getName(), obj_const.getArgs().size());
-        if (matching.size() > 1)
+        if (matching.size() > 1) {
             ALMCompiler.IMPLEMENTATION_FAILURE("Find ConstantEntry",
                     "ConstantEntry overloading is not supported in this version of ALM.");
-        if (matching.size() == 0)
+        }
+        if (matching.size() == 0) {
             return null;
+        }
         return matching.iterator().next();
     }
 
     /**
      * Caller must ensure that obj_const actually resolves to a constant entry.
-     * 
+     *
      * @param obj_const
      * @param objConstVal
      */
@@ -798,12 +831,14 @@ public class SymbolTable {
     }
 
     public ALMTerm getConstantDefinition(ALMTerm obj_const) {
-        if (!obj_const.isGround())
+        if (!obj_const.isGround()) {
             ALMCompiler.IMPLEMENTATION_FAILURE("Get Constant Definition",
                     "Retrieval of Constant Definition for non-ground constants is not supported in this version of ALM.");
+        }
         ConstantEntry ce = CDMap.get(obj_const);
-        if (ce == null)
+        if (ce == null) {
             return null;
+        }
         return ce.getConstantDefinition(obj_const);
     }
 

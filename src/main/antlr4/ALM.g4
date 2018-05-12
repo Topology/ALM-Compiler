@@ -355,6 +355,6 @@ goal_state: GOAL EQ '{' literal (',' literal)* '}';
 
 diagnostic_problem : DIAGNOSTIC PROBLEM max_steps history normal_conditions? current_state;
 normal_conditions: NORMAL CONDITIONS (one_normal_condition)+;
-one_normal_condition : literal ('when' literal (',' literal)*)?;  
+one_normal_condition : ID ':'  literal ('when' literal (',' literal)*)?;  
 current_state: SITUATION EQ '{' literal (',' literal)* '}';
 

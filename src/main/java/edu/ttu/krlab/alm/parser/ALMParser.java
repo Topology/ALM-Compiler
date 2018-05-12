@@ -6173,7 +6173,7 @@ public class ALMParser extends Parser {
 				setState(899); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << T__4) | (1L << MOD) | (1L << OCCURS) | (1L << INSTANCE) | (1L << IS_A) | (1L << HAS_CHILD) | (1L << HAS_PARENT) | (1L << LINK) | (1L << SOURCE) | (1L << SINK) | (1L << SUBSORT) | (1L << DOM) | (1L << SORT) | (1L << STATE) | (1L << CONSTRAINTS) | (1L << FUNCTION) | (1L << DECLARATIONS) | (1L << DEFINITIONS) | (1L << SYSTEM) | (1L << DESCRIPTION) | (1L << THEORY) | (1L << MODULE) | (1L << IMPORT) | (1L << FROM) | (1L << DEPENDS) | (1L << ON) | (1L << ATTRIBUTES) | (1L << OBJECT) | (1L << CONSTANT) | (1L << STATICS) | (1L << FLUENTS) | (1L << BASIC) | (1L << DEFINED) | (1L << TOTAL) | (1L << AXIOMS) | (1L << DYNAMIC) | (1L << CAUSAL) | (1L << LAWS) | (1L << EXECUTABILITY) | (1L << CONDITIONS) | (1L << CAUSES) | (1L << IMPOSSIBLE))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (IF - 64)) | (1L << (FALSE - 64)) | (1L << (TRUE - 64)) | (1L << (STRUCTURE - 64)) | (1L << (IN - 64)) | (1L << (WHERE - 64)) | (1L << (VALUE - 64)) | (1L << (OF - 64)) | (1L << (INSTANCES - 64)) | (1L << (TEMPORAL - 64)) | (1L << (PROJECTION - 64)) | (1L << (MAX - 64)) | (1L << (STEPS - 64)) | (1L << (HISTORY - 64)) | (1L << (OBSERVED - 64)) | (1L << (HAPPENED - 64)) | (1L << (BOOLEAN - 64)) | (1L << (INTEGERS - 64)) | (1L << (UNIVERSE - 64)) | (1L << (ACTIONS - 64)) | (1L << (ID - 64)) | (1L << (VAR - 64)) | (1L << (POSINT - 64)) | (1L << (NEGINT - 64)) | (1L << (ZERO - 64)))) != 0) );
+			} while ( _la==ID );
 			}
 		}
 		catch (RecognitionException re) {
@@ -6188,6 +6188,7 @@ public class ALMParser extends Parser {
 	}
 
 	public static class One_normal_conditionContext extends ParserRuleContext {
+		public TerminalNode ID() { return getToken(ALMParser.ID, 0); }
 		public List<LiteralContext> literal() {
 			return getRuleContexts(LiteralContext.class);
 		}
@@ -6216,29 +6217,33 @@ public class ALMParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(901);
+			match(ID);
+			setState(902);
+			match(T__13);
+			setState(903);
 			literal();
-			setState(911);
+			setState(913);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==WHEN) {
 				{
-				setState(902);
+				setState(904);
 				match(WHEN);
-				setState(903);
+				setState(905);
 				literal();
-				setState(908);
+				setState(910);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==T__1) {
 					{
 					{
-					setState(904);
+					setState(906);
 					match(T__1);
-					setState(905);
+					setState(907);
 					literal();
 					}
 					}
-					setState(910);
+					setState(912);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
@@ -6288,31 +6293,31 @@ public class ALMParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(913);
-			match(SITUATION);
-			setState(914);
-			match(EQ);
 			setState(915);
-			match(T__14);
+			match(SITUATION);
 			setState(916);
+			match(EQ);
+			setState(917);
+			match(T__14);
+			setState(918);
 			literal();
-			setState(921);
+			setState(923);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__1) {
 				{
 				{
-				setState(917);
+				setState(919);
 				match(T__1);
-				setState(918);
+				setState(920);
 				literal();
 				}
 				}
-				setState(923);
+				setState(925);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(924);
+			setState(926);
 			match(T__15);
 			}
 		}
@@ -6358,7 +6363,7 @@ public class ALMParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3g\u03a1\4\2\t\2\4"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3g\u03a3\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -6418,19 +6423,19 @@ public class ALMParser extends Parser {
 		"T\3T\3T\3T\3T\3T\7T\u035b\nT\fT\16T\u035e\13T\3U\3U\3U\3U\3U\3V\3V\3V"+
 		"\3V\3V\3V\3W\3W\3W\3W\3W\3W\7W\u0371\nW\fW\16W\u0374\13W\3W\3W\3X\3X\3"+
 		"X\3X\3X\5X\u037d\nX\3X\3X\3Y\3Y\3Y\6Y\u0384\nY\rY\16Y\u0385\3Z\3Z\3Z\3"+
-		"Z\3Z\7Z\u038d\nZ\fZ\16Z\u0390\13Z\5Z\u0392\nZ\3[\3[\3[\3[\3[\3[\7[\u039a"+
-		"\n[\f[\16[\u039d\13[\3[\3[\3[\2\4\26\30\\\2\4\6\b\n\f\16\20\22\24\26\30"+
-		"\32\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTVXZ\\^`bdfhjlnprtvxz|~\u0080"+
-		"\u0082\u0084\u0086\u0088\u008a\u008c\u008e\u0090\u0092\u0094\u0096\u0098"+
-		"\u009a\u009c\u009e\u00a0\u00a2\u00a4\u00a6\u00a8\u00aa\u00ac\u00ae\u00b0"+
-		"\u00b2\u00b4\2\n\5\2\24\24\32Q_c\3\2CD\4\2eegg\3\2eg\4\2\25\26\30\30\4"+
-		"\2AA^^\3\2[\\\4\2AA]^\2\u03bd\2\u00b6\3\2\2\2\4\u00b8\3\2\2\2\6\u00ba"+
-		"\3\2\2\2\b\u00bc\3\2\2\2\n\u00be\3\2\2\2\f\u00c2\3\2\2\2\16\u00c4\3\2"+
-		"\2\2\20\u00d2\3\2\2\2\22\u00da\3\2\2\2\24\u00de\3\2\2\2\26\u00e0\3\2\2"+
-		"\2\30\u00f4\3\2\2\2\32\u0114\3\2\2\2\34\u0116\3\2\2\2\36\u011b\3\2\2\2"+
-		" \u0122\3\2\2\2\"\u0129\3\2\2\2$\u0130\3\2\2\2&\u0137\3\2\2\2(\u013c\3"+
-		"\2\2\2*\u0141\3\2\2\2,\u0146\3\2\2\2.\u0154\3\2\2\2\60\u015d\3\2\2\2\62"+
-		"\u0162\3\2\2\2\64\u0164\3\2\2\2\66\u0166\3\2\2\28\u0168\3\2\2\2:\u0172"+
+		"Z\3Z\3Z\3Z\7Z\u038f\nZ\fZ\16Z\u0392\13Z\5Z\u0394\nZ\3[\3[\3[\3[\3[\3["+
+		"\7[\u039c\n[\f[\16[\u039f\13[\3[\3[\3[\2\4\26\30\\\2\4\6\b\n\f\16\20\22"+
+		"\24\26\30\32\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTVXZ\\^`bdfhjlnp"+
+		"rtvxz|~\u0080\u0082\u0084\u0086\u0088\u008a\u008c\u008e\u0090\u0092\u0094"+
+		"\u0096\u0098\u009a\u009c\u009e\u00a0\u00a2\u00a4\u00a6\u00a8\u00aa\u00ac"+
+		"\u00ae\u00b0\u00b2\u00b4\2\n\5\2\24\24\32Q_c\3\2CD\4\2eegg\3\2eg\4\2\25"+
+		"\26\30\30\4\2AA^^\3\2[\\\4\2AA]^\2\u03bf\2\u00b6\3\2\2\2\4\u00b8\3\2\2"+
+		"\2\6\u00ba\3\2\2\2\b\u00bc\3\2\2\2\n\u00be\3\2\2\2\f\u00c2\3\2\2\2\16"+
+		"\u00c4\3\2\2\2\20\u00d2\3\2\2\2\22\u00da\3\2\2\2\24\u00de\3\2\2\2\26\u00e0"+
+		"\3\2\2\2\30\u00f4\3\2\2\2\32\u0114\3\2\2\2\34\u0116\3\2\2\2\36\u011b\3"+
+		"\2\2\2 \u0122\3\2\2\2\"\u0129\3\2\2\2$\u0130\3\2\2\2&\u0137\3\2\2\2(\u013c"+
+		"\3\2\2\2*\u0141\3\2\2\2,\u0146\3\2\2\2.\u0154\3\2\2\2\60\u015d\3\2\2\2"+
+		"\62\u0162\3\2\2\2\64\u0164\3\2\2\2\66\u0166\3\2\2\28\u0168\3\2\2\2:\u0172"+
 		"\3\2\2\2<\u017d\3\2\2\2>\u017f\3\2\2\2@\u0182\3\2\2\2B\u0193\3\2\2\2D"+
 		"\u0196\3\2\2\2F\u01a4\3\2\2\2H\u01ae\3\2\2\2J\u01b2\3\2\2\2L\u01bb\3\2"+
 		"\2\2N\u01c1\3\2\2\2P\u01c3\3\2\2\2R\u01ca\3\2\2\2T\u01de\3\2\2\2V\u01e4"+
@@ -6445,7 +6450,7 @@ public class ALMParser extends Parser {
 		"\2\2\u009a\u0326\3\2\2\2\u009c\u032d\3\2\2\2\u009e\u0336\3\2\2\2\u00a0"+
 		"\u033d\3\2\2\2\u00a2\u0344\3\2\2\2\u00a4\u034d\3\2\2\2\u00a6\u0354\3\2"+
 		"\2\2\u00a8\u035f\3\2\2\2\u00aa\u0364\3\2\2\2\u00ac\u036a\3\2\2\2\u00ae"+
-		"\u0377\3\2\2\2\u00b0\u0380\3\2\2\2\u00b2\u0387\3\2\2\2\u00b4\u0393\3\2"+
+		"\u0377\3\2\2\2\u00b0\u0380\3\2\2\2\u00b2\u0387\3\2\2\2\u00b4\u0395\3\2"+
 		"\2\2\u00b6\u00b7\t\2\2\2\u00b7\3\3\2\2\2\u00b8\u00b9\t\3\2\2\u00b9\5\3"+
 		"\2\2\2\u00ba\u00bb\t\4\2\2\u00bb\7\3\2\2\2\u00bc\u00bd\t\5\2\2\u00bd\t"+
 		"\3\2\2\2\u00be\u00bf\t\6\2\2\u00bf\13\3\2\2\2\u00c0\u00c3\5\2\2\2\u00c1"+
@@ -6679,23 +6684,23 @@ public class ALMParser extends Parser {
 		"\u037b\3\2\2\2\u037c\u037d\3\2\2\2\u037d\u037e\3\2\2\2\u037e\u037f\5\u00b4"+
 		"[\2\u037f\u00af\3\2\2\2\u0380\u0381\7X\2\2\u0381\u0383\7?\2\2\u0382\u0384"+
 		"\5\u00b2Z\2\u0383\u0382\3\2\2\2\u0384\u0385\3\2\2\2\u0385\u0383\3\2\2"+
-		"\2\u0385\u0386\3\2\2\2\u0386\u00b1\3\2\2\2\u0387\u0391\5\60\31\2\u0388"+
-		"\u0389\7W\2\2\u0389\u038e\5\60\31\2\u038a\u038b\7\4\2\2\u038b\u038d\5"+
-		"\60\31\2\u038c\u038a\3\2\2\2\u038d\u0390\3\2\2\2\u038e\u038c\3\2\2\2\u038e"+
-		"\u038f\3\2\2\2\u038f\u0392\3\2\2\2\u0390\u038e\3\2\2\2\u0391\u0388\3\2"+
-		"\2\2\u0391\u0392\3\2\2\2\u0392\u00b3\3\2\2\2\u0393\u0394\7V\2\2\u0394"+
-		"\u0395\7\25\2\2\u0395\u0396\7\21\2\2\u0396\u039b\5\60\31\2\u0397\u0398"+
-		"\7\4\2\2\u0398\u039a\5\60\31\2\u0399\u0397\3\2\2\2\u039a\u039d\3\2\2\2"+
-		"\u039b\u0399\3\2\2\2\u039b\u039c\3\2\2\2\u039c\u039e\3\2\2\2\u039d\u039b"+
-		"\3\2\2\2\u039e\u039f\7\22\2\2\u039f\u00b5\3\2\2\2_\u00c2\u00cb\u00d0\u00da"+
-		"\u00de\u00e9\u00eb\u00f4\u00ff\u0101\u0114\u0154\u015d\u0162\u016e\u0170"+
-		"\u017d\u0184\u018e\u0193\u0196\u0199\u019c\u019f\u01a2\u01a9\u01ae\u01bb"+
-		"\u01c1\u01c8\u01cf\u01d8\u01dc\u01e2\u01eb\u01f0\u01f9\u0200\u0209\u0211"+
-		"\u0214\u0218\u021b\u021f\u0222\u0228\u022e\u0231\u023a\u023f\u0248\u0250"+
-		"\u0257\u0259\u0262\u0269\u0270\u0277\u0282\u028e\u0292\u029c\u02a4\u02a9"+
-		"\u02b5\u02ba\u02c3\u02c5\u02cd\u02d7\u02de\u02e7\u02f0\u02f3\u02fa\u0307"+
-		"\u0310\u0313\u031a\u031d\u0320\u0329\u032b\u0342\u034a\u0352\u035c\u0372"+
-		"\u037c\u0385\u038e\u0391\u039b";
+		"\2\u0385\u0386\3\2\2\2\u0386\u00b1\3\2\2\2\u0387\u0388\7c\2\2\u0388\u0389"+
+		"\7\20\2\2\u0389\u0393\5\60\31\2\u038a\u038b\7W\2\2\u038b\u0390\5\60\31"+
+		"\2\u038c\u038d\7\4\2\2\u038d\u038f\5\60\31\2\u038e\u038c\3\2\2\2\u038f"+
+		"\u0392\3\2\2\2\u0390\u038e\3\2\2\2\u0390\u0391\3\2\2\2\u0391\u0394\3\2"+
+		"\2\2\u0392\u0390\3\2\2\2\u0393\u038a\3\2\2\2\u0393\u0394\3\2\2\2\u0394"+
+		"\u00b3\3\2\2\2\u0395\u0396\7V\2\2\u0396\u0397\7\25\2\2\u0397\u0398\7\21"+
+		"\2\2\u0398\u039d\5\60\31\2\u0399\u039a\7\4\2\2\u039a\u039c\5\60\31\2\u039b"+
+		"\u0399\3\2\2\2\u039c\u039f\3\2\2\2\u039d\u039b\3\2\2\2\u039d\u039e\3\2"+
+		"\2\2\u039e\u03a0\3\2\2\2\u039f\u039d\3\2\2\2\u03a0\u03a1\7\22\2\2\u03a1"+
+		"\u00b5\3\2\2\2_\u00c2\u00cb\u00d0\u00da\u00de\u00e9\u00eb\u00f4\u00ff"+
+		"\u0101\u0114\u0154\u015d\u0162\u016e\u0170\u017d\u0184\u018e\u0193\u0196"+
+		"\u0199\u019c\u019f\u01a2\u01a9\u01ae\u01bb\u01c1\u01c8\u01cf\u01d8\u01dc"+
+		"\u01e2\u01eb\u01f0\u01f9\u0200\u0209\u0211\u0214\u0218\u021b\u021f\u0222"+
+		"\u0228\u022e\u0231\u023a\u023f\u0248\u0250\u0257\u0259\u0262\u0269\u0270"+
+		"\u0277\u0282\u028e\u0292\u029c\u02a4\u02a9\u02b5\u02ba\u02c3\u02c5\u02cd"+
+		"\u02d7\u02de\u02e7\u02f0\u02f3\u02fa\u0307\u0310\u0313\u031a\u031d\u0320"+
+		"\u0329\u032b\u0342\u034a\u0352\u035c\u0372\u037c\u0385\u0390\u0393\u039d";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

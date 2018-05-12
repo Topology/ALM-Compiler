@@ -97,6 +97,12 @@ public abstract class ALM {
     public static final String HISTORY_HAPPENED = "happened";
     public static final String HISTORY_OBSERVED = "observed";
     public static final String HISTORY = "History";
+    public static final String SOLVER_MODE = "Solver Mode";
+    public static final String SOLVER_MODE_TP = "Solver Mode: Temporal Projection";
+    public static final String SOLVER_MODE_PP = "Solver Mode: Planning Problem";
+    public static final String SOLVER_MODE_DP = "Solver Mode: Diagnostic Problem";
+    
+
 
     // literal: atom | '-' atom | term relation term ;
     public static ALMTerm ParseLiteral(LiteralContext litcon) {
