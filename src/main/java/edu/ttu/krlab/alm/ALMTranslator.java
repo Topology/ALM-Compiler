@@ -805,8 +805,8 @@ public abstract class ALMTranslator {
             if (st.isModeActive(ALM.HISTORY)) {
                 CreateHistory(tm, st, aspf, er);
             }
-            if(st.isModeActive(ALM.SOLVER_MODE_PP)){
-                
+            if (st.isModeActive(ALM.SOLVER_MODE_PP)) {
+
             }
         }
         //LoadFactsFromPreModelAnswerSet(tm, as, s); // TOO NAIVE, NEED TO FILTER FACTS FROM MISSING SORT INSTANCES. 

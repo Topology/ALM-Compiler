@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -50,7 +51,11 @@ public class ASPfProgram {
     }
 
     public List<ASPfRule> getRules(String section) {
-        return program.get(section);
+        List<ASPfRule> rules = program.get(section);
+        if(rules != null){
+            return rules;
+        } 
+        return Collections.EMPTY_LIST;
     }
 
     public void writeTo(BufferedWriter out) throws IOException {

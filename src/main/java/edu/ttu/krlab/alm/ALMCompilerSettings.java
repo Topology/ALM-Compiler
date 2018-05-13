@@ -103,7 +103,7 @@ public class ALMCompilerSettings {
 
     public static final String DEFAULT_JAVA_LOCATION = "java"; // assumes java is in a directory on the path.
     public static final String DEFAULT_SPARC_LOCATION = "sparc.jar"; // assumes sparc.jar is in current working
-                                                                     // directory
+    // directory
     public static final String DEFAULT_SOLVER_LOCATION = "./"; // assumes current working directory
     public static final String DEFAULT_SOLVER_TYPE = SOLVER_DLV; // assume using dlv
     public static final String DEFAULT_PM_DESTINATION = null; // no destination
@@ -247,315 +247,339 @@ public class ALMCompilerSettings {
 
     public BufferedWriter ErrorDestination() throws IOException {
         String destination = settings.get(ER_DESTINATION);
-        if (destination == null)
+        if (destination == null) {
             return null;
+        }
         switch (destination) {
-        case STD_ERR:
-            return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
-        case STD_OUT:
-            return new BufferedWriter(new OutputStreamWriter(System.out));
-        default:
-            // ensure parent directories exist
-            try {
-                new File(new File(destination).getParent()).mkdirs();
-            } catch (Exception ex) {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
-                        "Parent directories could not be created along path: " + destination);
-            }
-            er_destination = new BufferedWriter(new FileWriter(destination));
-            return er_destination;
+            case STD_ERR:
+                return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
+            case STD_OUT:
+                return new BufferedWriter(new OutputStreamWriter(System.out));
+            default:
+                // ensure parent directories exist
+                try {
+                    new File(new File(destination).getParent()).mkdirs();
+                } catch (Exception ex) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
+                            "Parent directories could not be created along path: " + destination);
+                }
+                er_destination = new BufferedWriter(new FileWriter(destination));
+                return er_destination;
         }
     }
 
     public BufferedWriter SymbolTableDestination() throws IOException {
         String destination = settings.get(ST_DESTINATION);
-        if (destination == null)
+        if (destination == null) {
             return null;
+        }
         switch (destination) {
-        case STD_ERR:
-            return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
-        case STD_OUT:
-            return new BufferedWriter(new OutputStreamWriter(System.out));
-        default:
-            // ensure parent directories exist
-            try {
-                new File(new File(destination).getParent()).mkdirs();
-            } catch (Exception ex) {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
-                        "Parent directories could not be created along path: " + destination);
-            }
-            st_destination = new BufferedWriter(new FileWriter(destination));
-            return st_destination;
+            case STD_ERR:
+                return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
+            case STD_OUT:
+                return new BufferedWriter(new OutputStreamWriter(System.out));
+            default:
+                // ensure parent directories exist
+                try {
+                    new File(new File(destination).getParent()).mkdirs();
+                } catch (Exception ex) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
+                            "Parent directories could not be created along path: " + destination);
+                }
+                st_destination = new BufferedWriter(new FileWriter(destination));
+                return st_destination;
         }
     }
 
     public BufferedWriter IntermediateASPfDestination() throws IOException {
         String destination = settings.get(ASPF_DESTINATION);
-        if (destination == null)
+        if (destination == null) {
             return null;
+        }
         switch (destination) {
-        case STD_ERR:
-            return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
-        case STD_OUT:
-            return new BufferedWriter(new OutputStreamWriter(System.out));
-        default:
-            // ensure parent directories exist
-            try {
-                new File(new File(destination).getParent()).mkdirs();
-            } catch (Exception ex) {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
-                        "Parent directories could not be created along path: " + destination);
-            }
-            aspf_destination = new BufferedWriter(new FileWriter(destination));
-            return aspf_destination;
+            case STD_ERR:
+                return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
+            case STD_OUT:
+                return new BufferedWriter(new OutputStreamWriter(System.out));
+            default:
+                // ensure parent directories exist
+                try {
+                    new File(new File(destination).getParent()).mkdirs();
+                } catch (Exception ex) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
+                            "Parent directories could not be created along path: " + destination);
+                }
+                aspf_destination = new BufferedWriter(new FileWriter(destination));
+                return aspf_destination;
         }
     }
 
     public BufferedWriter PreModelDestination() throws IOException {
         String destination = settings.get(PM_DESTINATION);
-        if (destination == null)
+        if (destination == null) {
             return null;
+        }
         switch (destination) {
-        case STD_ERR:
-            return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
-        case STD_OUT:
-            return new BufferedWriter(new OutputStreamWriter(System.out));
-        default:
-            // ensure parent directories exist
-            try {
-                new File(new File(destination).getParent()).mkdirs();
-            } catch (Exception ex) {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
-                        "Parent directories could not be created along path: " + destination);
-            }
-            pm_destination = new BufferedWriter(new FileWriter(destination));
-            return pm_destination;
+            case STD_ERR:
+                return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
+            case STD_OUT:
+                return new BufferedWriter(new OutputStreamWriter(System.out));
+            default:
+                // ensure parent directories exist
+                try {
+                    new File(new File(destination).getParent()).mkdirs();
+                } catch (Exception ex) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
+                            "Parent directories could not be created along path: " + destination);
+                }
+                pm_destination = new BufferedWriter(new FileWriter(destination));
+                return pm_destination;
         }
     }
 
     public BufferedWriter AnswerSetsDestination() throws IOException {
         String destination = settings.get(PREMODEL_AS_DESTINATION);
-        if (destination == null)
+        if (destination == null) {
             return null;
+        }
         switch (destination) {
-        case STD_ERR:
-            return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
-        case STD_OUT:
-            return new BufferedWriter(new OutputStreamWriter(System.out));
-        default:
-            // ensure parent directories exist
-            try {
-                new File(new File(destination).getParent()).mkdirs();
-            } catch (Exception ex) {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
-                        "Parent directories could not be created along path: " + destination);
-            }
-            premodel_as_destination = new BufferedWriter(new FileWriter(destination));
-            return premodel_as_destination;
+            case STD_ERR:
+                return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
+            case STD_OUT:
+                return new BufferedWriter(new OutputStreamWriter(System.out));
+            default:
+                // ensure parent directories exist
+                try {
+                    new File(new File(destination).getParent()).mkdirs();
+                } catch (Exception ex) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
+                            "Parent directories could not be created along path: " + destination);
+                }
+                premodel_as_destination = new BufferedWriter(new FileWriter(destination));
+                return premodel_as_destination;
         }
     }
 
     public BufferedWriter FinalAnswerSetsDestination() throws IOException {
         String destination = settings.get(FINAL_AS_DESTINATION);
-        if (destination == null)
+        if (destination == null) {
             return null;
+        }
         switch (destination) {
-        case STD_ERR:
-            return new BufferedWriter(new OutputStreamWriter(System.err));
-        case STD_OUT:
-            return new BufferedWriter(new OutputStreamWriter(System.out));
-        default:
-            // ensure parent directories exist
-            try {
-                new File(new File(destination).getParent()).mkdirs();
-            } catch (Exception ex) {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output",
-                        "Parent directories could not be created along path: " + destination);
-            }
-            final_as_destination = new BufferedWriter(new FileWriter(destination));
-            return final_as_destination;
+            case STD_ERR:
+                return new BufferedWriter(new OutputStreamWriter(System.err));
+            case STD_OUT:
+                return new BufferedWriter(new OutputStreamWriter(System.out));
+            default:
+                // ensure parent directories exist
+                try {
+                    new File(new File(destination).getParent()).mkdirs();
+                } catch (Exception ex) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output",
+                            "Parent directories could not be created along path: " + destination);
+                }
+                final_as_destination = new BufferedWriter(new FileWriter(destination));
+                return final_as_destination;
         }
     }
 
     public BufferedWriter TransitionModelDestination() throws IOException {
         String destination = settings.get(TM_DESTINATION);
-        if (destination == null)
+        if (destination == null) {
             return null;
+        }
         switch (destination) {
-        case STD_ERR:
-            return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
-        case STD_OUT:
-            return new BufferedWriter(new OutputStreamWriter(System.out));
-        default:
-            // ensure parent directories exist
-            try {
-                new File(new File(destination).getParent()).mkdirs();
-            } catch (Exception ex) {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
-                        "Parent directories could not be created along path: " + destination);
-            }
-            tm_destination = new BufferedWriter(new FileWriter(destination));
-            return tm_destination;
+            case STD_ERR:
+                return new BufferedWriter(new OutputStreamWriter(System.err)); // send to console error
+            case STD_OUT:
+                return new BufferedWriter(new OutputStreamWriter(System.out));
+            default:
+                // ensure parent directories exist
+                try {
+                    new File(new File(destination).getParent()).mkdirs();
+                } catch (Exception ex) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Opening file for output.",
+                            "Parent directories could not be created along path: " + destination);
+                }
+                tm_destination = new BufferedWriter(new FileWriter(destination));
+                return tm_destination;
         }
     }
 
     public void processCommandlineArgs(String[] args) {
         boolean sourceset = false;
 
-        if (args.length < 1)
+        if (args.length < 1) {
             printUsageAndExit();
+        }
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
-            case CL_H:
-            case CL_HELP:
-                printUsageAndExit();
-            case CL_SP:
-            case CL_SPARC:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(SPARC_LOCATION, args[i]);
-                break;
-            case CL_J:
-            case CL_JAVA:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(JAVA_LOCATION, args[i]);
-                break;
-            case CL_SO:
-            case CL_SOLVER:
-                i++;
-                i++;
-                if (i >= args.length || isCLCommand(args[i - 1]) || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 2]);
-                File f = new File(args[i - 1]);
-                // System.out.println(f.getParent());
-                if (f.isDirectory() || !f.exists()) {
-                    printUsageAndExitWithError("Clingo not found at " + args[i - 1]);
-                }
-                settings.put(SOLVER_LOCATION, f.getParent());
-                settings.put(SOLVER_TYPE, args[i].toLowerCase());
-                break;
-            case CL_PM:
-            case CL_PREMODEL:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(PM_DESTINATION, args[i]);
-                break;
-            case CL_PAS:
-            case CL_PREMODEL_ANSWERSET:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(PREMODEL_AS_DESTINATION, args[i]);
-                break;
-            case CL_FAS:
-            case CL_FINAL_ANSWERSET:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(FINAL_AS_DESTINATION, args[i]);
-                break;
-            case CL_TM:
-            case CL_TRANSITIONMODEL:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(TM_DESTINATION, args[i]);
-                break;
-            case CL_ER:
-            case CL_ERRORS:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(ER_DESTINATION, args[i]);
-                break;
-            case CL_ST:
-            case CL_SYMBOLTABLE:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(ST_DESTINATION, args[i]);
-                break;
-            case CL_ASPF:
-            case CL_INTERMEDIATEASPF:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(ASPF_DESTINATION, args[i]);
-                break;
-            case CL_SD:
-            case CL_SYSTEMDESCRIPTION:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(SYS_DESC_SOURCE, args[i]);
-                break;
-            case CL_D:
-            case CL_DEBUG:
-                debugSettings();
-                break;
-            case CL_C:
-            case CL_CONFIG:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                processConfigFile(args[i], null, null);
-                break;
-            case CL_OPT:
-            case CL_OPTIMIZATION:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                String optimizationname = args[i].toUpperCase().trim();
-                switch (optimizationname) {
-                case OPT_ALL_PM_FACTS:
+                case CL_H:
+                case CL_HELP:
+                    printUsageAndExit();
+                case CL_SP:
+                case CL_SPARC:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(SPARC_LOCATION, args[i]);
                     break;
-                default:
-                    printUsageAndExitWithError("unrecognized optimization " + args[i]);
-                }
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 2]);
-                String setting = args[i].toLowerCase().trim();
-                switch (setting) {
-                case ON:
-                case OFF:
+                case CL_J:
+                case CL_JAVA:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(JAVA_LOCATION, args[i]);
                     break;
-                default:
-                    printUsageAndExitWithError(
-                            "Optimization setting must be either 'on' or 'off', and not '" + args[i] + "'");
-                }
-                settings.put(optimizationname, setting);
-                break;
-            case CL_CC:
-            case CL_CREATECONFIG:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing filename following " + args[i - 1]);
-                createConfigFile(args[i]);
-                System.out.println("Config file created at: " + args[i]);
-                System.exit(0);
-            case CL_LIB:
-            case CL_LIBRARY:
-                i++;
-                if (i > args.length || isCLCommand(args[i]))
-                    printUsageAndExitWithError("Missing value following " + args[i - 1]);
-                settings.put(LIBRARY_LOCATION, args[i]);
-                break;
-
-            default:
-                if (!sourceset) {
+                case CL_SO:
+                case CL_SOLVER:
+                    i++;
+                    i++;
+                    if (i >= args.length || isCLCommand(args[i - 1]) || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 2]);
+                    }
+                    File f = new File(args[i - 1]);
+                    // System.out.println(f.getParent());
+                    if (f.isDirectory() || !f.exists()) {
+                        printUsageAndExitWithError("Clingo not found at " + args[i - 1]);
+                    }
+                    settings.put(SOLVER_LOCATION, f.getParent());
+                    settings.put(SOLVER_TYPE, args[i].toLowerCase());
+                    break;
+                case CL_PM:
+                case CL_PREMODEL:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(PM_DESTINATION, args[i]);
+                    break;
+                case CL_PAS:
+                case CL_PREMODEL_ANSWERSET:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(PREMODEL_AS_DESTINATION, args[i]);
+                    break;
+                case CL_FAS:
+                case CL_FINAL_ANSWERSET:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(FINAL_AS_DESTINATION, args[i]);
+                    break;
+                case CL_TM:
+                case CL_TRANSITIONMODEL:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(TM_DESTINATION, args[i]);
+                    break;
+                case CL_ER:
+                case CL_ERRORS:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(ER_DESTINATION, args[i]);
+                    break;
+                case CL_ST:
+                case CL_SYMBOLTABLE:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(ST_DESTINATION, args[i]);
+                    break;
+                case CL_ASPF:
+                case CL_INTERMEDIATEASPF:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(ASPF_DESTINATION, args[i]);
+                    break;
+                case CL_SD:
+                case CL_SYSTEMDESCRIPTION:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
                     settings.put(SYS_DESC_SOURCE, args[i]);
-                    sourceset = true;
-                } else {
-                    System.err.println("Too Many Entries Without Flags.");
-                    System.err.println("Assumed System Description Source: " + settings.get(SYS_DESC_SOURCE));
-                    printUsageAndExitWithError("Unrecognized Commandline Argument: " + args[i]);
-                }
+                    break;
+                case CL_D:
+                case CL_DEBUG:
+                    debugSettings();
+                    break;
+                case CL_C:
+                case CL_CONFIG:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    processConfigFile(args[i], null, null);
+                    break;
+                case CL_OPT:
+                case CL_OPTIMIZATION:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    String optimizationname = args[i].toUpperCase().trim();
+                    switch (optimizationname) {
+                        case OPT_ALL_PM_FACTS:
+                            break;
+                        default:
+                            printUsageAndExitWithError("unrecognized optimization " + args[i]);
+                    }
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 2]);
+                    }
+                    String setting = args[i].toLowerCase().trim();
+                    switch (setting) {
+                        case ON:
+                        case OFF:
+                            break;
+                        default:
+                            printUsageAndExitWithError(
+                                    "Optimization setting must be either 'on' or 'off', and not '" + args[i] + "'");
+                    }
+                    settings.put(optimizationname, setting);
+                    break;
+                case CL_CC:
+                case CL_CREATECONFIG:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing filename following " + args[i - 1]);
+                    }
+                    createConfigFile(args[i]);
+                    System.out.println("Config file created at: " + args[i]);
+                    System.exit(0);
+                case CL_LIB:
+                case CL_LIBRARY:
+                    i++;
+                    if (i > args.length || isCLCommand(args[i])) {
+                        printUsageAndExitWithError("Missing value following " + args[i - 1]);
+                    }
+                    settings.put(LIBRARY_LOCATION, args[i]);
+                    break;
+
+                default:
+                    if (!sourceset) {
+                        settings.put(SYS_DESC_SOURCE, args[i]);
+                        sourceset = true;
+                    } else {
+                        System.err.println("Too Many Entries Without Flags.");
+                        System.err.println("Assumed System Description Source: " + settings.get(SYS_DESC_SOURCE));
+                        printUsageAndExitWithError("Unrecognized Commandline Argument: " + args[i]);
+                    }
             }
         }
     }
@@ -583,13 +607,15 @@ public class ALMCompilerSettings {
                 int version = line.indexOf("version", 0);
                 if (version > 0) {
                     int ver18 = line.indexOf("1.8.", version);
-                    if (ver18 > 0)
+                    if (ver18 > 0) {
                         version18found = true;
+                    }
                 }
             }
-            if (!version18found)
+            if (!version18found) {
                 ALMCompiler.IMPLEMENTATION_FAILURE("Testing Java Version",
                         "Java is not version 1.8.*  Location of jre version 1.8.* must be provided.");
+            }
         } catch (IOException e) {
             ALMCompiler.IMPLEMENTATION_FAILURE("Testing Java Version",
                     "Could not start java executable from filename: " + settings.get(JAVA_LOCATION));
@@ -601,12 +627,12 @@ public class ALMCompilerSettings {
 
     private void TestSOLVER() {
         switch (settings.get(SOLVER_TYPE)) {
-        case SOLVER_DLV:
-        case SOLVER_CLINGO:
-            break;
-        default:
-            ALMCompiler.IMPLEMENTATION_FAILURE("Testing ASP Solver",
-                    "SOLVER_TYPE must be set to one of (clingo | dlv).  (See commandline option --help)");
+            case SOLVER_DLV:
+            case SOLVER_CLINGO:
+                break;
+            default:
+                ALMCompiler.IMPLEMENTATION_FAILURE("Testing ASP Solver",
+                        "SOLVER_TYPE must be set to one of (clingo | dlv).  (See commandline option --help)");
         }
         String solver = settings.get(SOLVER_TYPE);
         String solver_path = settings.get(SOLVER_LOCATION);
@@ -617,8 +643,9 @@ public class ALMCompilerSettings {
         ProcessBuilder pb_solver = new ProcessBuilder(commands);
         String existing_path = pb_solver.environment().get("PATH");
         String new_path = solver_path + File.pathSeparator + existing_path;
-        if (solver_path != null && solver_path.length() > 0)
+        if (solver_path != null && solver_path.length() > 0) {
             pb_solver.environment().put("PATH", new_path);
+        }
         try {
             Process solver_proc = pb_solver.start();
             solver_proc.waitFor();
@@ -645,9 +672,10 @@ public class ALMCompilerSettings {
             String line = null;
             java.waitFor();
             while ((line = read.readLine()) != null) {
-                if (line.contains("Error"))
+                if (line.contains("Error")) {
                     ALMCompiler.IMPLEMENTATION_FAILURE("Testing SPARC Jar",
                             "Could not start sparc from filename: " + sparc_loc);
+                }
 
             }
         } catch (IOException e) {
@@ -662,15 +690,17 @@ public class ALMCompilerSettings {
     private void processConfigFile(String config_file_name, String CD_Replace, String FN_Replace) {
         String line;
         File configfile = new File(config_file_name);
-        if (CD_Replace == null)
+        if (CD_Replace == null) {
             CD_Replace = configfile.getParentFile().getAbsolutePath();
+        }
         try {
             BufferedReader foo = new BufferedReader(new FileReader(configfile));
             try {
                 while ((line = foo.readLine()) != null) {
                     line = line.trim();
-                    if (line.length() == 0 || line.charAt(0) == '#')
+                    if (line.length() == 0 || line.charAt(0) == '#') {
                         continue;
+                    }
                     int pos = line.indexOf(':');
                     if (pos > 0) {
                         String key = line.substring(0, pos).toUpperCase().trim();
@@ -684,18 +714,18 @@ public class ALMCompilerSettings {
                             value = value.replaceFirst("<FN>", FN_Replace);
                         }
                         switch (key) {
-                        case PREMODEL_AS_DESTINATION:
-                        case FINAL_AS_DESTINATION:
-                        case ASPF_DESTINATION:
-                        case TM_DESTINATION:
-                        case ER_DESTINATION:
-                        case ST_DESTINATION:
-                        case TP_DESTINATION:
-                        case PM_DESTINATION:
-                        case SYS_DESC_SOURCE:
-                        case IMPORT_CONFIG:
-                        case LIBRARY_LOCATION:
-                            value = (new File(value)).getCanonicalPath();
+                            case PREMODEL_AS_DESTINATION:
+                            case FINAL_AS_DESTINATION:
+                            case ASPF_DESTINATION:
+                            case TM_DESTINATION:
+                            case ER_DESTINATION:
+                            case ST_DESTINATION:
+                            case TP_DESTINATION:
+                            case PM_DESTINATION:
+                            case SYS_DESC_SOURCE:
+                            case IMPORT_CONFIG:
+                            case LIBRARY_LOCATION:
+                                value = (new File(value)).getCanonicalPath();
 
                         }
                         if (key.compareTo(SYS_DESC_SOURCE) == 0) {
@@ -753,8 +783,9 @@ public class ALMCompilerSettings {
             out.write("#If commented out, default is current working directory or active path.\n");
             out.write("#" + JAVA_LOCATION + " : " + "<path to java executable>\n");
             String current_java_location = settings.get(JAVA_LOCATION);
-            if (current_java_location != null)
+            if (current_java_location != null) {
                 out.write(JAVA_LOCATION + " : " + current_java_location + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + SPARC_LOCATION + "\n");
@@ -762,8 +793,9 @@ public class ALMCompilerSettings {
             out.write("#If commented out, default is find it in current working directory or active path.\n");
             out.write("#" + SPARC_LOCATION + " : " + "<path to sparc.jar>\n");
             String current_sparc_location = settings.get(SPARC_LOCATION);
-            if (current_sparc_location != null)
+            if (current_sparc_location != null) {
                 out.write(SPARC_LOCATION + " : " + current_sparc_location + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + SOLVER_LOCATION + ": \n");
@@ -771,8 +803,9 @@ public class ALMCompilerSettings {
             out.write("#If commented out, default is current working directory or active path.\n");
             out.write("#" + SOLVER_LOCATION + " : " + "<path to asp solver>\n");
             String current_solver_location = settings.get(SOLVER_LOCATION);
-            if (current_solver_location != null)
+            if (current_solver_location != null) {
                 out.write(SOLVER_LOCATION + " : " + current_solver_location + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + SOLVER_TYPE + ": (dlv | clingo)\n");
@@ -783,8 +816,9 @@ public class ALMCompilerSettings {
             out.write("#" + SOLVER_TYPE + " : " + SOLVER_DLV + "\n");
             out.write("#" + SOLVER_TYPE + " : " + SOLVER_CLINGO + "\n");
             String current_solver_type = settings.get(SOLVER_TYPE);
-            if (current_solver_type != null)
+            if (current_solver_type != null) {
                 out.write(SOLVER_TYPE + " : " + current_solver_type + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + LIBRARY_LOCATION + ": <path to library directory>\n");
@@ -807,8 +841,9 @@ public class ALMCompilerSettings {
             out.write("#The following setting also indicates the source as standard in:\n");
             out.write("#" + SYS_DESC_SOURCE + " : " + STD_IN + "\n");
             String current_sys_desc_source = settings.get(SYS_DESC_SOURCE);
-            if (current_sys_desc_source != null)
+            if (current_sys_desc_source != null) {
                 out.write(SYS_DESC_SOURCE + " : " + current_sys_desc_source + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + TM_DESTINATION + " : <filename>\n");
@@ -819,8 +854,9 @@ public class ALMCompilerSettings {
             out.write("#uncomment the following to send to standard err. \n");
             out.write("#" + TM_DESTINATION + " : " + STD_ERR + "\n");
             String current_tm_dest = settings.get(TM_DESTINATION);
-            if (current_tm_dest != null)
+            if (current_tm_dest != null) {
                 out.write(TM_DESTINATION + " : " + current_tm_dest + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + ER_DESTINATION + " : <filename>\n");
@@ -832,8 +868,9 @@ public class ALMCompilerSettings {
             out.write("#uncomment the following to send to standard err. \n");
             out.write("#" + ER_DESTINATION + " : " + STD_ERR + "\n");
             String current_er_dest = settings.get(ER_DESTINATION);
-            if (current_er_dest != null)
+            if (current_er_dest != null) {
                 out.write(ER_DESTINATION + " : " + current_er_dest + "\n");
+            }
             out.write("\n");
 
             out.write("# OPTIMIZATION OPTIONS \n");
@@ -845,8 +882,9 @@ public class ALMCompilerSettings {
             out.write("#" + OPT_ALL_PM_FACTS + " : on\n");
             out.write("#" + OPT_ALL_PM_FACTS + " : off\n");
             String current_opt_all_pm_facts = settings.get(OPT_ALL_PM_FACTS);
-            if (current_opt_all_pm_facts != null)
+            if (current_opt_all_pm_facts != null) {
                 out.write(OPT_ALL_PM_FACTS + " : " + current_opt_all_pm_facts + "\n");
+            }
             out.write("\n");
 
             out.write("# DEBUGGING OPTIONS \n");
@@ -860,8 +898,9 @@ public class ALMCompilerSettings {
             out.write("#uncomment the following to send to standard err. \n");
             out.write("#" + ST_DESTINATION + " : " + STD_ERR + "\n");
             String current_st_dest = settings.get(ST_DESTINATION);
-            if (current_st_dest != null)
+            if (current_st_dest != null) {
                 out.write(ST_DESTINATION + " : " + current_st_dest + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + ASPF_DESTINATION + " : <filename>\n");
@@ -873,8 +912,9 @@ public class ALMCompilerSettings {
             out.write("#uncomment the following to send to standard err. \n");
             out.write("#" + ASPF_DESTINATION + " : " + STD_ERR + "\n");
             String current_aspf_dest = settings.get(ASPF_DESTINATION);
-            if (current_aspf_dest != null)
+            if (current_aspf_dest != null) {
                 out.write(ASPF_DESTINATION + " : " + current_aspf_dest + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + PM_DESTINATION + " : <filename>\n");
@@ -886,8 +926,9 @@ public class ALMCompilerSettings {
             out.write("#uncomment the following to send to standard err. \n");
             out.write("#" + PM_DESTINATION + " : " + STD_ERR + "\n");
             String current_pm_dest = settings.get(PM_DESTINATION);
-            if (current_pm_dest != null)
+            if (current_pm_dest != null) {
                 out.write(PM_DESTINATION + " : " + current_pm_dest + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + PREMODEL_AS_DESTINATION + " : <filename>\n");
@@ -898,8 +939,9 @@ public class ALMCompilerSettings {
             out.write("#uncomment the following to send to standard err. \n");
             out.write("#" + PREMODEL_AS_DESTINATION + " : " + STD_ERR + "\n");
             String current_premodel_as_dest = settings.get(PREMODEL_AS_DESTINATION);
-            if (current_premodel_as_dest != null)
+            if (current_premodel_as_dest != null) {
                 out.write(PREMODEL_AS_DESTINATION + " : " + current_premodel_as_dest + "\n");
+            }
             out.write("\n");
 
             out.write("#setting " + FINAL_AS_DESTINATION + " : <filename>\n");
@@ -910,8 +952,9 @@ public class ALMCompilerSettings {
             out.write("#uncomment the following to send to standard err. \n");
             out.write("#" + FINAL_AS_DESTINATION + " : " + STD_ERR + "\n");
             String current_final_as_dest = settings.get(FINAL_AS_DESTINATION);
-            if (current_final_as_dest != null)
+            if (current_final_as_dest != null) {
                 out.write(PREMODEL_AS_DESTINATION + " : " + current_final_as_dest + "\n");
+            }
             out.write("\n");
 
             out.flush();
@@ -935,43 +978,43 @@ public class ALMCompilerSettings {
 
     private boolean isCLCommand(String string) {
         switch (string) {
-        case CL_H:
-        case CL_HELP:
-        case CL_SP:
-        case CL_SPARC:
-        case CL_J:
-        case CL_JAVA:
-        case CL_SO:
-        case CL_SOLVER:
-        case CL_PM:
-        case CL_PREMODEL:
-        case CL_PAS:
-        case CL_PREMODEL_ANSWERSET:
-        case CL_FAS:
-        case CL_FINAL_ANSWERSET:
-        case CL_TM:
-        case CL_TRANSITIONMODEL:
-        case CL_ER:
-        case CL_ERRORS:
-        case CL_ST:
-        case CL_SYMBOLTABLE:
-        case CL_ASPF:
-        case CL_INTERMEDIATEASPF:
-        case CL_SD:
-        case CL_SYSTEMDESCRIPTION:
-        case CL_D:
-        case CL_DEBUG:
-        case CL_C:
-        case CL_CONFIG:
-        case CL_CC:
-        case CL_CREATECONFIG:
-        case CL_OPT:
-        case CL_OPTIMIZATION:
-        case CL_LIB:
-        case CL_LIBRARY:
-            return true;
-        default:
-            return false;
+            case CL_H:
+            case CL_HELP:
+            case CL_SP:
+            case CL_SPARC:
+            case CL_J:
+            case CL_JAVA:
+            case CL_SO:
+            case CL_SOLVER:
+            case CL_PM:
+            case CL_PREMODEL:
+            case CL_PAS:
+            case CL_PREMODEL_ANSWERSET:
+            case CL_FAS:
+            case CL_FINAL_ANSWERSET:
+            case CL_TM:
+            case CL_TRANSITIONMODEL:
+            case CL_ER:
+            case CL_ERRORS:
+            case CL_ST:
+            case CL_SYMBOLTABLE:
+            case CL_ASPF:
+            case CL_INTERMEDIATEASPF:
+            case CL_SD:
+            case CL_SYSTEMDESCRIPTION:
+            case CL_D:
+            case CL_DEBUG:
+            case CL_C:
+            case CL_CONFIG:
+            case CL_CC:
+            case CL_CREATECONFIG:
+            case CL_OPT:
+            case CL_OPTIMIZATION:
+            case CL_LIB:
+            case CL_LIBRARY:
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -982,14 +1025,19 @@ public class ALMCompilerSettings {
 
     public Reader SystemDescriptionReader() throws FileNotFoundException {
         String filename = settings.get(SYS_DESC_SOURCE);
-        if (filename == null || filename.compareTo(STD_IN) == 0)
+        if (filename == null || filename.compareTo(STD_IN) == 0) {
             return new BufferedReader(new InputStreamReader(System.in));
-        else
+        } else {
             return new BufferedReader(new FileReader(new File(filename)));
+        }
     }
 
     public String getSystemDescriptionFileName() {
         return settings.get(SYS_DESC_SOURCE);
+    }
+    
+    public void setSystemDescriptionFileName(String sysDescFile){
+        settings.put(SYS_DESC_SOURCE, sysDescFile);
     }
 
     public void closeIntermediateASPfDestination() throws IOException {
@@ -1045,20 +1093,39 @@ public class ALMCompilerSettings {
         return settings.get(SPARC_LOCATION);
     }
 
+    public void setSPARCLocation(String loc) {
+        settings.put(SPARC_LOCATION, loc);
+    }
+
     public String getJavaLocation() {
         return settings.get(JAVA_LOCATION);
     }
 
+    public void setJavaLocation(String loc) {
+        settings.put(JAVA_LOCATION, loc);
+    }
+
     public String getSolverType() {
         String solvertype = settings.get(SOLVER_TYPE);
-        if (solvertype == null)
+        if (solvertype == null) {
             return "";
-        else
+        } else {
             return solvertype;
+        }
+    }
+
+    public void setSolverType(String sType) {
+        if ("clingo".compareTo(sType) == 0 || "dlv".compareTo(sType) == 0) {
+            settings.put(SOLVER_TYPE, sType);
+        }
     }
 
     public String getSolverLocation() {
         return settings.get(SOLVER_LOCATION);
+    }
+
+    public void setSolverLocation(String loc) {
+        settings.put(SOLVER_LOCATION, loc);
     }
 
     public boolean OptimizationAddAllFactsFromPreModelAnswerset() {

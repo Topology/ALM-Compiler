@@ -67,6 +67,14 @@ public class ALMCompiler {
         SPARCProgram tm = new SPARCProgram();
         tm.addComment("Final Program For Transition Diagram");
 
+        ALMCompiler.Compile(s, st, er, aspf, pm, as, tm);
+            if (er.hasErrors())
+                ALMCompiler.exitWithErrors(er, s);
+    }
+    
+    public static final void Compile(ALMCompilerSettings s, SymbolTable st, ErrorReport er, ASPfProgram aspf,
+            SPARCProgram pm, List<AnswerSet> as, SPARCProgram tm) {
+        
         //Render input system description into ANTLR Syntax Parse Tree. 
         try {
             //Setup Input to Parser. 
@@ -105,27 +113,20 @@ public class ALMCompiler {
                 // Call The Translation Function (Where the magic happens)
                 // Produces the final SPARC program 'tm' and if solving a problem, the final answer set(s) 'as'. 
                 ALMCompiler.Translate(s, st, er, aspf, pm, as, tm);
-            } else {
-                System.out.println("The provided system description did not contain a structure.");
-                System.out.println("No translation was produced.");
-            }
-            if (er.hasErrors())
-                ALMCompiler.exitWithErrors(er, s);
-
+            } 
         } catch (FileNotFoundException e) {
             System.err
                     .println("Could not locate input system description in file: " + s.getSystemDescriptionFileName());
             e.printStackTrace();
-            System.exit(-1);
         } catch (IOException e) {
             System.err.println("Could Not Complete Translation Due To Java IO Exception:");
             e.printStackTrace();
-            System.exit(-1);
-
         }
-
     }
 
+    
+    
+    
     private static void processSolverMode(ALMCompilerSettings s, Solver_modeContext mode, SymbolTable st,
             ASPfProgram aspf, ErrorReport er) {
         ParseTreeWalker walker = new ParseTreeWalker();

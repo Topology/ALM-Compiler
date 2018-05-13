@@ -45,7 +45,7 @@ public class SPARCWrapper {
         OsUtils.runCommand(command, sparcProgram, pathToASPSolver);
         if (OsUtils.errors.toString().length() > 31
                 && OsUtils.errors.toString().substring(0, 31).equals("Error: Unable to access jarfile")) {
-            throw new RuntimeException("Unable to find Sparc Solver at given path");
+            throw new RuntimeException("Unable to find Sparc Solver at given path: "+pathToSPARCJar);
         }
         if (OsUtils.errors.toString().length() > 38
                 && OsUtils.errors.toString().substring(0, 38).equals("java.lang.UnsupportedClassVersionError")) {
@@ -53,14 +53,15 @@ public class SPARCWrapper {
         }
         if (OsUtils.errors.toString().length() > 45
                 && OsUtils.errors.toString().substring(32, 45).equals("dlv not found")) {
-            throw new RuntimeException("Unable to locate dlv solver");
+            throw new RuntimeException("Unable to locate dlv solver: "+pathToASPSolver);
         }
         if (OsUtils.errors.toString().length() > 45
                 && OsUtils.errors.toString().substring(32, 48).equals("Clingo not found")) {
-            throw new RuntimeException("Unable to locate clingo solver");
+            throw new RuntimeException("Unable to locate clingo solver: "+pathToASPSolver);
         }
 
         if (OsUtils.result.toString().equals("")) {
+            System.err.println("FAILED PROGRAM:\n"+sparcProgram);
             throw new RuntimeException(OsUtils.errors.toString());
         }
         return OsUtils.result.toString();
