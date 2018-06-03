@@ -1,0 +1,11 @@
+% Answer Set 1 of 1
+{
+ subsort(actions, universe), -subsort(timeStep, timeStep), -subsort(timeStep, universe), -subsort(timeStep, booleans), -subsort(timeStep, actions), -subsort(timeStep, integers), -subsort(universe, timeStep), -subsort(universe, universe), -subsort(universe, booleans), -subsort(universe, actions), -subsort(universe, integers), -subsort(booleans, timeStep), -subsort(booleans, universe), -subsort(booleans, booleans), -subsort(booleans, actions), -subsort(booleans, integers), -subsort(actions, timeStep), -subsort(actions, booleans), -subsort(actions, actions), -subsort(actions, integers), -subsort(integers, timeStep), -subsort(integers, universe), -subsort(integers, booleans), -subsort(integers, actions), -subsort(integers, integers)
+,sink(timeStep), sink(universe), sink(booleans), sink(integers), -sink(actions)
+,link(actions, universe), -link(timeStep, timeStep), -link(timeStep, universe), -link(timeStep, booleans), -link(timeStep, actions), -link(timeStep, integers), -link(universe, timeStep), -link(universe, universe), -link(universe, booleans), -link(universe, actions), -link(universe, integers), -link(booleans, timeStep), -link(booleans, universe), -link(booleans, booleans), -link(booleans, actions), -link(booleans, integers), -link(actions, timeStep), -link(actions, booleans), -link(actions, actions), -link(actions, integers), -link(integers, timeStep), -link(integers, universe), -link(integers, booleans), -link(integers, actions), -link(integers, integers)
+,has_parent(actions), -has_parent(timeStep), -has_parent(universe), -has_parent(booleans), -has_parent(integers)
+,source(timeStep), source(booleans), source(actions), source(integers), -source(universe)
+,has_child(universe), -has_child(timeStep), -has_child(booleans), -has_child(actions), -has_child(integers)
+
+}
+

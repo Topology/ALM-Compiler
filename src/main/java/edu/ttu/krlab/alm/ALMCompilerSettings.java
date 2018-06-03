@@ -245,7 +245,11 @@ public class ALMCompilerSettings {
 
     }
 
-    public BufferedWriter ErrorDestination() throws IOException {
+    public void setErrorDestination(String destination) {
+        settings.put(ER_DESTINATION, destination);
+    }
+
+    public BufferedWriter getErrorDestination() throws IOException {
         String destination = settings.get(ER_DESTINATION);
         if (destination == null) {
             return null;
@@ -268,7 +272,11 @@ public class ALMCompilerSettings {
         }
     }
 
-    public BufferedWriter SymbolTableDestination() throws IOException {
+    public void setSymbolTableDestination(String destination) {
+        settings.put(ST_DESTINATION, destination);
+    }
+
+    public BufferedWriter getSymbolTableDestination() throws IOException {
         String destination = settings.get(ST_DESTINATION);
         if (destination == null) {
             return null;
@@ -291,7 +299,11 @@ public class ALMCompilerSettings {
         }
     }
 
-    public BufferedWriter IntermediateASPfDestination() throws IOException {
+    public void setIntermediateASPfDestination(String destination) {
+        settings.put(ASPF_DESTINATION, destination);
+    }
+
+    public BufferedWriter getIntermediateASPfDestination() throws IOException {
         String destination = settings.get(ASPF_DESTINATION);
         if (destination == null) {
             return null;
@@ -314,7 +326,11 @@ public class ALMCompilerSettings {
         }
     }
 
-    public BufferedWriter PreModelDestination() throws IOException {
+    public void setPreModelDestination(String destination) {
+        settings.put(PM_DESTINATION, destination);
+    }
+
+    public BufferedWriter getPreModelDestination() throws IOException {
         String destination = settings.get(PM_DESTINATION);
         if (destination == null) {
             return null;
@@ -337,7 +353,11 @@ public class ALMCompilerSettings {
         }
     }
 
-    public BufferedWriter AnswerSetsDestination() throws IOException {
+    public void setIntermediateAnswerSetDestination(String destination) {
+        settings.put(PREMODEL_AS_DESTINATION, destination);
+    }
+
+    public BufferedWriter getIntermediateAnswerSetDestination() throws IOException {
         String destination = settings.get(PREMODEL_AS_DESTINATION);
         if (destination == null) {
             return null;
@@ -360,7 +380,11 @@ public class ALMCompilerSettings {
         }
     }
 
-    public BufferedWriter FinalAnswerSetsDestination() throws IOException {
+    public void setFinalAnswerSetDestination(String destination) {
+        settings.put(FINAL_AS_DESTINATION, destination);
+    }
+
+    public BufferedWriter getFinalAnswerSetDestination() throws IOException {
         String destination = settings.get(FINAL_AS_DESTINATION);
         if (destination == null) {
             return null;
@@ -383,7 +407,11 @@ public class ALMCompilerSettings {
         }
     }
 
-    public BufferedWriter TransitionModelDestination() throws IOException {
+    public void setTransitionModelDestination(String destination) {
+        settings.put(TM_DESTINATION, destination);
+    }
+
+    public BufferedWriter getTransitionModelDestination() throws IOException {
         String destination = settings.get(TM_DESTINATION);
         if (destination == null) {
             return null;
@@ -1035,8 +1063,8 @@ public class ALMCompilerSettings {
     public String getSystemDescriptionFileName() {
         return settings.get(SYS_DESC_SOURCE);
     }
-    
-    public void setSystemDescriptionFileName(String sysDescFile){
+
+    public void setSystemDescriptionFileName(String sysDescFile) {
         settings.put(SYS_DESC_SOURCE, sysDescFile);
     }
 

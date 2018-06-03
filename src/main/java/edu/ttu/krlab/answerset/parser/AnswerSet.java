@@ -138,6 +138,10 @@ public class AnswerSet {
     public Set<String> getAllLiterals() {
         return hash.keySet();
     }
+    
+    public Set<String> getAllLiteralInstances(){
+        return new HashSet<>(atoms);
+    }
 
     // returns all of the lists of ALMTerms (each list has a unique predicate name)
     public Collection<List<ALMTerm>> getAllAlmTerms() {

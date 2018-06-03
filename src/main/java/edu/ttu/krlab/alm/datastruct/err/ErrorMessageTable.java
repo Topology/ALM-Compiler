@@ -40,7 +40,7 @@ public abstract class ErrorMessageTable {
 
         // SRT001
         ErrorMetaDataBase srt001 = new ErrorMetaDataBase(SemanticError.SRT001,
-                "Predefined sort [1] cannot appear on right hand side of '::' token in sort specification",
+                "Predefined sort [1] cannot appear on right hand side of the '::' token in sort specifications.",
                 "Predefined sorts have a fixed interpretation which cannot be extended through specification in the sort-hierarchy.",
                 "Remove the predefined sort from the sort specification.  If you are intending to populate the sort on the left hand side of the '::' token with the values in the predefined sort, you must do so through specifying sort instances in the structure.  ");
         errorMetaData.put(SemanticError.SRT001, srt001);

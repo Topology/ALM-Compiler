@@ -63,17 +63,18 @@ public class ALMCompiler {
         ASPfProgram aspf = new ASPfProgram();
         SPARCProgram pm = new SPARCProgram();
         pm.addComment("Pre Model Program");
-        List<AnswerSet> as = new ArrayList<AnswerSet>();
+        List<AnswerSet> pm_as = new ArrayList<AnswerSet>();
         SPARCProgram tm = new SPARCProgram();
+        List<AnswerSet> tm_as = new ArrayList<AnswerSet>();
         tm.addComment("Final Program For Transition Diagram");
 
-        ALMCompiler.Compile(s, st, er, aspf, pm, as, tm);
+        ALMCompiler.Compile(s, st, er, aspf, pm, pm_as, tm, tm_as);
             if (er.hasErrors())
                 ALMCompiler.exitWithErrors(er, s);
     }
     
     public static final void Compile(ALMCompilerSettings s, SymbolTable st, ErrorReport er, ASPfProgram aspf,
-            SPARCProgram pm, List<AnswerSet> as, SPARCProgram tm) {
+            SPARCProgram pm, List<AnswerSet> pm_as, SPARCProgram tm, List<AnswerSet> tm_as) {
         
         //Render input system description into ANTLR Syntax Parse Tree. 
         try {
@@ -112,7 +113,7 @@ public class ALMCompiler {
                 }
                 // Call The Translation Function (Where the magic happens)
                 // Produces the final SPARC program 'tm' and if solving a problem, the final answer set(s) 'as'. 
-                ALMCompiler.Translate(s, st, er, aspf, pm, as, tm);
+                ALMCompiler.Translate(s, st, er, aspf, pm, pm_as, tm, tm_as);
             } 
         } catch (FileNotFoundException e) {
             System.err
@@ -184,7 +185,7 @@ public class ALMCompiler {
 
     public static void exitWithErrors(ErrorReport er, ALMCompilerSettings s) {
         try {
-            er.writeTo(s.ErrorDestination());
+            er.writeTo(s.getErrorDestination());
             s.closeErrorDestination();
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -194,30 +195,30 @@ public class ALMCompiler {
     }
 
     public static final void Translate(ALMCompilerSettings s, SymbolTable st, ErrorReport er, ASPfProgram aspf,
-            SPARCProgram pm, List<AnswerSet> as, SPARCProgram tm) throws IOException {
+            SPARCProgram pm, List<AnswerSet> pm_as, SPARCProgram tm, List<AnswerSet> tm_as) throws IOException {
 
         PerformConstantDefinitionSubstitution(st, aspf, er);
 
-        st.writeTo(s.SymbolTableDestination());
+        st.writeTo(s.getSymbolTableDestination());
         s.closeSymbolTableDestination();
-        aspf.writeTo(s.IntermediateASPfDestination());
+        aspf.writeTo(s.getIntermediateASPfDestination());
         s.closeIntermediateASPfDestination();
 
         if (er.hasErrors())
             ALMCompiler.exitWithErrors(er, s);
 
         ALMTranslator.ConstructPreModelProgram(pm, st, aspf);
-        pm.writeTo(s.PreModelDestination());
+        pm.writeTo(s.getPreModelDestination());
         s.closePreModelDestination();
-        as = GetAnswerSet(pm, s);
-        AnswerSets.writeTo(s.AnswerSetsDestination(), as);
+        pm_as = GetAnswerSet(pm, s);
+        AnswerSets.writeTo(s.getIntermediateAnswerSetDestination(), pm_as);
         s.closePremodelAnswerSetsDestination();
-        if (as.size() == 1) {
-            ALMTranslator.ConstructFinalProgram(tm, as.get(0), pm, st, aspf, s, er);
-            tm.writeTo(s.TransitionModelDestination());
+        if (pm_as.size() == 1) {
+            ALMTranslator.ConstructFinalProgram(tm, pm_as.get(0), pm, st, aspf, s, er);
+            tm.writeTo(s.getTransitionModelDestination());
             s.closeTransitionModelDestination();
-            as = GetAnswerSet(tm, s);
-            AnswerSets.writeTo(s.FinalAnswerSetsDestination(), as);
+            tm_as.addAll(GetAnswerSet(tm, s));
+            AnswerSets.writeTo(s.getFinalAnswerSetDestination(), tm_as);
             s.closeFinalAnswerSetsDestination();
         } else {
             er.newSemanticError(SemanticError.ANS001);
@@ -238,7 +239,7 @@ public class ALMCompiler {
 
     public static void IMPLEMENTATION_FAILURE(String phase, String error) {
         try {
-            er.writeTo(s.ErrorDestination());
+            er.writeTo(s.getErrorDestination());
             s.closeErrorDestination();
         } catch (Exception e) {
             e.printStackTrace();

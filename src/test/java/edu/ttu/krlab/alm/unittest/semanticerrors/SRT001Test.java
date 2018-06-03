@@ -19,17 +19,17 @@ public class SRT001Test extends UnitTestingBase {
 
     @Test
     public void SRT001BooleansTest() throws FileNotFoundException {
-        Compile(almUnitTest("semanticerrors", "srt001", "1"));
+        compile(almUnitTest("semanticerrors", "srt001", "1"));
         assertNoSyntaxErrors();
         assertSemanticErrorCount(1);
-        assertEquals("SRT001 for 'booleans' did not occur.", SemanticError.SRT001, er.getSemanticErrors().get(0).getErrorID());
+        assertEquals("SRT001 for 'booleans' on right did not occur.", SemanticError.SRT001, er.getSemanticErrors().get(0).getErrorID());
     }
-    
+
     @Test
     public void SRT001IntegersTest() throws FileNotFoundException {
-        Compile(almUnitTest("semanticerrors", "srt001", "2"));
+        compile(almUnitTest("semanticerrors", "srt001", "2"));
         assertNoSyntaxErrors();
         assertSemanticErrorCount(1);
-        assertEquals("SRT001 for 'integers' did not occur.", SemanticError.SRT001, er.getSemanticErrors().get(0).getErrorID());
+        assertEquals("SRT001 for 'integers' on right did not occur.", SemanticError.SRT001, er.getSemanticErrors().get(0).getErrorID());
     }
 }
