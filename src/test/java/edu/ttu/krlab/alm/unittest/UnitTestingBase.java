@@ -47,22 +47,22 @@ public class UnitTestingBase {
         } else {
             System.err.println("SPARC_JAR location not set.");
         }
-        String solver_loc = System.getProperty("ASP_SOLVER_FOLDER");
+        String solver_loc = System.getProperty("ASP_SOLVER_DIRECTORY");
         String solver_type = System.getProperty("ASP_SOLVER_TYPE");
         if (solver_loc != null && solver_type != null) {
             solver_loc = solver_loc.trim();
             solver_type = solver_type.trim();
             if (!(solver_loc.isEmpty() || solver_type.isEmpty())) {
                 solver_loc = (new File(solver_loc)).getAbsolutePath();
-                //System.out.println("ASP_SOLVER_FOLDER: "+solver_loc);
+                //System.out.println("ASP_SOLVER_DIRECTORY: "+solver_loc);
                 //System.out.println("ASP_SOLVER_TYPE: "+solver_type);
                 this.s.setSolverLocation(solver_loc);
                 this.s.setSolverType(solver_type);
             }
         } else {
-            System.err.println("ASP_SOLVER_FOLDER or ASP_SOLVER_TYPE not set.");
+            System.err.println("ASP_SOLVER_DIRECTORY or ASP_SOLVER_TYPE not set.");
         }
-        unit_test_folder = System.getProperty("UNIT_TEST_FOLDER");
+        unit_test_folder = System.getProperty("UNIT_TEST_DIRECTORY");
         s.setErrorDestination(null);
         s.setFinalAnswerSetDestination(null);
         s.setIntermediateASPfDestination(null);

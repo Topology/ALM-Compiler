@@ -5,10 +5,14 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
+        <alm.sys.desc>src/main/resources/sysdesc/testing/empty/empty.alm</alm.sys.desc>
+        <alm.debug>False</alm.debug>
+        <alm.output>target/alm/output</alm.output>
+        <alm.library>src/main/resources/sysdesc/libraries/</alm.library>
         <sparc.jar>src/main/resources/solvers/sparc.jar</sparc.jar>
         <!-- uncomment to manually set location of asp.solver
-        <asp.solver.folder>src/main/resources/solvers/</asp.solver.folder>
-        <asp.solver.name>clingo</asp.solver.name>
+        <asp.solver.directory>src/main/resources/solvers/</asp.solver.directory>
+        <asp.solver.type>clingo</asp.solver.type>
         -->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -71,10 +75,63 @@
                 <configuration>
                     <systemPropertyVariables>
                         <SPARC_JAR>${sparc.jar}</SPARC_JAR>
-                        <ASP_SOLVER_FOLDER>${asp.solver.folder}</ASP_SOLVER_FOLDER>
-                        <ASP_SOLVER_TYPE>${asp.solver.name}</ASP_SOLVER_TYPE>
-                        <UNIT_TEST_FOLDER>src/test/resources/sysdesc/unittest</UNIT_TEST_FOLDER>
+                        <ASP_SOLVER_DIRECTORY>${asp.solver.directory}</ASP_SOLVER_DIRECTORY>
+                        <ASP_SOLVER_TYPE>${asp.solver.type}</ASP_SOLVER_TYPE>
+                        <UNIT_TEST_DIRECTORY>src/test/resources/sysdesc/unittest</UNIT_TEST_DIRECTORY>
                     </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>id.test.run</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>edu.ttu.krlab.alm.ALMCompiler</mainClass>
+                    <arguments>
+                    </arguments>
+                        
+                    <systemProperties>
+                        <systemProperty>
+                            <key>alm.debug</key>
+                            <value>${alm.debug}</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>sparc.jar</key>
+                            <value>${sparc.jar}</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>asp.solver.directory</key>
+                            <value>${asp.solver.directory}</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>asp.solver.type</key>
+                            <value>${asp.solver.type}</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>alm.library</key>
+                            <value>${alm.library}</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>alm.sys.desc</key>
+                            <value>${alm.sys.desc}</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>alm.output</key>
+                            <value>${alm.output}</value>
+                        </systemProperty>
+                    </systemProperties>
+                                
+                    <executable>java</executable>
+
                 </configuration>
             </plugin>
         </plugins>
@@ -87,8 +144,8 @@
                 <clingo.version>4.5.4</clingo.version>
                 <clingo.download.filename>clingo-${clingo.version}-win64</clingo.download.filename>
                 <clingo.download.filetype>zip</clingo.download.filetype>
-                <asp.solver.folder>src/main/resources/solvers/${clingo.download.filename}</asp.solver.folder>
-                <asp.solver.name>clingo</asp.solver.name>
+                <asp.solver.directory>src/main/resources/solvers/${clingo.download.filename}</asp.solver.directory>
+                <asp.solver.type>clingo</asp.solver.type>
             </properties>
             <activation>
                 <os>
@@ -126,8 +183,8 @@
                 <clingo.version>4.5.4</clingo.version>
                 <clingo.download.filename>clingo-${clingo.version}-macos-${mac.os.version}</clingo.download.filename>
                 <clingo.download.filetype>tar.gz</clingo.download.filetype>
-                <asp.solver.folder>src/main/resources/solvers/${clingo.download.filename}</asp.solver.folder>
-                <asp.solver.name>clingo</asp.solver.name>
+                <asp.solver.directory>src/main/resources/solvers/${clingo.download.filename}</asp.solver.directory>
+                <asp.solver.type>clingo</asp.solver.type>
             </properties>
             <activation>
                 <os>
@@ -164,8 +221,8 @@
                 <clingo.version>4.5.4</clingo.version>
                 <clingo.download.filename>clingo-${clingo.version}-linux-x86_64</clingo.download.filename>
                 <clingo.download.filetype>tar.gz</clingo.download.filetype>
-                <asp.solver.folder>src/main/resources/solvers/${clingo.download.filename}</asp.solver.folder>
-                <asp.solver.name>clingo</asp.solver.name>
+                <asp.solver.directory>src/main/resources/solvers/${clingo.download.filename}</asp.solver.directory>
+                <asp.solver.type>clingo</asp.solver.type>
             </properties>
             <activation>
                 <os>

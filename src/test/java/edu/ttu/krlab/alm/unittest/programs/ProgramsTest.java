@@ -18,6 +18,7 @@ public class ProgramsTest extends UnitTestingBase {
     @Test
     public void programsTest() {
         testProgram("empty.alm", "empty.answerset");
+        testProgram("basic1.alm", "basic1.answerset");
         testProgramsFinished();
     }
 }

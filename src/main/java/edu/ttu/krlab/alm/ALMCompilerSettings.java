@@ -96,6 +96,8 @@ public class ALMCompilerSettings {
     private BufferedWriter premodel_as_destination = null;
     private BufferedWriter final_as_destination = null;
 
+    private boolean debug = false;
+
     public ALMCompilerSettings() {
         settings = new HashMap<String, String>();
         defaultSettings();
@@ -145,6 +147,10 @@ public class ALMCompilerSettings {
         settings.put(ASPF_DESTINATION, STD_OUT);
         settings.put(OPT_ALL_PM_FACTS, OFF);
 
+    }
+
+    public boolean debug() {
+        return this.debug;
     }
 
     public void printUsage() {
@@ -438,7 +444,12 @@ public class ALMCompilerSettings {
         boolean sourceset = false;
 
         if (args.length < 1) {
-            printUsageAndExit();
+            if (!readyToExecute()) {
+                if(getSPARCLocation() != null && getSystemDescriptionFileName() == null){
+                    System.exit(0); // Solver location provided through system properties, but not system description source
+                }
+                printUsageAndExit();
+            }
         }
 
         for (int i = 0; i < args.length; i++) {
@@ -757,13 +768,7 @@ public class ALMCompilerSettings {
 
                         }
                         if (key.compareTo(SYS_DESC_SOURCE) == 0) {
-                            int lastslash = value.lastIndexOf(File.separator);
-                            int firstdot = value.indexOf('.', lastslash);
-                            if (firstdot == -1) {
-                                FN_Replace = value.substring(lastslash + 1);
-                            } else {
-                                FN_Replace = value.substring(lastslash + 1, firstdot);
-                            }
+                            FN_Replace = getAlmProgramName(value);
                         } else if (key.compareTo(IMPORT_CONFIG) == 0) {
                             processConfigFile(value, CD_Replace, FN_Replace);
                             continue; // skip recording setting.
@@ -1172,6 +1177,186 @@ public class ALMCompilerSettings {
             return null;
         }
         return library_location + File.separator + libraryName + File.separator + theoryName + ".alm";
+    }
+
+    void processSystemProperties() {
+        //DEBUG MODE
+        boolean debug = false;
+        String debug_text = System.getProperty("alm.debug");
+        if (debug_text != null) {
+            debug_text = debug_text.toLowerCase().trim();
+            if (debug_text.equals("true")) {
+                debug = true;
+                System.out.println("DEBUG IS ON.");
+            }
+        }
+
+        //JAVA Executable
+        String java_loc = System.getProperty("java.location");
+        if (java_loc != null) {
+            java_loc = java_loc.trim();
+            if (java_loc.isEmpty()) {
+                java_loc = null;
+            } else {
+                java_loc = new File(java_loc).getAbsolutePath();
+                this.setJavaLocation(java_loc);
+                if (debug) {
+                    System.out.println(JAVA_LOCATION + ": " + java_loc);
+                }
+            }
+        }
+        if (java_loc == null && debug) {
+            System.out.println("No Explicit Java Location Set, Using JAVA_HOME.");
+        }
+
+        //SPARC JAR LOCATION
+        String sparc_jar = System.getProperty("sparc.jar");
+        if (sparc_jar != null) {
+            sparc_jar = sparc_jar.trim();
+            if (sparc_jar.isEmpty()) {
+                sparc_jar = null;
+            } else {
+                sparc_jar = new File(sparc_jar).getAbsolutePath();
+                this.setSPARCLocation(sparc_jar);
+                if (debug) {
+                    System.out.println(SPARC_LOCATION + ": " + sparc_jar);
+                }
+            }
+        }
+
+        //ASP SOLVER LOCATION
+        String asp_solver = System.getProperty("asp.solver.directory");
+        if (asp_solver != null) {
+            asp_solver = asp_solver.trim();
+            if (asp_solver.isEmpty()) {
+                asp_solver = null;
+            } else {
+                asp_solver = new File(asp_solver).getAbsolutePath();
+                this.setSolverLocation(asp_solver);
+                if (debug) {
+                    System.out.println(SOLVER_LOCATION + ": " + asp_solver);
+                }
+            }
+        }
+
+        //ASP SOLVER TYPE
+        String asp_solver_type = System.getProperty("asp.solver.type");
+        if (asp_solver_type != null) {
+            asp_solver_type = asp_solver_type.trim();
+            if (asp_solver_type.isEmpty()) {
+                asp_solver_type = null;
+            } else {
+                this.setSolverType(asp_solver_type);
+                if (debug) {
+                    System.out.println(SOLVER_TYPE + ": " + asp_solver_type);
+                }
+            }
+        }
+
+        //ALM LIBRARY
+        String alm_library = System.getProperty("alm.library");
+        if (alm_library != null) {
+            alm_library = alm_library.trim();
+            if (alm_library.isEmpty()) {
+                alm_library = null;
+            } else {
+                alm_library = new File(alm_library).getAbsolutePath();
+                settings.put(LIBRARY_LOCATION, alm_library);
+                if (debug) {
+                    System.out.println(LIBRARY_LOCATION + ": " + alm_library);
+                }
+            }
+        }
+
+        //ALM PROGRAM
+        String alm_program = System.getProperty("alm.sys.desc");
+        if (alm_program != null) {
+            alm_program = alm_program.trim();
+            if (alm_program.isEmpty()) {
+                alm_program = null;
+            } else {
+                alm_program = new File(alm_program).getAbsolutePath();
+                this.setSystemDescriptionFileName(alm_program);
+                if (debug) {
+                    System.out.println(SYS_DESC_SOURCE + ": " + alm_program);
+                }
+            }
+        }
+        if(sparc_jar != null && alm_program == null){
+            settings.put(SYS_DESC_SOURCE, null);
+        }
+
+        String alm_program_name = getAlmProgramName(alm_program);
+
+        //ALM OUTPUT DIRECTORY
+        String output_dir = System.getProperty("alm.output");
+        if (output_dir != null) {
+            output_dir = output_dir.trim();
+            if (output_dir.isEmpty()) {
+                output_dir = null;
+            } else {
+                output_dir = new File(output_dir).getAbsolutePath();
+                String out_dir = output_dir + File.separator;
+                settings.put(TM_DESTINATION, out_dir + alm_program_name + "_TM.sparc");
+                settings.put(FINAL_AS_DESTINATION, out_dir + alm_program_name + "_TM.answerset");
+                settings.put(ER_DESTINATION, out_dir + alm_program_name + ".errors");
+                if (debug) {
+                    System.out.println("OUTPUT_DIRECTORY: " + output_dir);
+                    settings.put(ASPF_DESTINATION, out_dir + alm_program_name + ".aspf");
+                    settings.put(ST_DESTINATION, out_dir + alm_program_name + ".st");
+                    settings.put(PM_DESTINATION, out_dir + alm_program_name + "_PM.sparc");
+                    settings.put(PREMODEL_AS_DESTINATION, out_dir + alm_program_name + "_PM.answerset");
+                    System.out.println(TM_DESTINATION + ": " + settings.get(TM_DESTINATION));
+                    System.out.println(ER_DESTINATION + ": " + settings.get(ER_DESTINATION));
+                    System.out.println(ASPF_DESTINATION + ": " + settings.get(ASPF_DESTINATION));
+                    System.out.println(ST_DESTINATION + ": " + settings.get(ST_DESTINATION));
+                    System.out.println(PM_DESTINATION + ": " + settings.get(PM_DESTINATION));
+                    System.out.println(PREMODEL_AS_DESTINATION + ": " + settings.get(PREMODEL_AS_DESTINATION));
+                    System.out.println(FINAL_AS_DESTINATION + ": " + settings.get(FINAL_AS_DESTINATION));
+                }
+            }
+        }
+
+    }
+
+    private boolean readyToExecute() {
+        if (settings.get(SPARC_LOCATION) == null) {
+            return false;
+        }
+        if (settings.get(SOLVER_LOCATION) == null) {
+            return false;
+        }
+        if (settings.get(SOLVER_TYPE) == null) {
+            return false;
+        }
+        if (settings.get(LIBRARY_LOCATION) == null) {
+            return false;
+        }
+        if (settings.get(SYS_DESC_SOURCE) == null) {
+            return false;
+        }
+        if (settings.get(TM_DESTINATION) == null) {
+            return false;
+        }
+        if (settings.get(ER_DESTINATION) == null) {
+            return false;
+        }
+        return true;
+    }
+
+    private String getAlmProgramName(String alm_program) {
+        if (alm_program == null) {
+            return null;
+        }
+        String result = null;
+        int lastslash = alm_program.lastIndexOf(File.separator);
+        int firstdot = alm_program.indexOf('.', lastslash);
+        if (firstdot == -1) {
+            result = alm_program.substring(lastslash + 1);
+        } else {
+            result = alm_program.substring(lastslash + 1, firstdot);
+        }
+        return result;
     }
 
 }

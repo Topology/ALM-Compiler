@@ -56,8 +56,11 @@ public class ALMCompiler {
         System.err.println("ALM Translator Version: " + VERSION);
 
         s = new ALMCompilerSettings();
+        s.processSystemProperties();
+        
         s.processCommandlineArgs(args);
 
+        
         SymbolTable st = new SymbolTable("Whole Theory");
         er = new ErrorReport();
         ASPfProgram aspf = new ASPfProgram();
