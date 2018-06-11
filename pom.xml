@@ -50,6 +50,25 @@
                     </execution>
                 </executions>
             </plugin>
+           <!-- <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <get src="https://raw.githubusercontent.com/iensen/sparc/master/sparc.jar"
+                         dest="src/main/resources/solvers"
+                         verbose="true"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin> -->
             <plugin>
                 <groupId>com.googlecode.maven-download-plugin</groupId>
                 <artifactId>download-maven-plugin</artifactId>
@@ -62,7 +81,7 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>https://github.com/iensen/sparc/blob/master/sparc.jar</url>
+                            <url>https://raw.githubusercontent.com/iensen/sparc/master/sparc.jar</url>
                             <outputDirectory>src/main/resources/solvers</outputDirectory>
                         </configuration>
                     </execution>
@@ -98,7 +117,6 @@
                     <mainClass>edu.ttu.krlab.alm.ALMCompiler</mainClass>
                     <arguments>
                     </arguments>
-                        
                     <systemProperties>
                         <systemProperty>
                             <key>alm.debug</key>

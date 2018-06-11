@@ -121,10 +121,10 @@ public class ALMCompilerSettings {
 
     public void defaultSettings() {
 
-        settings.put(SPARC_LOCATION, DEFAULT_SPARC_LOCATION);
+        //settings.put(SPARC_LOCATION, DEFAULT_SPARC_LOCATION);
         settings.put(JAVA_LOCATION, DEFAULT_JAVA_LOCATION);
-        settings.put(SOLVER_LOCATION, DEFAULT_SOLVER_LOCATION);
-        settings.put(SOLVER_TYPE, DEFAULT_SOLVER_TYPE);
+        //settings.put(SOLVER_LOCATION, DEFAULT_SOLVER_LOCATION);
+        //settings.put(SOLVER_TYPE, DEFAULT_SOLVER_TYPE);
         settings.put(PM_DESTINATION, DEFAULT_PM_DESTINATION);
         settings.put(PREMODEL_AS_DESTINATION, DEFAULT_INTERMEDIATE_AS_DESTINATION); // default is no destination
         settings.put(FINAL_AS_DESTINATION, DEFAULT_FINAL_AS_DESTINATION);

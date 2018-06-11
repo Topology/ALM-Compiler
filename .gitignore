@@ -5,4 +5,3 @@
 *.DS_Store
 *.settings*
 /src/main/resources/solvers/
-/nbactions.xml
