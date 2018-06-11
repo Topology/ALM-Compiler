@@ -1296,7 +1296,8 @@ public class ALMCompilerSettings {
                 output_dir = null;
             } else {
                 output_dir = new File(output_dir).getAbsolutePath();
-                String out_dir = output_dir + File.separator;
+                String out_dir = output_dir + File.separator + alm_program_name 
+                        + File.separator;
                 settings.put(TM_DESTINATION, out_dir + alm_program_name + "_TM.sparc");
                 settings.put(FINAL_AS_DESTINATION, out_dir + alm_program_name + "_TM.answerset");
                 settings.put(ER_DESTINATION, out_dir + alm_program_name + ".errors");
