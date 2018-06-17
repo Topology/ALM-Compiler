@@ -1,5 +1,0 @@
-system description srt001
-theory srt001
-module srt001
-   sort declarations
-      subsort::integers
