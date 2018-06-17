@@ -7,4 +7,15 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.6.0:java</goal>
             </goals>
         </action>
+        <action>
+            <actionName>CUSTOM-Debug ALM</actionName>
+            <displayName>Debug ALM</displayName>
+            <goals>
+                <goal>exec:java</goal>
+            </goals>
+            <properties>
+                <jpda.listen>maven</jpda.listen>
+                <skipTests>true</skipTests>
+            </properties>
+        </action>
 </actions>
