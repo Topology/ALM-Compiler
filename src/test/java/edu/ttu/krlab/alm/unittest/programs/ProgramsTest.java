@@ -19,6 +19,7 @@ public class ProgramsTest extends UnitTestingBase {
     public void programsTest() {
         testProgram("empty.alm", "empty.answerset");
         testProgram("basic1.alm", "basic1.answerset");
+        testProgram("multi-module-country.alm", "multi-module-country.answerset");
         testProgramsFinished();
     }
 }

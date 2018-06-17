@@ -42,7 +42,6 @@ public class UnitTestingBase {
         String sparc_loc = System.getProperty("SPARC_JAR");
         if (sparc_loc != null && !sparc_loc.trim().isEmpty()) {
             sparc_loc = (new File(sparc_loc)).getAbsolutePath();
-            //System.out.println("SPARC_JAR: "+sparc_loc);
             this.s.setSPARCLocation(sparc_loc);
         } else {
             System.err.println("SPARC_JAR location not set.");
@@ -54,8 +53,6 @@ public class UnitTestingBase {
             solver_type = solver_type.trim();
             if (!(solver_loc.isEmpty() || solver_type.isEmpty())) {
                 solver_loc = (new File(solver_loc)).getAbsolutePath();
-                //System.out.println("ASP_SOLVER_DIRECTORY: "+solver_loc);
-                //System.out.println("ASP_SOLVER_TYPE: "+solver_type);
                 this.s.setSolverLocation(solver_loc);
                 this.s.setSolverType(solver_type);
             }
@@ -73,7 +70,7 @@ public class UnitTestingBase {
     }
 
     private void reset() {
-        st = new SymbolTable("top");
+        st = new SymbolTable("top", null);
         er = new ErrorReport();
         aspf = new ASPfProgram();
         pm = new SPARCProgram();

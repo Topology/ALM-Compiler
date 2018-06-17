@@ -61,7 +61,7 @@ public class ALMCompiler {
         s.processCommandlineArgs(args);
 
         
-        SymbolTable st = new SymbolTable("Whole Theory");
+        SymbolTable rootST = new SymbolTable("Whole Theory", null); //This is the root symbol table. 
         er = new ErrorReport();
         ASPfProgram aspf = new ASPfProgram();
         SPARCProgram pm = new SPARCProgram();
@@ -71,12 +71,12 @@ public class ALMCompiler {
         List<AnswerSet> tm_as = new ArrayList<AnswerSet>();
         tm.addComment("Final Program For Transition Diagram");
 
-        ALMCompiler.Compile(s, st, er, aspf, pm, pm_as, tm, tm_as);
+        ALMCompiler.Compile(s, rootST, er, aspf, pm, pm_as, tm, tm_as);
             if (er.hasErrors())
                 ALMCompiler.exitWithErrors(er, s);
     }
     
-    public static final void Compile(ALMCompilerSettings s, SymbolTable st, ErrorReport er, ASPfProgram aspf,
+    public static final void Compile(ALMCompilerSettings s, SymbolTable rootST, ErrorReport er, ASPfProgram aspf,
             SPARCProgram pm, List<AnswerSet> pm_as, SPARCProgram tm, List<AnswerSet> tm_as) {
         
         //Render input system description into ANTLR Syntax Parse Tree. 
@@ -101,22 +101,22 @@ public class ALMCompiler {
 
             //Creates symbol tables for each module then flattens them into st
             //Populates axioms of each module into aspf. 
-            processTheory(s, amm, st, aspf, er);
+            processTheory(s, amm, rootST, aspf, er);
 
             StructureContext structure = sysDesc.structure();
             if (structure != null) {
 
                 //populate aspf with the rules derived from the structure.
                 //adds constant declarations to st.  
-                processStructure(s, structure, st, aspf, er);
+                processStructure(s, structure, rootST, aspf, er);
                 Solver_modeContext mode = sysDesc.solver_mode();
                 if (mode != null) {
                     //Adds rules to define and solve problems such as histories for temporal projections
-                    processSolverMode(s, mode, st, aspf, er);
+                    processSolverMode(s, mode, rootST, aspf, er);
                 }
                 // Call The Translation Function (Where the magic happens)
                 // Produces the final SPARC program 'tm' and if solving a problem, the final answer set(s) 'as'. 
-                ALMCompiler.Translate(s, st, er, aspf, pm, pm_as, tm, tm_as);
+                ALMCompiler.Translate(s, rootST, er, aspf, pm, pm_as, tm, tm_as);
             } 
         } catch (FileNotFoundException e) {
             System.err
@@ -143,18 +143,18 @@ public class ALMCompiler {
         walker.walk(new ALMBaseListener(s, st, aspf, er), structure);
     }
 
-    private static void processTheory(ALMCompilerSettings s, ALMModuleManager amm, SymbolTable st, ASPfProgram aspf,
+    private static void processTheory(ALMCompilerSettings s, ALMModuleManager amm, SymbolTable rootST, ASPfProgram aspf,
             ErrorReport er) {
         Set<ModuleContext> start = new HashSet<>();
         Set<ModuleContext> finished = new HashSet<>();
         amm.resolveModules();
         for (ModuleContext mc : amm.getLeafModules()) {
-            st.addDependency(processModuleToSymbolTable(s, mc, amm, aspf, er, start, finished));
+            rootST.addDependency(processModuleToSymbolTable(s, rootST, mc, amm, aspf, er, start, finished));
         }
-        st.flatten();
+        rootST.flatten();
     }
 
-    private static SymbolTable processModuleToSymbolTable(ALMCompilerSettings s, ModuleContext mc, ALMModuleManager amm,
+    private static SymbolTable processModuleToSymbolTable(ALMCompilerSettings s, SymbolTable rootST, ModuleContext mc, ALMModuleManager amm,
             ASPfProgram aspf, ErrorReport er, Set<ModuleContext> start, Set<ModuleContext> finished) {
         if (start.contains(mc))
             ALMCompiler.IMPLEMENTATION_FAILURE("Processing Modules To Symbol Tables",
@@ -163,13 +163,13 @@ public class ALMCompiler {
             return amm.getSymbolTableForModule(mc);
         start.add(mc);
         //process module dependencies
-        SymbolTable newST = new SymbolTable(amm.getModuleContextReference(mc));
+        SymbolTable newST = new SymbolTable(amm.getModuleContextReference(mc), rootST);
         amm.setSymbolTableForModule(mc, newST);
         Set<ModuleContext> dependencies = amm.getModuleDependencies(mc);
         for (ModuleContext d : dependencies) {
             SymbolTable dST = amm.getSymbolTableForModule(d);
             if (dST == null) {
-                dST = processModuleToSymbolTable(s, d, amm, aspf, er, start, finished);
+                dST = processModuleToSymbolTable(s, rootST, d, amm, aspf, er, start, finished);
             }
             newST.addDependency(dST);
         }

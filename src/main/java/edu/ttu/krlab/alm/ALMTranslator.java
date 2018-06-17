@@ -15,6 +15,7 @@ import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
 import edu.ttu.krlab.alm.datastruct.sig.DOMFunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
+import edu.ttu.krlab.alm.datastruct.sig.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
 import edu.ttu.krlab.alm.datastruct.sparc.PredicateAlreadyDeclared;
 import edu.ttu.krlab.alm.datastruct.sparc.SPARCLiteral;
@@ -103,28 +104,26 @@ public abstract class ALMTranslator {
         //if se has been started before now, throw an error.  A semantic error should have caught this. 
         if (started.contains(se)) {
             ALMCompiler.IMPLEMENTATION_FAILURE("Construct PREMODEL SORT SECTION",
-                    "Loop detected in sort heierarchy.  This code path should not execute due to semantic error generation.");
+                    "Loop detected in sort heierarchy with sort [" + se + "].  This code path should not execute due to semantic error generation.");
         }
 
         //Add sort to the started set. 
         started.add(se);
 
-        //Collect dependencies. 
-        Set<SortEntry> dependencies = new HashSet<>();
         //1. S' is a child of S
-        dependencies.addAll(se.getChildSorts());
-        //2. S' is used in the signature of the attribute function of S
-        for (FunctionEntry attr : se.getAttributes()) {
-            List<SortEntry> sig = attr.getSignature();
-            int sig_length = sig.size();
-            for (int i = 0; i < sig_length; i++) { // skip the first sort for attributes, always.
-                SortEntry sort = sig.get(i);
-                if (finished.contains(sort) || started.contains(sort)) //skip completed  and started dependencies. 
-                {
-                    continue;
-                }
-                if (!sort.subsortof(se)) { // ignore references to se.  
-                    dependencies.add(sort);
+        for (SortEntry dependency : se.getChildSorts()) {
+            PreModelSortHierarchy(dependency, pm, st, started, finished);
+        }
+        //2. S' is used in the instances of S
+        for (ALMTerm instance : se.getInstances()) {
+            for (ALMTerm instArg : instance.getArgs()) {
+                try {
+                    SortEntry sort = st.getSortEntry(instArg.getSort());
+                    PreModelSortHierarchy(sort, pm, st, started, finished);
+                } catch (SortNotFoundException ex) {
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Construct PREMODEL SORT SECTION",
+                            "Missing Sort Entry [" + instArg.getSort() + "] for instance [" + instance + "] of sort ["
+                            + se + "].  This should have been caught earlier by a semantic error.");
                 }
             }
         }
@@ -132,7 +131,7 @@ public abstract class ALMTranslator {
         for (ConstantEntry ce : se.getConstants()) {
             for (SortEntry arg : ce.getArguments()) {
                 if (arg != se) {
-                    dependencies.add(arg);
+                    PreModelSortHierarchy(arg, pm, st, started, finished);
                 } else {
                     ALMCompiler.IMPLEMENTATION_FAILURE("Construct Pre-Model Sort Section",
                             "Constant [" + ce.getConstName() + "] is an instance of its own argument ["
@@ -140,11 +139,6 @@ public abstract class ALMTranslator {
                 }
 
             }
-        }
-
-        //first write out dependencies. 
-        for (SortEntry dependency : dependencies) {
-            PreModelSortHierarchy(dependency, pm, st, started, finished);
         }
 
         // writing out dependencies is finished, time to write out this sort.

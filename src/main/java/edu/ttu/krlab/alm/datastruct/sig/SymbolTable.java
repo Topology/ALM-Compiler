@@ -15,59 +15,256 @@ import edu.ttu.krlab.alm.ALM;
 import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.Location;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SymbolTable {
 
-    /*
-     * STATIC VARIABLES
-     */
-    //This symbol table is the one that holds the function and sort definitions for an empty system description.
-    private static boolean bootstrap = false;
-    private static SymbolTable baseST = null;
+    //Only Base Symbol Table Instantiates These.
+    //DO NOT MAKE STATIC
+    final private SortEntry universe;
+    final private SortEntry actions;
+    final private SortEntry nodes;
+    final private SortEntry booleans;
+    final private SortEntry integers;
+    final private SortEntry timestep;
+    final private Map<String, Set<ConstantEntry>> globalCEMap;
+    final private Map<ALMTerm, ConstantEntry> CDMap; //structure populated
+    private int maxStep = -1;
 
-    private static SortEntry universe = null;
-    private static SortEntry actions = null;
-    private static SortEntry nodes = null;
-    private static SortEntry booleans = null;
-    private static SortEntry integers = null;
-    private static SortEntry timestep = null;
-    private static int maxStep = -1;
-
-    final private static Set<SortEntry> predefined = new HashSet<>();
-    final private static Set<String> modes = new HashSet<>();
-    final private static Map<String, Set<ConstantEntry>> staticCEMap = new HashMap<>();
-    final private static Map<String, SortEntry> singletons = new HashMap<>();
-    final private static Map<ALMTerm, ConstantEntry> CDMap = new HashMap<>();
+    final private Set<String> modes;
+    //private variables instantiated by all symbol tables in tree. 
+    final private SymbolTable rootST;
 
     /*
-     * STATIC FUNCTIONS
+     * ALL SYMBOL TABLES USE THESE. 
      */
+    final private String STName;
+    final private Set<SymbolTable> dependencies;  //This is allowd to be circular.  
+    final private Map<String, SortEntry> SEMap;
+    /**
+     * Constant entries are first retrievable by name and then by their argument signature.
+     */
+    final private Map<String, Set<ConstantEntry>> CEMap;
+    final private Map<String, SortEntry> singletons;
+    /**
+     * FunctionEntrys may have the same name but the combination of name and signature must be unique. Looking up by
+     * name should return a set of compatible functions To look up by signature as well, first lookup by name then look
+     * for the function in the set with the matching signature.
+     */
+    final private Map<String, Set<NormalFunctionEntry>> FEMap;
+    final private Map<NormalFunctionEntry, DOMFunctionEntry> DMap;
+
+    /**
+     * creates a new symbol table with an initial direct dependency on the base symbol table.
+     *
+     * @param STName The name of this symbol table.
+     * @param rootST If not null, this is the root symbol table. If null, this symbol tables becomes the root.
+     */
+    public SymbolTable(String STName, SymbolTable rootST) {
+        //structures for all symbol tables.
+        dependencies = new HashSet<>();
+        this.STName = STName;
+        this.rootST = rootST;
+        SEMap = new HashMap<>();
+        CEMap = new HashMap<>();
+        singletons = new HashMap<>();
+        FEMap = new HashMap<>();
+        DMap = new HashMap<>();
+
+        if (rootST != null) {
+            dependencies.add(rootST);
+            //rootST only variables are null;
+            nodes = null;
+            universe = null;
+            actions = null;
+            booleans = null;
+            integers = null;
+            timestep = null;
+            modes = null;
+            CDMap = null;
+            globalCEMap = null;
+            return;
+        }
+
+        SortEntry tempUniverse = null;
+        SortEntry tempActions = null;
+        SortEntry tempBooleans = null;
+        SortEntry tempIntegers = null;
+        SortEntry tempTimestep = null;
+
+        //This is root, initialize it
+        nodes = new SortEntry(ALM.SPECIAL_SORT_NODES, null);
+        CDMap = new HashMap<>();
+        modes = new HashSet<>();
+        globalCEMap = new HashMap<>();
+
+        try {
+            // Before the Hierarchy can be initialized, we need a special sort entry for nodes in the hierarchy.
+            SEMap.put(ALM.SPECIAL_SORT_NODES, nodes);
+
+            // Add Universe Sort
+            tempUniverse = this.createSortEntry(ALM.SORT_UNIVERSE, null);
+
+            // Add timestep Sort
+            tempTimestep = this.createSortEntry(ALM.SORT_TIMESTEP, null);
+
+            // Add Actions Sort (child of universe)
+            tempActions = this.createSortEntry(ALM.SORT_ACTIONS, null);
+            tempActions.addParentSort(tempUniverse);
+
+            // boolean
+            tempBooleans = this.createSortEntry(ALM.SORT_BOOLEANS, null);
+
+            // integer
+            tempIntegers = this.createSortEntry(ALM.SORT_INTEGERS, null);
+
+            // Add special functions
+            // SIGNATURES
+            // universe x nodes -> booleans
+            List<SortEntry> universe_nodes_booleans_sig = new ArrayList<SortEntry>();
+            universe_nodes_booleans_sig.add(tempUniverse);
+            universe_nodes_booleans_sig.add(nodes);
+            universe_nodes_booleans_sig.add(tempBooleans);
+
+            // nodes x nodes -> booleans
+            List<SortEntry> nodes_nodes_booleans_sig = new ArrayList<SortEntry>();
+            nodes_nodes_booleans_sig.add(nodes);
+            nodes_nodes_booleans_sig.add(nodes);
+            nodes_nodes_booleans_sig.add(tempBooleans);
+
+            // nodes -> booleans
+            List<SortEntry> nodes_booleans_sig = new ArrayList<SortEntry>();
+            nodes_booleans_sig.add(nodes);
+            nodes_booleans_sig.add(tempBooleans);
+
+            // actions -> booleans
+            List<SortEntry> actions_booleans_sig = new ArrayList<SortEntry>();
+            actions_booleans_sig.add(tempActions);
+            actions_booleans_sig.add(tempBooleans);
+
+            // SPECIAL FUNCTIONS
+            // is_a
+            FunctionEntry is_a = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_IS_A, universe_nodes_booleans_sig, null);
+            is_a.setSpecial();
+            is_a.setStatic();
+            is_a.setTotal();
+            is_a.setDefined();
+
+            // instance
+            FunctionEntry instance = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_INSTANCE, universe_nodes_booleans_sig,
+                    null);
+            instance.setSpecial();
+            instance.setStatic();
+            instance.setTotal();
+            instance.setDefined();
+
+            // link
+            FunctionEntry link = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_LINK, nodes_nodes_booleans_sig, null);
+            link.setSpecial();
+            link.setStatic();
+            link.setTotal();
+            link.setDefined();
+
+            // subsort
+            FunctionEntry subsort = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SUBSORT, nodes_nodes_booleans_sig, null);
+            subsort.setSpecial();
+            subsort.setStatic();
+            subsort.setTotal();
+            subsort.setDefined();
+
+            // has_child
+            FunctionEntry has_child = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_CHILD, nodes_booleans_sig, null);
+            has_child.setSpecial();
+            has_child.setStatic();
+            has_child.setTotal();
+            has_child.setDefined();
+
+            // has_parent
+            FunctionEntry has_parent = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_PARENT, nodes_booleans_sig, null);
+            has_parent.setSpecial();
+            has_parent.setStatic();
+            has_parent.setTotal();
+            has_parent.setDefined();
+
+            // sink
+            FunctionEntry sink = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SINK, nodes_booleans_sig, null);
+            sink.setSpecial();
+            sink.setStatic();
+            sink.setTotal();
+            sink.setDefined();
+
+            // source
+            FunctionEntry source = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SOURCE, nodes_booleans_sig, null);
+            source.setSpecial();
+            source.setStatic();
+            source.setTotal();
+            source.setDefined();
+
+            // occurs
+            FunctionEntry occurs = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_OCCURS, actions_booleans_sig, null);
+            occurs.setSpecial();
+            occurs.setFluent();
+            occurs.setTotal();
+            occurs.setDefined();
+        } catch (DuplicateFunctionException | DuplicateSortException ex) {
+            //should never happen.
+            Logger.getLogger(SymbolTable.class.getName()).log(Level.SEVERE, null, ex);
+            ALMCompiler.IMPLEMENTATION_FAILURE("Symbol Table Initialization", "Unexpected Exception: " + ex);
+            //IDE complains about uninitialized failures and doesn't realize this point is not reachable. 
+        }
+
+        universe = tempUniverse;
+        actions = tempActions;
+        booleans = tempBooleans;
+        integers = tempIntegers;
+        timestep = tempTimestep;
+    }
+
     /**
      * Creates the time step instances i where 0 <= i < {@code upper_boud}
      *
      * @param upper_bound The number of time steps.
      */
     public void setMaxSteps(int upper_bound) {
+        //needs to be set in root/base ST
+        if (rootST != null) {
+            rootST.setMaxSteps(upper_bound);
+            return;
+        }
         timestep.instances.clear();
         for (int i = 0; i < upper_bound; i++) {
             timestep.instances.add(new ALMTerm(Integer.toString(i), ALMTerm.INT));
         }
         maxStep = upper_bound - 1;
     }
-    
-    public int getMaxSteps(){
+
+    public int getMaxSteps() {
+        if (rootST != null) {
+            return rootST.getMaxSteps();
+        }
         return maxStep;
     }
 
     public boolean isTimeStep(int i) {
+        if (rootST != null) {
+            return rootST.isTimeStep(i);
+        }
         return i <= maxStep && i >= 0;
     }
 
     public boolean isModeActive(String mode) {
+        if (rootST != null) {
+            return rootST.isModeActive(mode);
+        }
         return modes.contains(mode);
     }
 
     public void setModeActive(String mode, boolean setting) {
+        if (rootST != null) {
+            rootST.setModeActive(mode, setting);
+            return;
+        }
         if (setting) {
             modes.add(mode);
         } else {
@@ -76,192 +273,59 @@ public class SymbolTable {
     }
 
     public SortEntry getUniverseSortEntry() {
-
+        if (rootST != null) {
+            return rootST.getUniverseSortEntry();
+        }
         return universe;
     }
 
     public SortEntry getTimestepSortEntry() {
-
+        if (rootST != null) {
+            return rootST.getTimestepSortEntry();
+        }
         return timestep;
     }
 
-    public  SortEntry getActionsSortEntry() {
+    public SortEntry getActionsSortEntry() {
+        if (rootST != null) {
+            //rootST
+            return rootST.getActionsSortEntry();
+        }
         return actions;
     }
 
-    public  SortEntry getNodesSpecialSortEntry() {
+    public SortEntry getNodesSpecialSortEntry() {
+        if (rootST != null) {
+            return rootST.getNodesSpecialSortEntry();
+        }
         return nodes;
     }
 
-    public  SortEntry getBooleansSortEntry() {
+    public SortEntry getBooleansSortEntry() {
+        if (rootST != null) {
+            return rootST.getBooleansSortEntry();
+        }
         return booleans;
     }
 
     public SortEntry getIntegersSortEntry() {
+        if (rootST != null) {
+            return rootST.getIntegersSortEntry();
+        }
         return integers;
     }
 
-    /*
-     * NON-STATIC VARIABLES
-     */
-    final private String STName;
-    final private Set<SymbolTable> dependencies = new HashSet<>();
-    final private Map<String, SortEntry> SEMap = new HashMap<>();
-    /**
-     * Constant entries are first retrievable by name and then by their argument
-     * signature.
-     */
-    final private HashMap<String, Set<ConstantEntry>> CEMap = new HashMap<>();
-    /**
-     * FunctionEntrys may have the same name but the combination of name and
-     * signature must be unique. Looking up by name should return a set of
-     * compatible functions To look up by signature as well, first lookup by
-     * name then look for the function in the set with the matching signature.
-     */
-    final private Map<String, Set<NormalFunctionEntry>> FEMap = new HashMap<>();
-    final private Map<NormalFunctionEntry, DOMFunctionEntry> DMap = new HashMap<>();
-
-    /**
-     * creates a new symbol table with an initial direct dependency on the base
-     * symbol table.
-     */
-    public SymbolTable(String STName) {
-        this.STName = STName;
-        if (bootstrap) {
-            try {
-                initialize();
-            } catch (DuplicateFunctionException | DuplicateSortException e) {
-                e.printStackTrace();
-                ALMCompiler.IMPLEMENTATION_FAILURE("Initializing Symbol Table",
-                        "Initialize Function Threw An Exception");
-                // this should never happen.
-            }
-        } else if (baseST == null) {
-            bootstrap = true;
-            baseST = new SymbolTable("base symbol table");
-            bootstrap = false;
-        } else {
-            dependencies.add(baseST);
+    protected Map<String, Set<ConstantEntry>> getGlobalCEMap() {
+        if (rootST != null) {
+            return rootST.getGlobalCEMap();
         }
-    }
-
-    private void initialize() throws DuplicateFunctionException, DuplicateSortException {
-
-        // Before the Hierarchy can be initialized, we need a special sort entry for
-        // nodes in the hierarchy.
-        nodes = new SortEntry(ALM.SPECIAL_SORT_NODES, null);
-        SEMap.put(ALM.SPECIAL_SORT_NODES, nodes);
-
-        // Add Universe Sort
-        universe = this.createSortEntry(ALM.SORT_UNIVERSE, null);
-
-        // Add timestep Sort
-        timestep = this.createSortEntry(ALM.SORT_TIMESTEP, null);
-
-        // Add Actions Sort (child of universe)
-        actions = this.createSortEntry(ALM.SORT_ACTIONS, null);
-        actions.addParentSort(universe);
-
-        // boolean
-        booleans = this.createSortEntry(ALM.SORT_BOOLEANS, null);
-        predefined.add(booleans);
-
-        // integer
-        integers = this.createSortEntry(ALM.SORT_INTEGERS, null);
-        predefined.add(integers);
-
-        // Add special functions
-        // SIGNATURES
-        // universe x nodes -> booleans
-        List<SortEntry> universe_nodes_booleans_sig = new ArrayList<SortEntry>();
-        universe_nodes_booleans_sig.add(universe);
-        universe_nodes_booleans_sig.add(nodes);
-        universe_nodes_booleans_sig.add(booleans);
-
-        // nodes x nodes -> booleans
-        List<SortEntry> nodes_nodes_booleans_sig = new ArrayList<SortEntry>();
-        nodes_nodes_booleans_sig.add(nodes);
-        nodes_nodes_booleans_sig.add(nodes);
-        nodes_nodes_booleans_sig.add(booleans);
-
-        // nodes -> booleans
-        List<SortEntry> nodes_booleans_sig = new ArrayList<SortEntry>();
-        nodes_booleans_sig.add(nodes);
-        nodes_booleans_sig.add(booleans);
-
-        // actions -> booleans
-        List<SortEntry> actions_booleans_sig = new ArrayList<SortEntry>();
-        actions_booleans_sig.add(actions);
-        actions_booleans_sig.add(booleans);
-
-        // SPECIAL FUNCTIONS
-        // is_a
-        FunctionEntry is_a = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_IS_A, universe_nodes_booleans_sig, null);
-        is_a.setSpecial();
-        is_a.setStatic();
-        is_a.setTotal();
-        is_a.setDefined();
-
-        // instance
-        FunctionEntry instance = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_INSTANCE, universe_nodes_booleans_sig,
-                null);
-        instance.setSpecial();
-        instance.setStatic();
-        instance.setTotal();
-        instance.setDefined();
-
-        // link
-        FunctionEntry link = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_LINK, nodes_nodes_booleans_sig, null);
-        link.setSpecial();
-        link.setStatic();
-        link.setTotal();
-        link.setDefined();
-
-        // subsort
-        FunctionEntry subsort = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SUBSORT, nodes_nodes_booleans_sig, null);
-        subsort.setSpecial();
-        subsort.setStatic();
-        subsort.setTotal();
-        subsort.setDefined();
-
-        // has_child
-        FunctionEntry has_child = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_CHILD, nodes_booleans_sig, null);
-        has_child.setSpecial();
-        has_child.setStatic();
-        has_child.setTotal();
-        has_child.setDefined();
-
-        // has_parent
-        FunctionEntry has_parent = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_HAS_PARENT, nodes_booleans_sig, null);
-        has_parent.setSpecial();
-        has_parent.setStatic();
-        has_parent.setTotal();
-        has_parent.setDefined();
-
-        // sink
-        FunctionEntry sink = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SINK, nodes_booleans_sig, null);
-        sink.setSpecial();
-        sink.setStatic();
-        sink.setTotal();
-        sink.setDefined();
-
-        // source
-        FunctionEntry source = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_SOURCE, nodes_booleans_sig, null);
-        source.setSpecial();
-        source.setStatic();
-        source.setTotal();
-        source.setDefined();
-
-        // occurs
-        FunctionEntry occurs = this.createFunctionEntry(ALM.SPECIAL_FUNCTION_OCCURS, actions_booleans_sig, null);
-        occurs.setSpecial();
-        occurs.setFluent();
-        occurs.setTotal();
-        occurs.setDefined();
-
+        return globalCEMap;
     }
 
     public boolean isPredefinedSort(String sort_text) {
+        if (rootST != null) {
+            return rootST.isPredefinedSort(sort_text);
+        }
 
         if (sort_text.compareTo(ALM.SORT_BOOLEANS) == 0) {
             return true;
@@ -280,7 +344,7 @@ public class SymbolTable {
     }
 
     /**
-     * Returns the sort entries in this symbol table and in all dependencies.
+     * Returns the sort entries in this symbol table and in all of its dependencies.
      *
      * @return all SortEntries reachable from this Symbol Table.
      */
@@ -294,15 +358,13 @@ public class SymbolTable {
     }
 
     /**
-     * Creates a new SortEntry of the given sortname in this symbol table if the
-     * name of the sort does not exist in this symbol table or any dependent
-     * symbol tables.
+     * Creates a new SortEntry of the given sortname in this symbol table if the name of the sort does not exist in this
+     * symbol table or any dependent symbol tables.
      *
      * @param sortname The name of the sort to create a SortEntry for.
      * @param loc The parsed text location for the sort.
      * @return the new SortEntry
-     * @throws DuplicateSortException if a SortEntry for the given sortname
-     * exists already.
+     * @throws DuplicateSortException if a SortEntry for the given sortname exists already.
      */
     public SortEntry createSortEntry(String sortname, Location loc) throws DuplicateSortException {
         // Sort Entries must be uniquely named.
@@ -314,14 +376,14 @@ public class SymbolTable {
             // Add new Sort Entry at this level.  
             SortEntry srt = new SortEntry(sortname, loc);
             SEMap.put(sortname, srt);
-            nodes.addSortInstance(new ALMTerm(srt.getSortName(), ALMTerm.ID));
+            getNodesSpecialSortEntry().addSortInstance(new ALMTerm(srt.getSortName(), ALMTerm.ID));
             return srt;
         }
     }
 
     /**
-     * Retrieves any existing SortEntry for the given sortname that exists in
-     * this symbol table or in any of its dependencies.
+     * Retrieves any existing SortEntry for the given sortname that exists in this symbol table or in any of its
+     * dependencies.
      *
      * @param sortname The name of the sort
      * @return The SortEntry for the given sort name.
@@ -341,26 +403,25 @@ public class SymbolTable {
         if (se != null) {
             return se;
         }
-        for (SymbolTable dependency : dependencies) {
-            se = dependency.getSortEntryHelp(sortname);
-            if (se != null) {
-                return se;
+        if (dependencies != null) {
+            for (SymbolTable dependency : dependencies) {
+                se = dependency.getSortEntryHelp(sortname);
+                if (se != null) {
+                    return se;
+                }
             }
         }
         return null;
     }
 
     /**
-     * Retrieves an existing singleton sort entry if it exists or creates a new
-     * one to hold the constant entry as its only instance. The singleton sort
-     * entry is marked as a singleton and registered with the constant for later
+     * Retrieves an existing singleton sort entry if it exists or creates a new one to hold the constant entry as its
+     * only instance. The singleton sort entry is marked as a singleton and registered with the constant for later
      * retrieval.
      *
-     * @param ce The {@link ConstantEntry ConstantEntry} for which its singleton
-     * sort is to be retrieved.
+     * @param ce The {@link ConstantEntry ConstantEntry} for which its singleton sort is to be retrieved.
      *
-     * @return The {@link SortEntry SortEntry} that is the singleton sort of the
-     * constant entry.
+     * @return The {@link SortEntry SortEntry} that is the singleton sort of the constant entry.
      */
     private SortEntry getSingletonSortForConstantEntry(ConstantEntry ce) {
         //The naming convention of the singleton sort should not be easily produced by a user of the ALM system. 
@@ -445,16 +506,17 @@ public class SymbolTable {
     }
 
     /**
-     * Returns all functions with the matching function name from this symbol
-     * table and its dependecies.
+     * Returns all functions with the matching function name from this symbol table and its dependecies.
      *
      * @param funname The name of the function to match;
      * @return The set of all function entries with the same name.
      */
     private Set<NormalFunctionEntry> getFunctionEntriesHelp(String funname) {
         Set<NormalFunctionEntry> matching = new HashSet<>();
-        for (SymbolTable dependency : dependencies) {
-            matching.addAll(dependency.getFunctionEntriesHelp(funname));
+        if (dependencies != null) {
+            for (SymbolTable dependency : dependencies) {
+                matching.addAll(dependency.getFunctionEntriesHelp(funname));
+            }
         }
         Set<NormalFunctionEntry> matches = FEMap.get(funname);
         if (matches != null) {
@@ -503,8 +565,7 @@ public class SymbolTable {
     }
 
     /**
-     * Returns all visible normal functions from this symbol table and all
-     * dependencies.
+     * Returns all visible normal functions from this symbol table and all dependencies.
      *
      * @return Set of NormalFunctionEntries reachable from this SymbolTable.
      */
@@ -520,8 +581,7 @@ public class SymbolTable {
     }
 
     /**
-     * Returns the function matching the same name and the same argument
-     * signature
+     * Returns the function matching the same name and the same argument signature
      *
      * @param funname The name of the function
      * @param signature The signature of the function.
@@ -627,13 +687,11 @@ public class SymbolTable {
     }
 
     /**
-     * Returns the constant entry with the matching constant name and argument
-     * signature. This function examines this symbol table and all dependencies
-     * for matching instances.
+     * Returns the constant entry with the matching constant name and argument signature. This function examines this
+     * symbol table and all dependencies for matching instances.
      *
      * @param constname The name of the constant
-     * @param arguments The list of arguments. may be null or empty list to
-     * indicate the constants has no arguments.
+     * @param arguments The list of arguments. may be null or empty list to indicate the constants has no arguments.
      * @return The matching ConstantEntry if it exists, otherwise null.
      */
     public ConstantEntry getConstantEntry(String constname, List<SortEntry> arguments) {
@@ -659,20 +717,15 @@ public class SymbolTable {
     }
 
     /**
-     * Creates a new constant entry for the given {@code constname(arguments)}
-     * and registers the constant as belonging to the sort entries in the list
-     * of sourceSorts.
+     * Creates a new constant entry for the given {@code constname(arguments)} and registers the constant as belonging
+     * to the sort entries in the list of sourceSorts.
      *
      * @param constname the String name of the constant
-     * @param arguments the sorts that specify the schema for instantiating the
-     * constant.
-     * @param parent_sorts The sort entries that will have the constant as a
-     * member of their sort.
-     * @param loc The syntactic element relating to the declaration of the
-     * constants.
+     * @param arguments the sorts that specify the schema for instantiating the constant.
+     * @param parent_sorts The sort entries that will have the constant as a member of their sort.
+     * @param loc The syntactic element relating to the declaration of the constants.
      * @return the ConstantEntry created in the symbol table.
-     * @throws DuplicateConstantException if the exact constant has already been
-     * declared for one of the parent_sorts.
+     * @throws DuplicateConstantException if the exact constant has already been declared for one of the parent_sorts.
      */
     public ConstantEntry createConstantEntry(String constname, List<SortEntry> arguments, List<SortEntry> parent_sorts,
             Location loc) throws DuplicateConstantException {
@@ -691,10 +744,12 @@ public class SymbolTable {
                 }
             }
         }
+
         //we do not want to duplicate any existing compatible ConstantEntry created by other symbol tables. 
         if (constEntry == null) {
             //check global constent entry table
-            Set<ConstantEntry> otherSTEntries = staticCEMap.get(constname);
+            Map<String, Set<ConstantEntry>> globalCEMap = getGlobalCEMap();
+            Set<ConstantEntry> otherSTEntries = globalCEMap.get(constname);
             if (otherSTEntries != null) {
                 for (ConstantEntry c : otherSTEntries) {
                     if (c.getArguments().equals(arguments)) {
@@ -705,10 +760,10 @@ public class SymbolTable {
             }
             if (constEntry == null) {
                 constEntry = new ConstantEntry(constname, arguments, parent_sorts, loc);
-                Set<ConstantEntry> globalSet = staticCEMap.get(constname);
+                Set<ConstantEntry> globalSet = globalCEMap.get(constname);
                 if (globalSet == null) {
                     globalSet = new HashSet<>();
-                    staticCEMap.put(constname, globalSet);
+                    globalCEMap.put(constname, globalSet);
                 }
                 globalSet.add(constEntry);
             }
@@ -739,11 +794,9 @@ public class SymbolTable {
     }
 
     /**
-     * Finds a matching constant entry of the same name. returns null if no such
-     * constant entry can be found.
+     * Finds a matching constant entry of the same name. returns null if no such constant entry can be found.
      *
-     * @param constTerm The ALMTerm whose matching constant entry we are
-     * seeking.
+     * @param constTerm The ALMTerm whose matching constant entry we are seeking.
      * @return the matching constant entry if it exists, otherwise null.
      */
     public Set<ConstantEntry> getMatchingConstantEntries(ALMTerm constTerm) {
@@ -851,12 +904,25 @@ public class SymbolTable {
     }
 
     public void flatten() {
+        if(rootST != null){
+            ALMCompiler.IMPLEMENTATION_FAILURE("Flatten SymbolTable", "Flatten was called on a non-root symbol table.");
+        }
+        flattenHelp(this, new HashSet<>());
+    }
+    
+    protected void flattenHelp(SymbolTable rootST, Set<SymbolTable> processed){
+        if(processed.contains(this)){
+            return;
+        }        
+        if(rootST != this){
+            rootST.SEMap.putAll(this.SEMap);
+            rootST.CEMap.putAll(this.CEMap);
+            rootST.FEMap.putAll(this.FEMap);
+            rootST.DMap.putAll(this.DMap);
+        }
+        processed.add(this);
         for (SymbolTable dependency : dependencies) {
-            dependency.flatten();
-            this.SEMap.putAll(dependency.SEMap);
-            this.CEMap.putAll(dependency.CEMap);
-            this.FEMap.putAll(dependency.FEMap);
-            this.DMap.putAll(dependency.DMap);
+                dependency.flattenHelp(rootST, processed);
         }
         dependencies.clear();
     }

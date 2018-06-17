@@ -163,18 +163,47 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         args.set(index, arg);
         return this;
     }
-
-    public void setSort(String var, String sort) {
-        if (this.type == VAR && this.name.compareTo(var) == 0) {
-            this.sort = sort;
-        }
-        for (ALMTerm arg : args) {
-            arg.setSort(var, sort);
-        }
-
-    }
+//
+//    public void setSort(String var, String sort) {
+//        if (this.type == VAR && this.name.compareTo(var) == 0) {
+//            this.sort = sort;
+//        }
+//        for (ALMTerm arg : args) {
+//            arg.setSort(var, sort);
+//        }
+//
+//    }
 
     public String getSort() {
+        if (sort == null) {
+            switch (this.type) {
+                case ALMTerm.VAR:
+                    if (typechecker == null) {
+                        sort = ALM.SORT_UNKNOWN;
+                    }
+                    SortType sortType = typechecker.getNarrowestSortType(this.name);
+                    if (sortType.isSingleton()) {
+                        sort = sortType.getSingleton().getSortName();
+                    } else {
+                        ALMCompiler.IMPLEMENTATION_FAILURE("toSortInstance",
+                                "Union Sort not handled here.  Whole section needs to be re-written. ");
+                    }
+                    break;
+
+                case ALMTerm.BOOL:
+                    sort = ALM.SORT_BOOLEANS;
+                    break;
+                case ALMTerm.INT:
+                    sort = ALM.SORT_INTEGERS;
+                    break;
+                case ALMTerm.ID:
+                //NOT SUPPORT YET, Likely need to look up for matching instance or constant and use parent sort. 
+                case ALMTerm.FUN:
+                //NOT SUPPORT YET, Likely need to look up functor in instance and use parent sort. 
+                default:
+                    ALMCompiler.IMPLEMENTATION_FAILURE("Sort As String", "Unhandled type [" + this.type + "]");
+            }
+        }
         return sort;
     }
 
@@ -714,7 +743,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                 }
                 SortType sortType = typechecker.getNarrowestSortType(this.name);
                 if (sortType.isSingleton()) {
-                    return "#" + sortType.getSingleton().getSortName();
+                    return "#" + getSort();
                 } else {
                     ALMCompiler.IMPLEMENTATION_FAILURE("toSortInstance",
                             "Union Sort not handled here.  Whole section needs to be re-written. ");

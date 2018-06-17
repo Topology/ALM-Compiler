@@ -481,7 +481,6 @@ public class ALMCompilerSettings {
                         printUsageAndExitWithError("Missing value following " + args[i - 2]);
                     }
                     File f = new File(args[i - 1]);
-                    // System.out.println(f.getParent());
                     if (f.isDirectory() || !f.exists()) {
                         printUsageAndExitWithError("Clingo not found at " + args[i - 1]);
                     }

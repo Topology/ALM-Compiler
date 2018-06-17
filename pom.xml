@@ -5,8 +5,8 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
-        <alm.sys.desc>src/main/resources/sysdesc/testing/empty/empty.alm</alm.sys.desc>
-        <alm.debug>False</alm.debug>
+        <alm.sys.desc>src/test/resources/sysdesc/unittest/programs/basic1.alm</alm.sys.desc>
+        <alm.debug>True</alm.debug>
         <alm.output>target/alm/output</alm.output>
         <alm.library>src/main/resources/sysdesc/libraries/</alm.library>
         <sparc.jar>src/main/resources/solvers/sparc.jar</sparc.jar>
@@ -107,7 +107,6 @@
                 <executions>
                     <execution>
                         <id>id.test.run</id>
-                        <phase>test</phase>
                         <goals>
                             <goal>java</goal>
                         </goals>

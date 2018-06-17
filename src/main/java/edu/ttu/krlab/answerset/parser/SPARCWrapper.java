@@ -190,7 +190,6 @@ class StreamGobbler // from Evgenii Balai
                     // finish him!
                     Runtime.getRuntime().halt(0);
                 }
-                //System.out.println(type + ">" + line);
                 if (type.equals("STDOUT")) {
                     OsUtils.result.append(line).append("\n");
                 } else if (type.equals("ERROR")) {
