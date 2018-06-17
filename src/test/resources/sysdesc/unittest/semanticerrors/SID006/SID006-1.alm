@@ -1,0 +1,18 @@
+system description sid006
+    theory sid006
+        module sid006
+            sort declarations
+                points, things :: universe
+                agents :: things
+                move :: actions
+                    attributes
+                        actor : agents
+                        origin : points
+                        dest : points
+    structure bob_and_john
+	instances
+            bob in agents
+            new_york in points
+            go(X,P) in move
+                actor = X
+                dest = P

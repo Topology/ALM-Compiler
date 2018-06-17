@@ -32,7 +32,6 @@ public class UnitTestingBase {
     protected SPARCProgram tm;
     protected List<AnswerSet> pm_as;
     protected List<AnswerSet> tm_as;
-    protected StringBuilder progTestRes = new StringBuilder();
     protected boolean testProgramsPassed = true;
 
     private String unit_test_folder = "";
@@ -77,7 +76,6 @@ public class UnitTestingBase {
         tm = new SPARCProgram();
         pm_as = new ArrayList<>();
         tm_as = new ArrayList<>();
-        progTestRes = new StringBuilder();
     }
 
     public void compile(String almProgramLocation) {
@@ -110,13 +108,14 @@ public class UnitTestingBase {
     }
 
     protected void testProgram(String programFile, String answersetFile) {
+        System.out.println("TEST PROGRAM: " + programFile);
         String almProgLoc = unit_test_folder + File.separator + "programs" + File.separator + programFile;
         String ansLoc = unit_test_folder + File.separator + "programs" + File.separator + answersetFile;
         compile(almProgLoc);
 
+        System.out.println("Verifying Answerset");
         if (tm_as.size() != 1) {
-            progTestRes.append("PROGRAM TEST: ").append(almProgLoc).append(" FAILED")
-                    .append(" to produce exactly 1 answerset.");
+            System.out.println("FAILED to produce exactly 1 intermediate answerset.");
             testProgramsPassed = false;
             return;
         }
@@ -125,17 +124,13 @@ public class UnitTestingBase {
         try {
             rawAS = readFile(ansLoc);
         } catch (IOException ex) {
-            progTestRes.append("PROGRAM TEST: ").append(almProgLoc).append(" FAILED")
-                    .append(" due to bad file location for expected answerset: ")
-                    .append(ex.getMessage()).append(ls);
+            System.out.println("FAILED due to bad file location for expected answerset: " + ex.getMessage());
             testProgramsPassed = false;
             return;
         }
         List<AnswerSet> ansSets = new DLVAnswerSetParser().getAnswerSets(new BufferedReader(new StringReader(rawAS)));
         if (ansSets.size() != 1) {
-            progTestRes.append("PROGRAM TEST: ").append(almProgLoc).append(" FAILED")
-                    .append(" due to expected answerset file not containing exactly 1 answerset.")
-                    .append(ls);
+            System.out.println("FAILED to produce exactly 1 final answerset.");
             testProgramsPassed = false;
             return;
         }
@@ -147,29 +142,26 @@ public class UnitTestingBase {
         Set<String> recMinusExp = new HashSet<>(received);
         recMinusExp.removeAll(expected);
         if (expMinusRec.size() != 0 || recMinusExp.size() != 0) {
-            progTestRes.append("PROGRAM TEST: ").append(almProgLoc).append(" FAILED")
-                    .append(" due to expected answerset and computed answerset being different.")
-                    .append(ls);
             if (expMinusRec.size() != 0) {
-                progTestRes.append("The received answerset did not contain the following literals:").append(ls);
+                System.out.println("Final Answerset Missing Literals:");
                 for (String lit : expMinusRec) {
-                    progTestRes.append("        ").append(lit).append(ls);
+                    System.out.println("        " + lit);
                 }
             }
             if (recMinusExp.size() != 0) {
-                progTestRes.append("The received answerset contain the following excess literals:").append(ls);
+                System.out.println("Final Answerset Excess Literals:");
                 for (String lit : recMinusExp) {
-                    progTestRes.append("        ").append(lit).append(ls);
+                    System.out.println("        " + lit);
                 }
             }
             testProgramsPassed = false;
+            System.out.println("FAILED\n");
             return;
         }
-        progTestRes.append("PROGRAM TEST: ").append(almProgLoc).append(" PASSED.").append(ls);
+        System.out.println("PASSED\n");
     }
 
     protected void testProgramsFinished() {
-        System.out.println(progTestRes.toString());
         assertEquals("One or more test programs failed.", testProgramsPassed, true);
     }
 

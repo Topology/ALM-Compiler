@@ -75,6 +75,7 @@ public class SemanticError {
     public static final String SID003 = "SID003";
     public static final String SID004 = "SID004";
     public static final String SID005 = "SID005";
+    public static final String SID006 = "SID006";
     public static final String SFD001 = "SFD001";
     public static final String SFD002 = "SFD002";
     public static final String TYP001 = "TYP001";
@@ -113,6 +114,13 @@ public class SemanticError {
     public SemanticError add(ParserRuleContext location) {
         if (location != null)
             add(new Location(location));
+        return this;
+    }
+    
+    public SemanticError add(List<? extends ParserRuleContext> location){
+        if(location != null){
+            add(new Location(location));
+        }
         return this;
     }
 

@@ -48,9 +48,11 @@ module seven
 structure multi
     instances 
         usa, canada in country, name
-        texas, california in state, name
+        texas, california in name
+        texas, california in state
                 countryOf = usa
-        calgary, alberta in state, name
+        calgary, alberta in name
+        calgary, alberta in state
                 countryOf = canada
         kane in name
         kane in citizen

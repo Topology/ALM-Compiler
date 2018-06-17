@@ -415,6 +415,12 @@ public abstract class ErrorMessageTable {
                 "Change either the attribute declaration signature or the attribute definition to match the number of arguments for the function.");
         errorMetaData.put(SemanticError.SID005, sid005);
 
+        // SID006
+        errorMetaData.put(SemanticError.SID006, new ErrorMetaDataBase(SemanticError.SID006,
+                "Instances [1] declared for sorts [2] has defined attributes [3].",
+                "This version of ALM does not support attribute definitions while defining instances for multiple sorts.",
+                "Define the instances for each sort separately in order to define the related sort attributes."));
+
         // SFD001
         ErrorMetaDataBase sfd001 = new ErrorMetaDataBase(SemanticError.SFD001,
                 "The function [1] being defined must be a static function. It's declaration [2] does not match.",

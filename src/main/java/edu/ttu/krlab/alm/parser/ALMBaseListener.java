@@ -2340,6 +2340,9 @@ public class ALMBaseListener implements ALMListener {
         List<ALMParser.One_attribute_defContext> attr_defs = null;
         if (ctx.attribute_defs() != null) {
             attr_defs = ctx.attribute_defs().one_attribute_def();
+            if(sorts.size() >1 && !attr_defs.isEmpty()){
+                er.newSemanticError(SemanticError.SID006).add(instances).add(sorts).add(attr_defs);
+            }
         }
 
         // Turn list of sort_names into a list of SortEntries in the symbol
@@ -2348,7 +2351,7 @@ public class ALMBaseListener implements ALMListener {
         for (ALMParser.Sort_nameContext sort : sorts) {
             String sort_text = sort.getText();
             if (st.isPredefinedSort(sort_text)) {
-                er.newSemanticError("SID001").add(new Location(sort));
+                er.newSemanticError(SemanticError.SID001).add(new Location(sort));
             } else {
                 SortEntry se;
                 try {

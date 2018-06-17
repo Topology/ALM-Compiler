@@ -73,7 +73,7 @@ public class ALMCompiler {
 
         ALMCompiler.Compile(s, rootST, er, aspf, pm, pm_as, tm, tm_as);
             if (er.hasErrors())
-                ALMCompiler.exitWithErrors(er, s);
+                ALMCompiler.reportErrors(er, s);
     }
     
     public static final void Compile(ALMCompilerSettings s, SymbolTable rootST, ErrorReport er, ASPfProgram aspf,
@@ -175,7 +175,7 @@ public class ALMCompiler {
         }
 
         if (er.hasErrors()) {
-            ALMCompiler.exitWithErrors(er, s);
+            ALMCompiler.reportErrors(er, s);
         }
         ALMBaseListener mcListener = new ALMBaseListener(s, newST, aspf, er);
         ParseTreeWalker walker = new ParseTreeWalker();
@@ -186,7 +186,7 @@ public class ALMCompiler {
         return newST;
     }
 
-    public static void exitWithErrors(ErrorReport er, ALMCompilerSettings s) {
+    public static void reportErrors(ErrorReport er, ALMCompilerSettings s) {
         try {
             er.writeTo(s.getErrorDestination());
             s.closeErrorDestination();
@@ -194,7 +194,6 @@ public class ALMCompiler {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        System.exit(-1);
     }
 
     public static final void Translate(ALMCompilerSettings s, SymbolTable st, ErrorReport er, ASPfProgram aspf,
@@ -208,7 +207,7 @@ public class ALMCompiler {
         s.closeIntermediateASPfDestination();
 
         if (er.hasErrors())
-            ALMCompiler.exitWithErrors(er, s);
+            ALMCompiler.reportErrors(er, s);
 
         ALMTranslator.ConstructPreModelProgram(pm, st, aspf);
         pm.writeTo(s.getPreModelDestination());
