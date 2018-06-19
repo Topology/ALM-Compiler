@@ -5,7 +5,7 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
-        <alm.sys.desc>src/test/resources/sysdesc/unittest/programs/basic1.alm</alm.sys.desc>
+        <alm.sys.desc>src/test/resources/sysdesc/unittest/programs/basicMotion.alm</alm.sys.desc>
         <alm.debug>True</alm.debug>
         <alm.output>target/alm/output</alm.output>
         <alm.library>src/main/resources/sysdesc/libraries/</alm.library>
