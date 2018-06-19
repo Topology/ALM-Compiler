@@ -177,6 +177,8 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     public String getSort() {
         if (sort == null) {
             switch (this.type) {
+                case ALMTerm.SORT:
+                    return name;
                 case ALMTerm.VAR:
                     if (typechecker == null) {
                         sort = ALM.SORT_UNKNOWN;
@@ -737,6 +739,8 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
 
     public String toSortInstance() {
         switch (this.type) {
+            case ALMTerm.SORT: 
+                return "#"+getSort();
             case ALMTerm.VAR:
                 if (typechecker == null) {
                     return ALM.SORT_UNKNOWN;
@@ -818,6 +822,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
 
     public boolean isGround() {
         switch (this.type) {
+            case ALMTerm.SORT:
             case ALMTerm.VAR:
                 return false;
             case ALMTerm.INT:

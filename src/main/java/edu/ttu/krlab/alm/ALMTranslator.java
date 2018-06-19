@@ -1205,7 +1205,7 @@ public abstract class ALMTranslator {
             int len = sig.size();
             for (int i = 0; i < len - 1; i++) {
                 SortEntry sorti = sig.get(i);
-                functor.addArg(new ALMTerm(sorti.getSortName(), ALMTerm.ID));
+                functor.addArg(new ALMTerm(sorti.getSortName(), ALMTerm.SORT));
             }
             fluents_sort.addInstance(functor);
         }
@@ -1662,6 +1662,7 @@ public abstract class ALMTranslator {
     private static SPARCLiteral new_SPARCLiteral_Boolean_Fluent(String sign, FunctionEntry f, List<ALMTerm> args,
             String timestep) {
         ALMTerm slit = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN);
+        slit.setSign(sign);
         if (args != null) {
             for (ALMTerm arg : args) {
                 slit.addArg(arg);

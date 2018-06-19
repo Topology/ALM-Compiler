@@ -18,7 +18,8 @@ public class ProgramsTest extends UnitTestingBase {
     @Test
     public void programsTest() {
         testProgram("empty.alm", "empty.answerset");
-        testProgram("basic1.alm", "basic1.answerset");
+        testProgram("basicMotion.alm", "basicMotion.answerset");
+        testProgram("coin_flip.alm", "coin_flip.answerset");
         testProgram("multi-module-country.alm", "multi-module-country.answerset");
         testProgramsFinished();
     }
