@@ -37,7 +37,10 @@ import edu.ttu.krlab.alm.parser.ALMParser.StructureContext;
 import edu.ttu.krlab.alm.parser.ALMParser.System_descriptionContext;
 import edu.ttu.krlab.alm.parser.ALMSyntaxErrorListener;
 import edu.ttu.krlab.answerset.parser.AnswerSet;
+import edu.ttu.krlab.answerset.parser.DLVAnswerSetParser;
 import edu.ttu.krlab.answerset.parser.SPARCWrapper;
+import java.io.BufferedReader;
+import java.io.StringReader;
 
 public class ALMCompiler {
 
@@ -220,6 +223,13 @@ public class ALMCompiler {
             tm.writeTo(s.getTransitionModelDestination());
             s.closeTransitionModelDestination();
             tm_as.addAll(GetAnswerSet(tm, s));
+            if(s.finalAnswerSetDestinationExists()){
+                try{
+                    writeFinalAnswerSetDiff(s, tm_as);
+                } catch (IOException e){
+                    //move on to writing final answerset. 
+                }
+            }
             AnswerSets.writeTo(s.getFinalAnswerSetDestination(), tm_as);
             s.closeFinalAnswerSetsDestination();
         } else {
@@ -279,6 +289,48 @@ public class ALMCompiler {
                 }
             }
         }
+    }
+
+    private static void writeFinalAnswerSetDiff(ALMCompilerSettings s, List<AnswerSet> tm_as) throws IOException {
+        BufferedReader previousFinalAnswerset = s.getFinalAnswerSetDestinationReader();
+        List<AnswerSet> ansSets = new DLVAnswerSetParser().getAnswerSets(previousFinalAnswerset);
+        previousFinalAnswerset.close();
+        BufferedWriter writer = s.getFinalAnswerSetDiffDestination();
+        if (ansSets.size() > 1) {
+            writer.append("Existing Final Answerset File Has More Than 1 Answerset And Cannot Be Differenced.");
+            writer.close();
+            return;
+        } else if (ansSets.size() < 1){
+            writer.append("Existing Final Answerset File Has No Answerset And Cannot Be Differenced.");
+            writer.close();
+            return;
+        }
+        String ls = System.getProperty("line.separator");
+        AnswerSet aSet = ansSets.get(0);
+        Set<String> expected = aSet.getAllLiteralInstances();
+        Set<String> received = tm_as.get(0).getAllLiteralInstances();
+        Set<String> expMinusRec = new HashSet<>(expected);
+        expMinusRec.removeAll(received);
+        Set<String> recMinusExp = new HashSet<>(received);
+        recMinusExp.removeAll(expected);
+        if (expMinusRec.size() != 0 || recMinusExp.size() != 0) {
+            if (expMinusRec.size() != 0) {
+                writer.append("Previous Final Answerset Has These Extra Literals:").append(ls);
+                for (String lit : expMinusRec) {
+                    writer.append("        " + lit).append(ls);
+                }
+            }
+            writer.append(ls);
+            if (recMinusExp.size() != 0) {
+                writer.append("Previous Final Answerset Did Not Have These Literals:").append(ls);
+                for (String lit : recMinusExp) {
+                    writer.append("        " + lit).append(ls);
+                }
+            }
+        } else {
+            writer.append("No Difference.").append(ls);
+        }
+        writer.close();
     }
 
 }

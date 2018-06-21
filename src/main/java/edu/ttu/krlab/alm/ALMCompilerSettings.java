@@ -1359,4 +1359,29 @@ public class ALMCompilerSettings {
         return result;
     }
 
+    boolean finalAnswerSetDestinationExists() {
+        String destination = settings.get(FINAL_AS_DESTINATION);
+        if (destination == null) {
+            return false;
+        }
+        return new File(destination).exists();        
+    }
+
+    BufferedReader getFinalAnswerSetDestinationReader() throws FileNotFoundException {
+        String destination = settings.get(FINAL_AS_DESTINATION);
+        if(destination == null){
+            return null;
+        }
+        return new BufferedReader(new FileReader(new File(destination)));
+    }
+
+    BufferedWriter getFinalAnswerSetDiffDestination() throws IOException {
+        String destination = settings.get(FINAL_AS_DESTINATION);
+        if(destination == null){
+            return null;
+        }
+        destination = destination+".diff";
+        return new BufferedWriter(new FileWriter(new File(destination)));
+    }
+
 }
