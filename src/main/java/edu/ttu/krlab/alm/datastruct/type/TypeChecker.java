@@ -27,8 +27,9 @@ public class TypeChecker {
     }
 
     public boolean typeCheckPasses(ErrorReport er) {
-        if (typeChecked)
+        if (typeChecked) {
             return passed;
+        }
         passed = true; // until proven otherwise.
         for (Map.Entry<String, SortType> entry : varTypes.entrySet()) {
             String var = entry.getKey();
@@ -54,14 +55,18 @@ public class TypeChecker {
         return passed;
     }
 
-    public String newVariable(String baseVar) {
+    public String newVariable(String baseVar, SortType type) {
         Set<String> variables = varTypes.keySet();
-        if (!variables.contains(baseVar))
+        if (!variables.contains(baseVar)) {
+            varTypes.put(baseVar, type);
             return baseVar;
+        }
         int count = 1;
         String newVar = baseVar + count;
-        while (variables.contains(newVar))
+        while (variables.contains(newVar)) {
             newVar = baseVar + (count++);
+        }
+        varTypes.put(baseVar, type);
         return newVar;
     }
 
@@ -74,10 +79,11 @@ public class TypeChecker {
         }
         occurrences.add(constTerm);
         SortType constType = constTypes.get(cnst);
-        if (constType == null)
+        if (constType == null) {
             constType = Type.getSortType(cnst.getSourceSorts());
-        else
+        } else {
             constType = Type.intersect(constType, expected);
+        }
         constTypes.put(cnst, constType);
         return constType;
     }

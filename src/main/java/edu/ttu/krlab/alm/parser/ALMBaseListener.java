@@ -30,6 +30,7 @@ import edu.ttu.krlab.alm.datastruct.sig.NormalFunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
+import edu.ttu.krlab.alm.datastruct.type.Type;
 import edu.ttu.krlab.alm.datastruct.type.TypeChecker;
 import edu.ttu.krlab.alm.parser.ALMParser.Action_conditionsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Added_constraintsContext;
@@ -2533,7 +2534,7 @@ public class ALMBaseListener implements ALMListener {
                     }
                     // Construct a new variable for the function to equal.
                     String new_var_base = attr_fun.getName().substring(0, 1).toUpperCase() + "_";
-                    ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base), ALMTerm.VAR, attr_def.getLocation());
+                    ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base, Type.ANY_TYPE), ALMTerm.VAR, attr_def.getLocation());
                     ALMTerm ad_head = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, attr_def.getLocation());
                     ad_head.addArg(new_fun);
                     ad_head.addArg(new_var);

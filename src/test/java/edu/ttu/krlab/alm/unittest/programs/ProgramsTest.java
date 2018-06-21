@@ -21,6 +21,7 @@ public class ProgramsTest extends UnitTestingBase {
         testProgram("basicMotion.alm", "basicMotion.answerset");
         testProgram("coin_flip.alm", "coin_flip.answerset");
         testProgram("multi-module-country.alm", "multi-module-country.answerset");
+        testProgram("npainting.alm", "npainting.answerset");
         testProgramsFinished();
     }
 }

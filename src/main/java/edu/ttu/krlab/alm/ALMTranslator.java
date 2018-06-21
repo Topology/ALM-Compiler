@@ -25,6 +25,7 @@ import edu.ttu.krlab.alm.datastruct.sparc.SPARCRule;
 import edu.ttu.krlab.alm.datastruct.sparc.SPARCSort;
 import edu.ttu.krlab.alm.datastruct.sparc.SPARCSortAlreadyDefined;
 import edu.ttu.krlab.alm.datastruct.sparc.SPARCSortNotDefined;
+import edu.ttu.krlab.alm.datastruct.type.Type;
 import edu.ttu.krlab.alm.datastruct.type.TypeChecker;
 import edu.ttu.krlab.answerset.parser.AnswerSet;
 
@@ -1584,8 +1585,22 @@ public abstract class ALMTranslator {
     private static ALMTerm TranslateTermRelation(ALMTerm tlit, List<SPARCLiteral> body, SymbolTable st, TypeChecker tc,
             String timestep) {
         ALMTerm termRelation = new ALMTerm(tlit.getName(), ALMTerm.TERM_RELATION);
-        termRelation.addArg(TranslateTerm(tlit.getArg(0), body, st, tc, timestep));
-        termRelation.addArg(TranslateTerm(tlit.getArg(1), body, st, tc, timestep));
+        ALMTerm left = tlit.getArg(0);
+        ALMTerm right = tlit.getArg(1);
+        if(left.isVariable() && left.getSort() != ALM.SORT_UNKNOWN){
+            ALMTerm leftCopy =  new ALMTerm(left.getName(), ALMTerm.VAR);
+            body.add(new ALMTerm("#"+left.getSort(), ALMTerm.FUN, leftCopy));
+            termRelation.addArg(leftCopy);
+        } else {
+            termRelation.addArg(TranslateTerm(left, body, st, tc, timestep));
+        }
+        if(right.isVariable() && right.getSort()!= ALM.SORT_UNKNOWN){
+            ALMTerm rightCopy =  new ALMTerm(right.getName(), ALMTerm.VAR);
+            body.add(new ALMTerm("#"+right.getSort(), ALMTerm.FUN, rightCopy));
+            termRelation.addArg(rightCopy);
+        } else {
+            termRelation.addArg(TranslateTerm(right, body, st, tc, timestep));
+        }
         return termRelation;
     }
 
@@ -1616,12 +1631,16 @@ public abstract class ALMTranslator {
                     //Determine pattern of variables to use in this rule.  
                     String new_var_base = f.getFunctionName().substring(0, 1).toUpperCase() + "O";
                     // Get New Variable
-                    ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base), ALMTerm.VAR);
+                    ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base, Type.ANY_TYPE), ALMTerm.VAR);
                     // Need To Add the Function To the Body of the rule we are constructing;
                     if (f.isBoolean()) {
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term", "Boolean function ["
                                 + f.getQualifiedFunctionName() + "] is occurring nested within a term");
                     }
+                    //The function occurring as a term denotes the value assigned to it in ASP{f}.  
+                    //The function must be replaced by a variable carrying its value.  This variable 
+                    //is added as the final argument of the literal in SPARC since functions are 
+                    //modeled as predicates.  
                     if (f.isStatic()) {
                         body.add(new_SPARCLiteral_NonBoolean_Static(f, term.getArgs(), new_var));
                     } else if (f.isFluent()) {

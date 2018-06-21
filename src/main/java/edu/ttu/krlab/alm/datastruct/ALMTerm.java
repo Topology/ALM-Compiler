@@ -182,6 +182,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                 case ALMTerm.VAR:
                     if (typechecker == null) {
                         sort = ALM.SORT_UNKNOWN;
+                        return sort;
                     }
                     SortType sortType = typechecker.getNarrowestSortType(this.name);
                     if (sortType.isSingleton()) {
