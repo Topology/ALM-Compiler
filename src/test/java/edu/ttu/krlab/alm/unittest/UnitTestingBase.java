@@ -58,6 +58,8 @@ public class UnitTestingBase {
         } else {
             System.err.println("ASP_SOLVER_DIRECTORY or ASP_SOLVER_TYPE not set.");
         }
+        String library = System.getProperty("LIBRARY");
+        s.setLibraryLocation(library);
         unit_test_folder = System.getProperty("UNIT_TEST_DIRECTORY");
         s.setErrorDestination(null);
         s.setFinalAnswerSetDestination(null);

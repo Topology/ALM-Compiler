@@ -1,0 +1,9 @@
+system description abstract_entity
+    theory entity
+        import name.core from unit_test
+        module nameable
+            depends on name.core
+            sort declarations
+                named_entities :: universe
+                    attributes
+                        name_of : names

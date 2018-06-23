@@ -22,6 +22,7 @@ public class ProgramsTest extends UnitTestingBase {
         testProgram("coin_flip.alm", "coin_flip.answerset");
         testProgram("multi-module-country.alm", "multi-module-country.answerset");
         testProgram("npainting.alm", "npainting.answerset");
+        testProgram("named_entity_library.alm", "named_entity_library.answerset");
         testProgramsFinished();
     }
 }

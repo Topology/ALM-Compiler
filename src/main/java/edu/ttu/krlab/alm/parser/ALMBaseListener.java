@@ -1200,6 +1200,8 @@ public class ALMBaseListener implements ALMListener {
                             .add(duplicated.iterator().next());
 
                 }
+            } else {
+                        return ; //nothing else to do here due to error. 
             }
 
             // Add the is_a(object_constant, source_sort) rule to ASPf

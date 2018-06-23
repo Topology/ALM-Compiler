@@ -1384,4 +1384,7 @@ public class ALMCompilerSettings {
         return new BufferedWriter(new FileWriter(new File(destination)));
     }
 
+    public void setLibraryLocation(String library) {
+        settings.put(LIBRARY_LOCATION, library);
+    }
 }

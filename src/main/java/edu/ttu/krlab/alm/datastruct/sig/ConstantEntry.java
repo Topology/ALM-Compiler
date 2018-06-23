@@ -19,7 +19,7 @@ public class ConstantEntry {
     List<SortEntry> arguments;
     Location loc;
     SortEntry singletonSort = null;
-    Map<String, ALMTerm> CDMap = null;
+    final Map<String, ALMTerm> CDMap = new HashMap<>();;
 
     public ConstantEntry(String name, List<SortEntry> arguments, List<SortEntry> sourceSorts, Location loc) {
         this.constName = name;
@@ -143,15 +143,11 @@ public class ConstantEntry {
     }
 
     public void setConstantDefinition(ALMTerm obj_const, ALMTerm objConstVal) {
-        if (CDMap == null)
-            CDMap = new HashMap<>();
         String objConst = obj_const.toString();
         CDMap.put(objConst, objConstVal);
     }
 
     public ALMTerm getConstantDefinition(ALMTerm obj_const) {
-        if (CDMap == null)
-            return null;
         String objConst = obj_const.toString();
         return CDMap.get(objConst);
     }

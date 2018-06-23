@@ -1,0 +1,8 @@
+system description multi
+import entity from unit_test
+structure library
+    instances 
+        john in names
+        john in named_entities
+            name_of = john
+
