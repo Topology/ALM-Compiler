@@ -68,35 +68,28 @@ import edu.ttu.krlab.alm.parser.ALMParser.Temporal_projectionContext;
 import edu.ttu.krlab.alm.parser.ALMParser.TermContext;
 
 /**
- * This class provides an empty implementation of {@link ALMListener}, which can
- * be extended to create a listener which only needs to handle a subset of the
- * available methods.
+ * This class provides an empty implementation of {@link ALMListener}, which can be extended to create a listener which
+ * only needs to handle a subset of the available methods.
  */
 /**
  *
  *
- * Organized to target computing Pre-model in SPARC first, then targeting Final
- * SPARC Program.
+ * Organized to target computing Pre-model in SPARC first, then targeting Final SPARC Program.
  *
- * Prior to Constructing Pre-Model SPARC Program: 1) Parse Sort Hierarchy A)
- * Sort Hierarchy into Symbol Table B) ASP{f} rules for Hierarchy Created and in
- * intermediate ASP{f} Rule Table 2) Parse Function Declarations A) Functions
- * into Symbol Table 3) Parse Axioms A) Parse Axioms into ASP{f} Rule Table for
- * each type of Axiom 4) Parse Constant Definitions in Structure A) Constant
- * Definitions modify declared constants in the Symbol Table 5) Parse Sort
- * Instances A) Sort Instances are added to the symbol table. B) Rules for sort
- * instances added to ASP{f} table of appropriate type. 6) Parse Function
- * definitions A) Definitions added to ASP{f} rule table of appropriate type.
+ * Prior to Constructing Pre-Model SPARC Program: 1) Parse Sort Hierarchy A) Sort Hierarchy into Symbol Table B) ASP{f}
+ * rules for Hierarchy Created and in intermediate ASP{f} Rule Table 2) Parse Function Declarations A) Functions into
+ * Symbol Table 3) Parse Axioms A) Parse Axioms into ASP{f} Rule Table for each type of Axiom 4) Parse Constant
+ * Definitions in Structure A) Constant Definitions modify declared constants in the Symbol Table 5) Parse Sort
+ * Instances A) Sort Instances are added to the symbol table. B) Rules for sort instances added to ASP{f} table of
+ * appropriate type. 6) Parse Function definitions A) Definitions added to ASP{f} rule table of appropriate type.
  *
- * Construct Pre-model SPARC Program 1) Initialize Sort Section from SORT
- * Hierarchy in symbol table 2) Define predicates from function in symbol table.
- * 3) Translate static rules from ASP{f} that contribute to pre-model.
+ * Construct Pre-model SPARC Program 1) Initialize Sort Section from SORT Hierarchy in symbol table 2) Define predicates
+ * from function in symbol table. 3) Translate static rules from ASP{f} that contribute to pre-model.
  *
  * Compute Answer Set
  *
- * Construct Final SPARC Program 1) Populate Sort Section from answerset 2) Copy
- * predicate declarations 3) Copy rules 4) Translate remaining non-static rules
- * from ASP{f} 5) Add facts from Answer Set.
+ * Construct Final SPARC Program 1) Populate Sort Section from answerset 2) Copy predicate declarations 3) Copy rules 4)
+ * Translate remaining non-static rules from ASP{f} 5) Add facts from Answer Set.
  *
  * @author Edward Wertz
  */
@@ -1201,7 +1194,7 @@ public class ALMBaseListener implements ALMListener {
 
                 }
             } else {
-                        return ; //nothing else to do here due to error. 
+                return; //nothing else to do here due to error. 
             }
 
             // Add the is_a(object_constant, source_sort) rule to ASPf
@@ -1677,7 +1670,7 @@ public class ALMBaseListener implements ALMListener {
      * </p>
      */
     @Override
-    public void enterDefinitions(ALMParser.DefinitionsContext ctx) {
+    public void enterFunction_definitions(ALMParser.Function_definitionsContext ctx) {
     }
 
     /**
@@ -1688,7 +1681,7 @@ public class ALMBaseListener implements ALMListener {
      * </p>
      */
     @Override
-    public void exitDefinitions(ALMParser.DefinitionsContext ctx) {
+    public void exitFunction_definitions(ALMParser.Function_definitionsContext ctx) {
 
     }
 
@@ -2320,9 +2313,8 @@ public class ALMBaseListener implements ALMListener {
     /**
      * {@inheritDoc}
      *
-     * GRAMMAR: one_instance_def: object_constant (',' object_constant)* 'in'
-     * sort_name (',' sort_name)* ('where' literal (',' literal)* )?
-     * attribute_defs;//<one_instance_def> attribute_defs: (one_attribute_def)*;
+     * GRAMMAR: one_instance_def: object_constant (',' object_constant)* 'in' sort_name (',' sort_name)* ('where'
+     * literal (',' literal)* )? attribute_defs;//<one_instance_def> attribute_defs: (one_attribute_def)*;
      * one_attribute_def: function_term EQ term;
      *
      *
@@ -2343,7 +2335,7 @@ public class ALMBaseListener implements ALMListener {
         List<ALMParser.One_attribute_defContext> attr_defs = null;
         if (ctx.attribute_defs() != null) {
             attr_defs = ctx.attribute_defs().one_attribute_def();
-            if(sorts.size() >1 && !attr_defs.isEmpty()){
+            if (sorts.size() > 1 && !attr_defs.isEmpty()) {
                 er.newSemanticError(SemanticError.SID006).add(instances).add(sorts).add(attr_defs);
             }
         }
@@ -3037,6 +3029,16 @@ public class ALMBaseListener implements ALMListener {
     public void exitDiagnostic_problem(Diagnostic_problemContext ctx) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public void enterAlm_file(ALMParser.Alm_fileContext ctx) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void exitAlm_file(ALMParser.Alm_fileContext ctx) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

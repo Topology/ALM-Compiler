@@ -21,7 +21,6 @@ import edu.ttu.krlab.alm.parser.ALMParser.Constant_declarationsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Constant_defsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Current_stateContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Defined_function_declarationsContext;
-import edu.ttu.krlab.alm.parser.ALMParser.DefinitionsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Diagnostic_problemContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Dynamic_causal_lawsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Executability_conditionsContext;
@@ -30,6 +29,7 @@ import edu.ttu.krlab.alm.parser.ALMParser.FactorContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Fluent_declarationsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Fun_defContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Function_declarationsContext;
+import edu.ttu.krlab.alm.parser.ALMParser.Function_definitionsContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Function_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Function_termContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Goal_stateContext;
@@ -864,13 +864,13 @@ public class ALMModuleListener implements ALMListener {
     }
 
     @Override
-    public void enterDefinitions(DefinitionsContext ctx) {
+    public void enterFunction_definitions(Function_definitionsContext ctx) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void exitDefinitions(DefinitionsContext ctx) {
+    public void exitFunction_definitions(Function_definitionsContext ctx) {
         // TODO Auto-generated method stub
 
     }
@@ -1257,6 +1257,16 @@ public class ALMModuleListener implements ALMListener {
     public void exitDiagnostic_problem(Diagnostic_problemContext ctx) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public void enterAlm_file(ALMParser.Alm_fileContext ctx) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void exitAlm_file(ALMParser.Alm_fileContext ctx) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

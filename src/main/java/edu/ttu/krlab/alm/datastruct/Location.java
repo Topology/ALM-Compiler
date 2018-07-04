@@ -103,12 +103,19 @@ public class Location {
     }
 
     public String getFileName() {
+        String fileName = null;
         if (token != null) {
-            return token.getTokenSource().getSourceName();
+            fileName =  token.getTokenSource().getSourceName();
         } else if (prc != null) {
-            return prc.start.getTokenSource().getSourceName();
-        } else {
-            return "";
+            fileName = prc.start.getTokenSource().getSourceName();
+        } 
+        if(fileName != null){
+            int lastSlash = fileName.lastIndexOf('\\');
+            if(lastSlash > 0){
+                return fileName.substring(lastSlash+1);
+            }
+            return fileName;
         }
+        return "";
     }
 }

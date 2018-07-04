@@ -350,8 +350,10 @@ public class SymbolTable {
      */
     public Set<SortEntry> getSortEntries() {
         Set<SortEntry> result = new HashSet<>();
-        for (SymbolTable dependency : dependencies) {
-            result.addAll(dependency.getSortEntries());
+        if (rootST != null) { //process dependency of non-root symbol table (root pointer exists)
+            for (SymbolTable dependency : dependencies) {
+                result.addAll(dependency.getSortEntries());
+            }
         }
         result.addAll(this.SEMap.values());
         return result;
@@ -403,7 +405,7 @@ public class SymbolTable {
         if (se != null) {
             return se;
         }
-        if (dependencies != null) {
+        if (rootST != null && dependencies != null) { //process dependency of non-root symbol table (root pointer exists)
             for (SymbolTable dependency : dependencies) {
                 se = dependency.getSortEntryHelp(sortname);
                 if (se != null) {
@@ -513,7 +515,7 @@ public class SymbolTable {
      */
     private Set<NormalFunctionEntry> getFunctionEntriesHelp(String funname) {
         Set<NormalFunctionEntry> matching = new HashSet<>();
-        if (dependencies != null) {
+        if (rootST != null && dependencies != null) { //process dependency of non-root symbol table (root pointer exists)
             for (SymbolTable dependency : dependencies) {
                 matching.addAll(dependency.getFunctionEntriesHelp(funname));
             }
@@ -571,8 +573,10 @@ public class SymbolTable {
      */
     public Set<NormalFunctionEntry> getFunctions() {
         Set<NormalFunctionEntry> result = new HashSet<>();
-        for (SymbolTable dependency : dependencies) {
-            result.addAll(dependency.getFunctions());
+        if (rootST != null) { //process dependency of non-root symbol table (root pointer exists)
+            for (SymbolTable dependency : dependencies) {
+                result.addAll(dependency.getFunctions());
+            }
         }
         for (String fname : FEMap.keySet()) {
             result.addAll(getFunctionEntriesHelp(fname));
@@ -613,8 +617,10 @@ public class SymbolTable {
 
     public Set<DOMFunctionEntry> getDOMFunctions() {
         Set<DOMFunctionEntry> result = new HashSet<>();
-        for (SymbolTable dependency : dependencies) {
-            result.addAll(dependency.getDOMFunctions());
+        if (rootST != null) { //process dependency of non-root symbol table (root pointer exists)
+            for (SymbolTable dependency : dependencies) {
+                result.addAll(dependency.getDOMFunctions());
+            }
         }
         result.addAll(DMap.values());
         return result;
@@ -625,10 +631,12 @@ public class SymbolTable {
         if (df != null) {
             return df;
         }
-        for (SymbolTable dependency : dependencies) {
-            df = dependency.getDOMFunction(f);
-            if (df != null) {
-                return df;
+        if (rootST != null) { //process dependency of non-root symbol table (root pointer exists)
+            for (SymbolTable dependency : dependencies) {
+                df = dependency.getDOMFunction(f);
+                if (df != null) {
+                    return df;
+                }
             }
         }
         return null;
@@ -706,10 +714,12 @@ public class SymbolTable {
             }
         }
         //iterate through dependencies until a match is found.
-        for (SymbolTable dependency : dependencies) {
-            ConstantEntry ce = dependency.getConstantEntry(constname, arguments);
-            if (ce != null) {
-                return ce;
+        if (rootST != null) { //process dependency of non-root symbol table (root pointer exists)
+            for (SymbolTable dependency : dependencies) {
+                ConstantEntry ce = dependency.getConstantEntry(constname, arguments);
+                if (ce != null) {
+                    return ce;
+                }
             }
         }
         //no match found
@@ -831,8 +841,10 @@ public class SymbolTable {
 
     public Set<ConstantEntry> getConstantEntries(String name) {
         Set<ConstantEntry> result = new HashSet<>();
-        for (SymbolTable dependency : dependencies) {
-            result.addAll(dependency.getConstantEntries(name));
+        if (rootST != null) { //process dependency of non-root symbol table (root pointer exists)
+            for (SymbolTable dependency : dependencies) {
+                result.addAll(dependency.getConstantEntries(name));
+            }
         }
         Set<ConstantEntry> constants = CEMap.get(name);
         if (constants != null) {
@@ -904,17 +916,17 @@ public class SymbolTable {
     }
 
     public void flatten() {
-        if(rootST != null){
+        if (rootST != null) {
             ALMCompiler.IMPLEMENTATION_FAILURE("Flatten SymbolTable", "Flatten was called on a non-root symbol table.");
         }
         flattenHelp(this, new HashSet<>());
     }
-    
-    protected void flattenHelp(SymbolTable rootST, Set<SymbolTable> processed){
-        if(processed.contains(this)){
+
+    protected void flattenHelp(SymbolTable rootST, Set<SymbolTable> processed) {
+        if (processed.contains(this)) {
             return;
-        }        
-        if(rootST != this){
+        }
+        if (rootST != this) {
             rootST.SEMap.putAll(this.SEMap);
             rootST.CEMap.putAll(this.CEMap);
             rootST.FEMap.putAll(this.FEMap);
@@ -922,7 +934,7 @@ public class SymbolTable {
         }
         processed.add(this);
         for (SymbolTable dependency : dependencies) {
-                dependency.flattenHelp(rootST, processed);
+            dependency.flattenHelp(rootST, processed);
         }
         dependencies.clear();
     }

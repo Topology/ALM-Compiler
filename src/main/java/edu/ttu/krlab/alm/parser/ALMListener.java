@@ -258,6 +258,16 @@ public interface ALMListener extends ParseTreeListener {
 	 */
 	void exitOccurs_literal(ALMParser.Occurs_literalContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ALMParser#alm_file}.
+	 * @param ctx the parse tree
+	 */
+	void enterAlm_file(ALMParser.Alm_fileContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#alm_file}.
+	 * @param ctx the parse tree
+	 */
+	void exitAlm_file(ALMParser.Alm_fileContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ALMParser#library_name}.
 	 * @param ctx the parse tree
 	 */
@@ -598,15 +608,15 @@ public interface ALMListener extends ParseTreeListener {
 	 */
 	void exitState_constraints(ALMParser.State_constraintsContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link ALMParser#definitions}.
+	 * Enter a parse tree produced by {@link ALMParser#function_definitions}.
 	 * @param ctx the parse tree
 	 */
-	void enterDefinitions(ALMParser.DefinitionsContext ctx);
+	void enterFunction_definitions(ALMParser.Function_definitionsContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link ALMParser#definitions}.
+	 * Exit a parse tree produced by {@link ALMParser#function_definitions}.
 	 * @param ctx the parse tree
 	 */
-	void exitDefinitions(ALMParser.DefinitionsContext ctx);
+	void exitFunction_definitions(ALMParser.Function_definitionsContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ALMParser#one_dynamic_causal_law}.
 	 * @param ctx the parse tree

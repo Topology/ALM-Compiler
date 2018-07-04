@@ -106,10 +106,7 @@ RESTRICTIONS : 'restrictions';
 PERMISSIONS : 'permissions';
 POSSIBLE: 'possible';
 AVOID: 'avoid';
-
-
-//PREDEFINED SORT NAMES, reserved and cannot be any kind of ID
-BOOLEAN: 'booleans';
+BOOLEANS: 'booleans';
 INTEGERS: 'integers';
 UNIVERSE: 'universe';
 ACTIONS: 'actions';
@@ -140,12 +137,15 @@ ZERO: [0]+; //TOKEN For ZERO, not a non-terminal in ALM BNF, used in 'integer'  
 
 // RECOVER KEYWORDS INTO IDENTIFIER
 
-id : ID | MOD | OCCURS | INSTANCE | IS_A | HAS_CHILD | HAS_PARENT | LINK | SOURCE | SINK | SUBSORT | DOM | SORT 
-| STATE | CONSTRAINTS | FUNCTION | DECLARATIONS | DEFINITIONS | SYSTEM | DESCRIPTION | THEORY | MODULE | IMPORT 
-| FROM | DEPENDS | ON | ATTRIBUTES | OBJECT | CONSTANT | STATICS | FLUENTS | BASIC | DEFINED | TOTAL | AXIOMS 
-| DYNAMIC | CAUSAL | LAWS | EXECUTABILITY | CONDITIONS | CAUSES | IMPOSSIBLE | IF | FALSE | TRUE | STRUCTURE 
-| IN | WHERE | VALUE | OF | INSTANCES | TEMPORAL | PROJECTION  | MAX | STEPS | HISTORY  | OBSERVED | HAPPENED 
-| BOOLEAN | INTEGERS | UNIVERSE  | ACTIONS;
+id : ID | MOD | SORT | STATE | CONSTRAINTS | FUNCTION | DECLARATIONS | 
+     DEFINITIONS | SYSTEM | DESCRIPTION | THEORY | MODULE | IMPORT | FROM |
+     DEPENDS | ON | ATTRIBUTES | OBJECT | CONSTANT | STATICS | FLUENTS |
+     BASIC | DEFINED | TOTAL | AXIOMS | DYNAMIC | CAUSAL | LAWS | EXECUTABILITY |
+     CONDITIONS | CAUSES | IMPOSSIBLE | IF | FALSE | TRUE | STRUCTURE | IN |
+     WHERE | VALUE | OF | INSTANCES | TEMPORAL  | PROJECTION | MAX | STEPS |
+     HISTORY | OBSERVED | HAPPENED | PLANNING |  PROBLEM | DIAGNOSTIC | 
+     GOAL | SITUATION | WHEN | NORMAL | ACTION | ADDITIONAL | RESTRICTIONS |
+     PERMISSIONS | POSSIBLE | AVOID | BOOLEANS | INTEGERS | UNIVERSE | ACTIONS;
 
 
 /*
@@ -210,12 +210,14 @@ literal: atom | '-' atom |  term relation term ;//<literal> not including specia
 
 occurs_literal:  occurs_atom | '-' occurs_atom; 
 
+/* ALM FILE */
+alm_file : (system_description | theory | module) EOF;
 
 /* ALM SYSTEM DESCRIPTION */
  
 library_name: alm_name;     
 sys_desc_name: alm_name;
-system_description  : SYSTEM DESCRIPTION sys_desc_name theory (structure solver_mode?)?;    //<system_description>
+system_description  : SYSTEM DESCRIPTION sys_desc_name theory (structure solver_mode?)? EOF;    //<system_description>
 
 /* ALM THEORY */
 
@@ -240,7 +242,7 @@ one_dependency: (theory_name '.')? module_name;
 /* ALM SORT DECLARATIONS */
 
 integer_range: '[' integer '..' integer ']';
-predefined_sorts: BOOLEAN | INTEGERS | integer_range;
+predefined_sorts: BOOLEANS | INTEGERS | integer_range;
 sort_name: predefined_sorts | UNIVERSE | ACTIONS | id;
 
 
@@ -260,7 +262,7 @@ one_constant_decl:   object_constant (',' object_constant)*  ':' sort_name (',' 
  
 /* ALM FUNCTION DECLARATIONS */
 
-function_name:ID;
+function_name:id;
 function_declarations: FUNCTION DECLARATIONS static_declarations? fluent_declarations?;// 
 static_declarations: STATICS basic_function_declarations? defined_function_declarations?;//<static_declarations>
 fluent_declarations: FLUENTS basic_function_declarations? defined_function_declarations?;//<static_declarations>
@@ -276,11 +278,11 @@ fun_def : (pos_fun_def | neg_fun_def);
 
 /* ALM AXIOMS */
 
-axioms: AXIOMS (dynamic_causal_laws | executability_conditions | state_constraints | definitions)* ;//<axioms>,<remainder_axioms>
+axioms: AXIOMS (dynamic_causal_laws | executability_conditions | state_constraints | function_definitions)+ ;//<axioms>,<remainder_axioms>
 dynamic_causal_laws: DYNAMIC CAUSAL LAWS (one_dynamic_causal_law)+;
 executability_conditions: EXECUTABILITY CONDITIONS (one_executability_condition)+;
 state_constraints: STATE CONSTRAINTS (one_state_constraint)+;
-definitions: FUNCTION DEFINITIONS (one_definition)+;
+function_definitions: FUNCTION DEFINITIONS (one_definition)+;
 
  /* DYNAMIC CAUSAL LAW */
  
@@ -357,6 +359,6 @@ goal_state: GOAL EQ '{' literal (',' literal)* '}' '.';
 
 diagnostic_problem : DIAGNOSTIC PROBLEM max_steps history normal_conditions? current_state;
 normal_conditions: NORMAL CONDITIONS (one_normal_condition)+;
-one_normal_condition : ID ':'  literal ('when' literal (',' literal)*)?'.';  
+one_normal_condition : id ':'  literal ('when' literal (',' literal)*)?'.';  
 current_state: SITUATION EQ '{' literal (',' literal)* '}' '.';
 

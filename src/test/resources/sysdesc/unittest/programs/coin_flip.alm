@@ -42,6 +42,7 @@ happened(flip(nickel), 0).
 happened(hide(nickel), 1).
 happened(flip(dime), 2).
 happened(flip(nickel), 2).
+%%%% Observing a coin ...??? 
 observed(showing(nickel), heads, 3).
 happened(flip(dime), 4).
 happened(flip(nickel), 4).

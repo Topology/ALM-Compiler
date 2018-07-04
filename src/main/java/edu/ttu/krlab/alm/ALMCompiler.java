@@ -119,6 +119,23 @@ public class ALMCompiler {
                 // Call The Translation Function (Where the magic happens)
                 // Produces the final SPARC program 'tm' and if solving a problem, the final answer set(s) 'as'. 
                 ALMCompiler.Translate(s, rootST, er, aspf, pm, pm_as, tm, tm_as);
+            } else {
+
+                rootST.writeTo(s.getSymbolTableDestination());
+                s.closeSymbolTableDestination();
+                aspf.writeTo(s.getIntermediateASPfDestination());
+                s.closeIntermediateASPfDestination();
+
+                if (er.hasErrors()) {
+                    ALMCompiler.reportErrors(er, s);
+                }
+
+                ALMTranslator.ConstructPreModelProgram(pm, rootST, aspf);
+                pm.writeTo(s.getPreModelDestination());
+                s.closePreModelDestination();
+                pm_as = GetAnswerSet(pm, s);
+                AnswerSets.writeTo(s.getIntermediateAnswerSetDestination(), pm_as);
+                s.closePremodelAnswerSetsDestination();
             }
         } catch (FileNotFoundException e) {
             System.err
@@ -209,6 +226,7 @@ public class ALMCompiler {
 
         if (er.hasErrors()) {
             ALMCompiler.reportErrors(er, s);
+            return;
         }
 
         ALMTranslator.ConstructPreModelProgram(pm, st, aspf);

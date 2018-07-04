@@ -198,10 +198,10 @@ public abstract class ALM {
         return null;
     }
 
-    // predefined_sorts: BOOLEAN | INTEGERS | integer_range;
+    // predefined_sorts: BOOLEANS | INTEGERS | integer_range;
     private static ALMTerm ParsePredefinedSort(Predefined_sortsContext ps) {
-        if (ps.BOOLEAN() != null)
-            return new ALMTerm(ps.BOOLEAN().getText(), ALMTerm.SORT, ps);
+        if (ps.BOOLEANS() != null)
+            return new ALMTerm(ps.BOOLEANS().getText(), ALMTerm.SORT, ps);
         else if (ps.INTEGERS() != null)
             return new ALMTerm(ps.INTEGERS().getText(), ALMTerm.SORT, ps);
         else if (ps.integer_range() != null)
