@@ -40,7 +40,6 @@ import edu.ttu.krlab.answerset.parser.AnswerSet;
 import edu.ttu.krlab.answerset.parser.DLVAnswerSetParser;
 import edu.ttu.krlab.answerset.parser.SPARCWrapper;
 import java.io.BufferedReader;
-import java.io.StringReader;
 
 public class ALMCompiler {
 
@@ -48,7 +47,7 @@ public class ALMCompiler {
     private static ALMCompilerSettings s = null;
 
     public static final String VERSION = "0.1.0"; // Major = huge features, Minor = smaller adjustments, Release Build =
-                                                  // bugfixes
+    // bugfixes
     private static final boolean DEBUG_VERSION = true;
 
     /**
@@ -60,10 +59,9 @@ public class ALMCompiler {
 
         s = new ALMCompilerSettings();
         s.processSystemProperties();
-        
+
         s.processCommandlineArgs(args);
 
-        
         SymbolTable rootST = new SymbolTable("Whole Theory", null); //This is the root symbol table. 
         er = new ErrorReport();
         ASPfProgram aspf = new ASPfProgram();
@@ -75,13 +73,14 @@ public class ALMCompiler {
         tm.addComment("Final Program For Transition Diagram");
 
         ALMCompiler.Compile(s, rootST, er, aspf, pm, pm_as, tm, tm_as);
-            if (er.hasErrors())
-                ALMCompiler.reportErrors(er, s);
+        if (er.hasErrors()) {
+            ALMCompiler.reportErrors(er, s);
+        }
     }
-    
+
     public static final void Compile(ALMCompilerSettings s, SymbolTable rootST, ErrorReport er, ASPfProgram aspf,
             SPARCProgram pm, List<AnswerSet> pm_as, SPARCProgram tm, List<AnswerSet> tm_as) {
-        
+
         //Render input system description into ANTLR Syntax Parse Tree. 
         try {
             //Setup Input to Parser. 
@@ -120,7 +119,7 @@ public class ALMCompiler {
                 // Call The Translation Function (Where the magic happens)
                 // Produces the final SPARC program 'tm' and if solving a problem, the final answer set(s) 'as'. 
                 ALMCompiler.Translate(s, rootST, er, aspf, pm, pm_as, tm, tm_as);
-            } 
+            }
         } catch (FileNotFoundException e) {
             System.err
                     .println("Could not locate input system description in file: " + s.getSystemDescriptionFileName());
@@ -131,9 +130,6 @@ public class ALMCompiler {
         }
     }
 
-    
-    
-    
     private static void processSolverMode(ALMCompilerSettings s, Solver_modeContext mode, SymbolTable st,
             ASPfProgram aspf, ErrorReport er) {
         ParseTreeWalker walker = new ParseTreeWalker();
@@ -159,11 +155,13 @@ public class ALMCompiler {
 
     private static SymbolTable processModuleToSymbolTable(ALMCompilerSettings s, SymbolTable rootST, ModuleContext mc, ALMModuleManager amm,
             ASPfProgram aspf, ErrorReport er, Set<ModuleContext> start, Set<ModuleContext> finished) {
-        if (start.contains(mc))
+        if (start.contains(mc)) {
             ALMCompiler.IMPLEMENTATION_FAILURE("Processing Modules To Symbol Tables",
                     "Circular Module Dependency encountered, no semantic error yet.");
-        if (finished.contains(mc))
+        }
+        if (finished.contains(mc)) {
             return amm.getSymbolTableForModule(mc);
+        }
         start.add(mc);
         //process module dependencies
         SymbolTable newST = new SymbolTable(amm.getModuleContextReference(mc), rootST);
@@ -209,8 +207,9 @@ public class ALMCompiler {
         aspf.writeTo(s.getIntermediateASPfDestination());
         s.closeIntermediateASPfDestination();
 
-        if (er.hasErrors())
+        if (er.hasErrors()) {
             ALMCompiler.reportErrors(er, s);
+        }
 
         ALMTranslator.ConstructPreModelProgram(pm, st, aspf);
         pm.writeTo(s.getPreModelDestination());
@@ -223,10 +222,10 @@ public class ALMCompiler {
             tm.writeTo(s.getTransitionModelDestination());
             s.closeTransitionModelDestination();
             tm_as.addAll(GetAnswerSet(tm, s));
-            if(s.finalAnswerSetDestinationExists()){
-                try{
+            if (s.finalAnswerSetDestinationExists()) {
+                try {
                     writeFinalAnswerSetDiff(s, tm_as);
-                } catch (IOException e){
+                } catch (IOException e) {
                     //move on to writing final answerset. 
                 }
             }
@@ -268,7 +267,6 @@ public class ALMCompiler {
         //instances as arguments.  Typechecking must happen after processing the complete structure.  
 
         //TYPE CHECK COMPLEX CONSTANT DEFINITIONS HERE. 
-
         //Replace simple constants in the ASPf Program
         for (Map.Entry<ALMTerm, ConstantEntry> entry : definedConstants.entrySet()) {
             ALMTerm constInstance = entry.getKey();
@@ -300,8 +298,17 @@ public class ALMCompiler {
             writer.append("Existing Final Answerset File Has More Than 1 Answerset And Cannot Be Differenced.");
             writer.close();
             return;
-        } else if (ansSets.size() < 1){
+        } else if (ansSets.size() < 1) {
             writer.append("Existing Final Answerset File Has No Answerset And Cannot Be Differenced.");
+            writer.close();
+            return;
+        }
+        if (tm_as.size() > 1) {
+            writer.append("New Final Answerset File Has More Than 1 Answerset And Cannot Be Differenced.");
+            writer.close();
+            return;
+        } else if (tm_as.size() < 1) {
+            writer.append("New Final Answerset File Has No Answerset And Cannot Be Differenced.");
             writer.close();
             return;
         }

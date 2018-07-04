@@ -77,8 +77,7 @@ public abstract class ALMTranslator {
     }
 
     /**
-     * Recursively constructs the sort section of the given SPARCProgram
-     * ensuring that all dependencies are respected.
+     * Recursively constructs the sort section of the given SPARCProgram ensuring that all dependencies are respected.
      * <br>
      * A sort S is dependent on S' under the following conditions:
      * <ol>
@@ -600,22 +599,19 @@ public abstract class ALMTranslator {
     }
 
     /**
-     * Static Functions have predicates declared in the predicate section, These
-     * rules are described in the ALM paper as needing to be added per type of
-     * function
+     * Static Functions have predicates declared in the predicate section, These rules are described in the ALM paper as
+     * needing to be added per type of function
      * <p>
      * defined functions need the closed world assumption. <br>
      * -f(X1..Xn) :- not f(X1..Xn).
      * <p>
-     * non-boolean functions need uniqueness constraints to enforce uniqueness
-     * of assignment. <br>
+     * non-boolean functions need uniqueness constraints to enforce uniqueness of assignment. <br>
      * :- f(X1..Xn, V), f(X1..Xn, V2), V != V2. 3)
      * <p>
      * dom_f needs its axioms added: <br>
      * dom_f(X1..Xn) :- f(X1..Xn). when f's range is boolean. <br>
      * dom_f(X1..Xn) :- f(X1..Xn, V). when f's range is not boolean. <br>
-     * -dom_f(X1..Xn) :- not dom_f(X1..Xn). closed world assumption on domain of
-     * static functions. <br>
+     * -dom_f(X1..Xn) :- not dom_f(X1..Xn). closed world assumption on domain of static functions. <br>
      * :- -dom_f(X1..Xn). when f is total.
      *
      * @param pm The SPARCProgram to compute the pre-model.
@@ -915,17 +911,12 @@ public abstract class ALMTranslator {
     /**
      * Fluent functions need the following axioms:
      * <ol>
-     * <li>-f(X1..Xn, I) :- not f(X1..Xn, I) defined fluents receive the closed
-     * world assumption.
-     * <li>:- f(X1..Xn, V, I), f(X1..Xn, V2, I), V != V2. (Unique Assignment
-     * Constraint)
-     * <li>f(X1..Xn, V, I+1) :- f(X1..Xn, V, I), not f(X1..Xn, V2, I), V != V2,
-     * dom_f(X1...Xn, I+1). (Law Of Inertia for f).
+     * <li>-f(X1..Xn, I) :- not f(X1..Xn, I) defined fluents receive the closed world assumption.
+     * <li>-f(X1..Xn, V2, I) :- f(X1..Xn, V, I), V != V2. (Unique Assignment Constraint)
+     * <li>f(X1..Xn, V, I+1) :- f(X1..Xn, V, I), not -f(X1..Xn, V, I+1), dom_f(X1...Xn, I+1). (Law Of Inertia for f).
      * <li>dom_f(X1..Xn, I) :- f(X1..Xn,V,I). 5) (Definition of positive dom_f)
-     * <li>dom_f(X1..Xn, I+1) :- dom_f(X1..Xn, I), not -dom_f(X1..Xn, I+1).
-     * (Positive Law Of Inertia for dom_f)
-     * <li>-dom_f(X1..Xn, I+1) :- -dom_f(X1..Xn,I), not dom_f(X1..Xn, I+1).
-     * (Negative Law Of Inertia for dom_f)
+     * <li>dom_f(X1..Xn, I+1) :- dom_f(X1..Xn, I), not -dom_f(X1..Xn, I+1). (Positive Law Of Inertia for dom_f)
+     * <li>-dom_f(X1..Xn, I+1) :- -dom_f(X1..Xn,I), not dom_f(X1..Xn, I+1). (Negative Law Of Inertia for dom_f)
      * </ol>
      *
      * @param tm
@@ -984,11 +975,11 @@ public abstract class ALMTranslator {
                 args.add(V);
                 args.add(Inc);
 
-                ALMTerm not_f_V2_Inc = new ALMTerm(f_name, ALMTerm.FUN);
-                not_f_V2_Inc.setSign(ALMTerm.SIGN_NOT);
-                args = not_f_V2_Inc.getArgs();
+                ALMTerm not_neg_f_V_Inc = new ALMTerm(f_name, ALMTerm.FUN);
+                not_neg_f_V_Inc.setSign(ALMTerm.SIGN_NOT_NEG);
+                args = not_neg_f_V_Inc.getArgs();
                 args.addAll(domain_args);
-                args.add(V2);
+                args.add(V);
                 args.add(Inc);
 
                 ALMTerm V_not_V2 = new ALMTerm(ALM.SYMBOL_NEQ, ALMTerm.TERM_RELATION);
@@ -1037,16 +1028,16 @@ public abstract class ALMTranslator {
 
                 if (!f.isBoolean()) {
                     // Unique Assignment Constraint only applies to non-boolean functions. 
-                    // :- f(X1..Xn, V, I), f(X1..Xn, V2, I), V != V2.
+                    // -f(X1..Xn, V2, I) :- f(X1..Xn, V, I), V != V2.
                     ALMTerm f_V2_I = new ALMTerm(f_name, ALMTerm.FUN);
                     f_V2_I.getArgs().addAll(domain_args);
                     f_V2_I.addArg(V2);
                     f_V2_I.addArg(I);
+                    f_V2_I.setSign(ALMTerm.SIGN_NEG);
                     body = new ArrayList<>();
                     body.add(f_V_I);
-                    body.add(f_V2_I);
                     body.add(V_not_V2);
-                    r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, null, body);
+                    r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, f_V2_I, body);
                     r.addComment("Unique Assignment Constraint for modeling non-boolean functions using relations.");
                 }
 
@@ -1067,11 +1058,10 @@ public abstract class ALMTranslator {
                     r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, neg_f_Inc, body);
                     r.addComment("Law Of Inertia for negative boolean function [" + f_name + "].");
                 } else {
-                    // f(X1..Xn, V, I+1) :- f(X1..Xn,V, I), not f(X1..Xn, V2, I+1), V != V2, dom_f(X1...Xn, I+1).
+                    // f(X1..Xn, V, I+1) :- f(X1..Xn, V, I), not -f(X1..Xn, V, I+1), dom_f(X1...Xn, I+1).
                     body = new ArrayList<>();
                     body.add(f_V_I);
-                    body.add(not_f_V2_Inc);
-                    body.add(V_not_V2);
+                    body.add(not_neg_f_V_Inc);
                     body.add(dom_f_Inc);
                     r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, f_V_Inc, body);
                     r.addComment("Law Of Inertia for non-boolean function [" + f_name + "].");
@@ -1101,18 +1091,7 @@ public abstract class ALMTranslator {
                     r.addComment("Definition of positive non-boolean function [" + dom_f_name + "].");
                 }
 
-                // // -dom_f(X1..Xn, I) :- not dom_f(X1 .. Xn, I).
-                // body = new ArrayList<>();
-                // ALMTerm not_dom_f_I = new ALMTerm(dom_f_name, ALMTerm.FUN);
-                // not_dom_f_I.setSign(ALMTerm.SIGN_NOT);
-                // args = not_dom_f_I.getArgs();
-                // args.addAll(domain_args);
-                // args.add(I);
-                // body.add(not_dom_f_I);
-                // r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, neg_dom_f_I, body);
-                // r.addComment("Definition of negative [" + dom_f_name + "] (Closed World
-                // Assumption).");
-                // dom_f(X1..Xn, I+1) :- dom_f(X1..Xn, I), not -dom_f(X1..Xn, I+1).
+                // f(X1..Xn, V, I+1) :- f(X1..Xn, V, I), not -f(X1..Xn, V, I+1), dom_f(X1...Xn, I+1).
                 body = new ArrayList<>();
                 body.add(dom_f_I);
                 ALMTerm not_neg_dom_f_Inc = new ALMTerm(dom_f_name, ALMTerm.FUN);
@@ -1122,7 +1101,7 @@ public abstract class ALMTranslator {
                 args.add(Inc);
                 body.add(not_neg_dom_f_Inc);
                 r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, dom_f_Inc, body);
-                r.addComment("Law Of Inertia for positive [" + dom_f_name + "].");
+                r.addComment("Law Of Inertia for positive domain function [" + dom_f_name + "].");
 
                 // -dom_f(X1..Xn, I+1) :- -dom_f(X1..Xn,I), not dom_f(X1..Xn, I+1).
                 body = new ArrayList<>();
@@ -1144,7 +1123,7 @@ public abstract class ALMTranslator {
                 args.add(Inc);
                 body.add(not_dom_f_Inc);
                 r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, neg_dom_f_Inc, body);
-                r.addComment("Law Of Intertia for negated [" + dom_f_name + "].");
+                r.addComment("Law Of Intertia for negated domain functions [" + dom_f_name + "].");
             }
         }
     }
@@ -1194,8 +1173,7 @@ public abstract class ALMTranslator {
      *
      * @param tm SPARCProgram that rules from facts of history will be added to.
      * @param st The SymbolTable of the ALMCompiler.
-     * @param aspf The ASPf Program containing the History section parsed from
-     * the system description.
+     * @param aspf The ASPf Program containing the History section parsed from the system description.
      */
     private static void CreateHistory(SPARCProgram tm, SymbolTable st, ASPfProgram aspf, ErrorReport er) {
         //Create Sort For All Fluent Functions
@@ -1412,12 +1390,10 @@ public abstract class ALMTranslator {
      * @param st
      * @return (the head of the rule)
      *
-     * This function is the meat of the endeavor. Based on the type of literal
-     * there are different translations case: function at top subcase: static
-     * boolean function -- no change subcase: fluent boolean function -- add
-     * time dimension at end of predicate. case: term relation replace each type
-     * of function occurrence in the term with a variable. Add a new literal to
-     * the body with the variable added and a time component if it is basic.
+     * This function is the meat of the endeavor. Based on the type of literal there are different translations case:
+     * function at top subcase: static boolean function -- no change subcase: fluent boolean function -- add time
+     * dimension at end of predicate. case: term relation replace each type of function occurrence in the term with a
+     * variable. Add a new literal to the body with the variable added and a time component if it is basic.
      */
     private static void TranslateRule(ASPfRule ar, SymbolTable st, SPARCProgram pm, String section) {
         String timestep = ar.newVariable("TS");
@@ -1587,16 +1563,16 @@ public abstract class ALMTranslator {
         ALMTerm termRelation = new ALMTerm(tlit.getName(), ALMTerm.TERM_RELATION);
         ALMTerm left = tlit.getArg(0);
         ALMTerm right = tlit.getArg(1);
-        if(left.isVariable() && left.getSort() != ALM.SORT_UNKNOWN){
-            ALMTerm leftCopy =  new ALMTerm(left.getName(), ALMTerm.VAR);
-            body.add(new ALMTerm("#"+left.getSort(), ALMTerm.FUN, leftCopy));
+        if (left.isVariable() && left.getSort() != ALM.SORT_UNKNOWN) {
+            ALMTerm leftCopy = new ALMTerm(left.getName(), ALMTerm.VAR);
+            body.add(new ALMTerm("#" + left.getSort(), ALMTerm.FUN, leftCopy));
             termRelation.addArg(leftCopy);
         } else {
             termRelation.addArg(TranslateTerm(left, body, st, tc, timestep));
         }
-        if(right.isVariable() && right.getSort()!= ALM.SORT_UNKNOWN){
-            ALMTerm rightCopy =  new ALMTerm(right.getName(), ALMTerm.VAR);
-            body.add(new ALMTerm("#"+right.getSort(), ALMTerm.FUN, rightCopy));
+        if (right.isVariable() && right.getSort() != ALM.SORT_UNKNOWN) {
+            ALMTerm rightCopy = new ALMTerm(right.getName(), ALMTerm.VAR);
+            body.add(new ALMTerm("#" + right.getSort(), ALMTerm.FUN, rightCopy));
             termRelation.addArg(rightCopy);
         } else {
             termRelation.addArg(TranslateTerm(right, body, st, tc, timestep));
@@ -1605,21 +1581,16 @@ public abstract class ALMTranslator {
     }
 
     /**
-     * Returns the Normalized ALMTerm to be added to a SPARC program after
-     * translating it from the intermediate ALMTerm representation. Function
-     * terms are replaced by variables in the containing term and a new term
-     * constraint is added to the body which binds the new variable to the
-     * translated normalization of the nested term.
+     * Returns the Normalized ALMTerm to be added to a SPARC program after translating it from the intermediate ALMTerm
+     * representation. Function terms are replaced by variables in the containing term and a new term constraint is
+     * added to the body which binds the new variable to the translated normalization of the nested term.
      *
      * @param term The ALMTerm to be translated.
      * @param body The body of rules that is accumulating the translation.
-     * @param st The symbol table, used to retrieve the function associated with
-     * the term.
-     * @param tc The type checker for the rule, used to create new variables
-     * within the body of the rule.
+     * @param st The symbol table, used to retrieve the function associated with the term.
+     * @param tc The type checker for the rule, used to create new variables within the body of the rule.
      * @param timestep The timestep variable to use for fluents.
-     * @return The translated and normalized version of the outermost ALMTerm in
-     * 'term'.
+     * @return The translated and normalized version of the outermost ALMTerm in 'term'.
      */
     private static ALMTerm TranslateTerm(ALMTerm term, List<SPARCLiteral> body, SymbolTable st, TypeChecker tc,
             String timestep) {

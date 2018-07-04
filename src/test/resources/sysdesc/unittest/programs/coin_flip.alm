@@ -34,12 +34,15 @@ structure coin_flip
 temporal projection
 max steps 6
 history 
-observed(showing(dime), heads, 0)
-happened(flip(dime), 0)
-observed(showing(nickel), tails, 0)
-happened(flip(nickel), 0)
-happened(hide(nickel), 1)
-happened(flip(dime), 2)
-happened(flip(nickel), 2)
-happened(flip(dime), 4)
-happened(flip(nickel), 4) 
+observed(showing(dime), heads, 0).
+happened(flip(dime), 0).
+observed(showing(nickel), tails, 0).
+happened(flip(nickel), 0).
+%%%% Hiding a coin makes the side shown undefined.  
+happened(hide(nickel), 1).
+happened(flip(dime), 2).
+happened(flip(nickel), 2).
+observed(showing(nickel), heads, 3).
+happened(flip(dime), 4).
+happened(flip(nickel), 4).
+%End of File

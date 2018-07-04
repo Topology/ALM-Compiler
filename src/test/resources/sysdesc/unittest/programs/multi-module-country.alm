@@ -41,7 +41,7 @@ module six
         person :: movable_thing
 module seven
     depends on 
-        six
+        six,
         four
     sort declarations
         citizen :: person, hasCountry

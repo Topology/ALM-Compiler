@@ -26,6 +26,8 @@ grammar ALM;
 //ORDER OF RULES IN FILE (TOP TO BOTTOM) matters
 //ORDER OF DEFINITIONS (LEFT TO RIGHT) within  NON-TERMINAL and TOKENS matters
 
+COMMENT:    '%' ~[\r\n]* ('\r'? '\n' | EOF)  -> skip;
+
 WhiteSpace: (' '|'\t'|'\r'|'\n') -> skip; //SKIP WHITESPACE
 
 //EAGERLY CREATE THESE SPECIFIC TOKENS AHEAD OF MORE GENERAL CLASS
@@ -232,7 +234,7 @@ module_body: module_dependencies? sort_declarations? constant_declarations? func
 
 /* ALM MODULE DEPENDENCIES */
 
-module_dependencies: DEPENDS ON one_dependency+;
+module_dependencies: DEPENDS ON one_dependency (',' one_dependency)*;
 one_dependency: (theory_name '.')? module_name;
 
 /* ALM SORT DECLARATIONS */
@@ -331,16 +333,16 @@ solver_mode : (temporal_projection  | planning_problem | diagnostic_problem) add
 
 max_steps : MAX STEPS  POSINT;
 history : HISTORY (observed | happened)+;
-observed : OBSERVED '(' function_term ',' term ',' nat_num ')' ;
-happened : HAPPENED '(' object_constant ',' nat_num ')' ;
+observed : OBSERVED '(' function_term ',' term ',' nat_num ')' '.' ;
+happened : HAPPENED '(' object_constant ',' nat_num ')' '.';
 
 /* SOLVER MODE ADDITIONAL CONSTRAINTS */
 
 added_constraints: ADDITIONAL CONSTRAINTS (one_added_constraint)+;
-one_added_constraint: (IMPOSSIBLE | AVOID) literal (',' literal)*;
+one_added_constraint: (IMPOSSIBLE | AVOID) literal (',' literal)* '.';
 
 action_conditions: ACTION (RESTRICTIONS | PERMISSIONS) (one_action_condition)+;
-one_action_condition: (POSSIBLE | IMPOSSIBLE | AVOID) function_term  WHEN literal (',' literal)*;
+one_action_condition: (POSSIBLE | IMPOSSIBLE | AVOID) function_term  WHEN literal (',' literal)* '.';
 
 /* TEMPORAL PROJECTION SPECIFIC */
 
@@ -349,12 +351,12 @@ temporal_projection : TEMPORAL PROJECTION max_steps history;
 /* PLANNING PROBLEM SPECIFIC */
 
 planning_problem : PLANNING PROBLEM max_steps history goal_state;
-goal_state: GOAL EQ '{' literal (',' literal)* '}';
+goal_state: GOAL EQ '{' literal (',' literal)* '}' '.';
 
 /* DIAGNOSTIC PROBLEM SPECIFIC */
 
 diagnostic_problem : DIAGNOSTIC PROBLEM max_steps history normal_conditions? current_state;
 normal_conditions: NORMAL CONDITIONS (one_normal_condition)+;
-one_normal_condition : ID ':'  literal ('when' literal (',' literal)*)?;  
-current_state: SITUATION EQ '{' literal (',' literal)* '}';
+one_normal_condition : ID ':'  literal ('when' literal (',' literal)*)?'.';  
+current_state: SITUATION EQ '{' literal (',' literal)* '}' '.';
 
