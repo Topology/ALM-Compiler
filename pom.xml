@@ -78,6 +78,7 @@
                         <ASP_SOLVER_DIRECTORY>${asp.solver.directory}</ASP_SOLVER_DIRECTORY>
                         <ASP_SOLVER_TYPE>${asp.solver.type}</ASP_SOLVER_TYPE>
                         <UNIT_TEST_DIRECTORY>src/test/resources/sysdesc/unittest</UNIT_TEST_DIRECTORY>
+                        <LIBRARY>${alm.library}</LIBRARY>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
