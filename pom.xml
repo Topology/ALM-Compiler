@@ -5,13 +5,13 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
-        <alm.sys.desc>src/test/resources/sysdesc/unittest/programs/basicMotion.alm</alm.sys.desc>
+        <alm.sys.desc>src/test/resources/sysdesc/unittest/programs/coin_flip_plan.alm</alm.sys.desc>
         <alm.debug>True</alm.debug>
         <alm.output>target/alm/output</alm.output>
         <alm.library>src/main/resources/sysdesc/libraries/</alm.library>
-        <sparc.jar>src/main/resources/solvers/sparc.jar</sparc.jar>
+        <sparc.jar>solvers/sparc.jar</sparc.jar>
         <!-- uncomment to manually set location of asp.solver
-        <asp.solver.directory>src/main/resources/solvers/</asp.solver.directory>
+        <asp.solver.directory>solvers/</asp.solver.directory>
         <asp.solver.type>clingo</asp.solver.type>
         -->
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -63,7 +63,7 @@
                         </goals>
                         <configuration>
                             <url>https://raw.githubusercontent.com/iensen/sparc/master/sparc.jar</url>
-                            <outputDirectory>src/main/resources/solvers</outputDirectory>
+                            <outputDirectory>solvers</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
@@ -133,6 +133,41 @@
 
                 </configuration>
             </plugin>
+                  <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <excludes>
+            <exclude>*solvers*</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>edu.ttu.krlab.alm.ALMCompiler</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <excludes>
+                        <exclude>*solvers*</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     
@@ -143,7 +178,7 @@
                 <clingo.version>4.5.4</clingo.version>
                 <clingo.download.filename>clingo-${clingo.version}-win64</clingo.download.filename>
                 <clingo.download.filetype>zip</clingo.download.filetype>
-                <asp.solver.directory>src/main/resources/solvers/${clingo.download.filename}</asp.solver.directory>
+                <asp.solver.directory>solvers/${clingo.download.filename}</asp.solver.directory>
                 <asp.solver.type>clingo</asp.solver.type>
             </properties>
             <activation>
@@ -167,7 +202,7 @@
                                 <configuration>
                                     <url>https://sourceforge.net/projects/potassco/files/clingo/${clingo.version}/${clingo.download.filename}.${clingo.download.filetype}</url>
                                     <unpack>true</unpack>
-                                    <outputDirectory>src/main/resources/solvers/</outputDirectory>
+                                    <outputDirectory>solvers/</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>
@@ -182,7 +217,7 @@
                 <clingo.version>4.5.4</clingo.version>
                 <clingo.download.filename>clingo-${clingo.version}-macos-${mac.os.version}</clingo.download.filename>
                 <clingo.download.filetype>tar.gz</clingo.download.filetype>
-                <asp.solver.directory>src/main/resources/solvers/${clingo.download.filename}</asp.solver.directory>
+                <asp.solver.directory>solvers/${clingo.download.filename}</asp.solver.directory>
                 <asp.solver.type>clingo</asp.solver.type>
             </properties>
             <activation>
@@ -206,7 +241,7 @@
                                 <configuration>
                                     <url>https://sourceforge.net/projects/potassco/files/clingo/${clingo.version}/${clingo.download.filename}.${clingo.download.filetype}</url>
                                     <unpack>true</unpack>
-                                    <outputDirectory>src/main/resources/solvers/</outputDirectory>
+                                    <outputDirectory>solvers/</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>
@@ -220,7 +255,7 @@
                 <clingo.version>4.5.4</clingo.version>
                 <clingo.download.filename>clingo-${clingo.version}-linux-x86_64</clingo.download.filename>
                 <clingo.download.filetype>tar.gz</clingo.download.filetype>
-                <asp.solver.directory>src/main/resources/solvers/${clingo.download.filename}</asp.solver.directory>
+                <asp.solver.directory>solvers/${clingo.download.filename}</asp.solver.directory>
                 <asp.solver.type>clingo</asp.solver.type>
             </properties>
             <activation>
@@ -244,7 +279,7 @@
                                 <configuration>
                                     <url>https://sourceforge.net/projects/potassco/files/clingo/${clingo.version}/${clingo.download.filename}.${clingo.download.filetype}</url>
                                     <unpack>true</unpack>
-                                    <outputDirectory>src/main/resources/solvers/</outputDirectory>
+                                    <outputDirectory>solvers/</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>

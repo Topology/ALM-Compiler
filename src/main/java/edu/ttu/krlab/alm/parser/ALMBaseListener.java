@@ -2798,6 +2798,8 @@ public class ALMBaseListener implements ALMListener {
         ALMTerm t = ALM.ParseTerm(ctx.term());
         int i = Integer.parseInt(ctx.nat_num().getText());
 
+        st.addHistoryTimeStep(i);
+
         ALMTerm observed = new ALMTerm(ALM.HISTORY_OBSERVED, ALMTerm.FUN);
         observed.addArg(f);
         observed.addArg(t);
@@ -2834,6 +2836,8 @@ public class ALMBaseListener implements ALMListener {
     public void exitHappened(HappenedContext ctx) {
         ALMTerm a = ALM.ParseALMTerm(ctx.object_constant());
         int i = Integer.parseInt(ctx.nat_num().getText());
+
+        st.addHistoryTimeStep(i);
 
         ALMTerm happened = new ALMTerm(ALM.HISTORY_HAPPENED, ALMTerm.FUN);
         happened.addArg(a);
@@ -2967,8 +2971,90 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void exitGoal_state(Goal_stateContext ctx) {
-        // TODO Auto-generated method stub
+        List<ALMParser.LiteralContext> literals = ctx.literal();
+        if (literals.size() == 0) {
+            //no conditions, return from function. 
+            return;
+        }
 
+        SortEntry booleans = st.getBooleansSortEntry();
+        List<SortEntry> sig = new ArrayList<>();
+        sig.add(booleans);
+
+        //create goal function. 
+        FunctionEntry goal;
+        try {
+            //create defined fluent function which is true when goal state reached.
+            goal = st.createFunctionEntry(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_GOAL, sig, new Location(ctx.GOAL()));
+            goal.setDefined();
+            goal.setFluent();
+        } catch (DuplicateFunctionException ex) {
+            ALMCompiler.IMPLEMENTATION_FAILURE("planning problem", "Assumed unique function name for goal state is already declared.");
+            return;
+        }
+
+        //create success function. 
+        FunctionEntry success;
+        try {
+            //create defined static function which is true if goal state is ever true.
+            success = st.createFunctionEntry(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_SUCCESS, sig, new Location(ctx.GOAL()));
+            success.setDefined();
+            success.setStatic();
+        } catch (DuplicateFunctionException ex) {
+            ALMCompiler.IMPLEMENTATION_FAILURE("planning problem", "Assumed unique function name for success state is already declared.");
+            return;
+        }
+
+        //create something happened function. 
+        FunctionEntry something_happened;
+        try {
+            //defined fluent to indicate action occurred. 
+            something_happened = st.createFunctionEntry(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_SOMETHING_HAPPENED, sig, new Location(ctx.GOAL()));
+            something_happened.setDefined();
+            something_happened.setFluent();
+        } catch (DuplicateFunctionException ex) {
+            ALMCompiler.IMPLEMENTATION_FAILURE("planning problem", "Assumed unique function name for something_happened is already declared.");
+            return;
+        }
+
+        // Convert literals into ALMTerms
+        List<ALMTerm> lits = new ArrayList<>();
+        for (ALMParser.LiteralContext literal : literals) {
+            lits.add(ALM.ParseLiteral(literal));
+        }
+
+        //Type Check Literals
+        TypeChecker tc = new TypeChecker(st);
+        for (ASPfLiteral lit : lits) {
+            lit.typeCheck(tc, st, er);
+        }
+
+        //Verify Type Check Passes.
+        if (!tc.typeCheckPasses(er)) {
+            //cannot proceed if errors.
+            return;
+        }
+
+        // body
+        List<ASPfLiteral> goal_body = new ArrayList<>();
+        for (ALMTerm lit : lits) {
+            goal_body.add(lit);
+        }
+
+        /**
+         * START: goal(TS) :- { literals }
+         */
+        //goal_head
+        ASPfLiteral goal_head = new ALMTerm(goal.getFunctionName(), ALMTerm.FUN, goal.getLocation());
+
+        //rule indicating goal condition is reached in current state. 
+        ASPfRule goal_ar = aspf.newRule(ALM.SOLVER_MODE_PP, goal_head, goal_body);
+        goal_ar.addComment("Goal conditions for planning problem: goal = {literals}");
+        /**
+         * END: goal(TS) :- { literals }
+         */
+
+        //The additional rules are created in the translation to the final SPARC program. 
     }
 
     @Override
@@ -3039,6 +3125,15 @@ public class ALMBaseListener implements ALMListener {
     @Override
     public void exitAlm_file(ALMParser.Alm_fileContext ctx) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void enterCurrent_time(ALMParser.Current_timeContext ctx) {
+    }
+
+    @Override
+    public void exitCurrent_time(ALMParser.Current_timeContext ctx) {
+        st.setCurrentTime(Integer.parseInt(ctx.nat_num().getText()));
     }
 
 }

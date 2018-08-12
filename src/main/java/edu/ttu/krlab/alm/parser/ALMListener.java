@@ -778,6 +778,16 @@ public interface ALMListener extends ParseTreeListener {
 	 */
 	void exitMax_steps(ALMParser.Max_stepsContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ALMParser#current_time}.
+	 * @param ctx the parse tree
+	 */
+	void enterCurrent_time(ALMParser.Current_timeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#current_time}.
+	 * @param ctx the parse tree
+	 */
+	void exitCurrent_time(ALMParser.Current_timeContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ALMParser#history}.
 	 * @param ctx the parse tree
 	 */

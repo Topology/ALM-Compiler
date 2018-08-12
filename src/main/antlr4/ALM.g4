@@ -110,6 +110,8 @@ BOOLEANS: 'booleans';
 INTEGERS: 'integers';
 UNIVERSE: 'universe';
 ACTIONS: 'actions';
+CURRENT: 'current';
+TIME: 'time';
 
 // THESE TOKENS ARE MORE GENERAL AND LESS EAGERLY DETERMINED
 ID: [a-z]([a-zA-Z0-9_\-])*;  //Describes <identifier> in the ALM BNF, includes <lowercase_letter>, <uppercase_letter>
@@ -145,7 +147,8 @@ id : ID | MOD | SORT | STATE | CONSTRAINTS | FUNCTION | DECLARATIONS |
      WHERE | VALUE | OF | INSTANCES | TEMPORAL  | PROJECTION | MAX | STEPS |
      HISTORY | OBSERVED | HAPPENED | PLANNING |  PROBLEM | DIAGNOSTIC | 
      GOAL | SITUATION | WHEN | NORMAL | ACTION | ADDITIONAL | RESTRICTIONS |
-     PERMISSIONS | POSSIBLE | AVOID | BOOLEANS | INTEGERS | UNIVERSE | ACTIONS;
+     PERMISSIONS | POSSIBLE | AVOID | BOOLEANS | INTEGERS | UNIVERSE | ACTIONS |
+     CURRENT | TIME;
 
 
 /*
@@ -334,6 +337,7 @@ solver_mode : (temporal_projection  | planning_problem | diagnostic_problem) add
 /* SOLVER MODE COMMON PARTS */
 
 max_steps : MAX STEPS  POSINT;
+current_time: CURRENT TIME nat_num;
 history : HISTORY (observed | happened)+;
 observed : OBSERVED '(' function_term ',' term ',' nat_num ')' '.' ;
 happened : HAPPENED '(' object_constant ',' nat_num ')' '.';
@@ -352,12 +356,12 @@ temporal_projection : TEMPORAL PROJECTION max_steps history;
 
 /* PLANNING PROBLEM SPECIFIC */
 
-planning_problem : PLANNING PROBLEM max_steps history goal_state;
-goal_state: GOAL EQ '{' literal (',' literal)* '}' '.';
+planning_problem : PLANNING PROBLEM max_steps current_time? history goal_state;
+goal_state: GOAL EQ '{' literal (',' literal)* '}';
 
 /* DIAGNOSTIC PROBLEM SPECIFIC */
 
-diagnostic_problem : DIAGNOSTIC PROBLEM max_steps history normal_conditions? current_state;
+diagnostic_problem : DIAGNOSTIC PROBLEM max_steps current_time? history normal_conditions? current_state;
 normal_conditions: NORMAL CONDITIONS (one_normal_condition)+;
 one_normal_condition : id ':'  literal ('when' literal (',' literal)*)?'.';  
 current_state: SITUATION EQ '{' literal (',' literal)* '}' '.';

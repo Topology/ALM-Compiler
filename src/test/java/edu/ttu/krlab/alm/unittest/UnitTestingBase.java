@@ -116,11 +116,11 @@ public class UnitTestingBase {
         compile(almProgLoc);
 
         System.out.println("Verifying Answerset");
-        if (tm_as.size() != 1) {
-            System.out.println("FAILED to produce exactly 1 intermediate answerset.");
-            testProgramsPassed = false;
-            return;
-        }
+//        if (pm_as.size() != 1) {
+//            System.out.println("FAILED to produce exactly 1 intermediate answerset.");
+//            testProgramsPassed = false;
+//            return;
+//        }
 
         String rawAS = null;
         try {
@@ -131,34 +131,48 @@ public class UnitTestingBase {
             return;
         }
         List<AnswerSet> ansSets = new DLVAnswerSetParser().getAnswerSets(new BufferedReader(new StringReader(rawAS)));
-        if (ansSets.size() != 1) {
-            System.out.println("FAILED to produce exactly 1 final answerset.");
-            testProgramsPassed = false;
-            return;
+//        if (ansSets.size() != 1) {
+//            System.out.println("FAILED to produce exactly 1 final answerset.");
+//            testProgramsPassed = false;
+//            return;
+//        }
+        
+        Set<Integer> tmHashCodes = new HashSet<>();
+        for(AnswerSet as : tm_as){
+            tmHashCodes.add(as.hashCode());
         }
-        AnswerSet aSet = ansSets.get(0);
-        Set<String> expected = aSet.getAllLiteralInstances();
-        Set<String> received = tm_as.get(0).getAllLiteralInstances();
-        Set<String> expMinusRec = new HashSet<>(expected);
-        expMinusRec.removeAll(received);
-        Set<String> recMinusExp = new HashSet<>(received);
-        recMinusExp.removeAll(expected);
-        if (expMinusRec.size() != 0 || recMinusExp.size() != 0) {
-            if (expMinusRec.size() != 0) {
-                System.out.println("Final Answerset Missing Literals:");
-                for (String lit : expMinusRec) {
-                    System.out.println("        " + lit);
+        Set<Integer> fileHashCodes = new HashSet<>();
+        for(AnswerSet fas : ansSets){
+            fileHashCodes.add(fas.hashCode());
+        }
+        
+        if(!tmHashCodes.contains(fileHashCodes) && fileHashCodes.contains(tmHashCodes)){    
+            //just diff first of each.  
+            System.out.println("HASHCODE MISMATCH, diffing first answersets.\n");
+            AnswerSet aSet = ansSets.get(0);
+            Set<String> expected = aSet.getAllLiteralInstances();
+            Set<String> received = tm_as.get(0).getAllLiteralInstances();
+            Set<String> expMinusRec = new HashSet<>(expected);
+            expMinusRec.removeAll(received);
+            Set<String> recMinusExp = new HashSet<>(received);
+            recMinusExp.removeAll(expected);
+            if (expMinusRec.size() != 0 || recMinusExp.size() != 0) {
+                if (expMinusRec.size() != 0) {
+                    System.out.println("Final Answerset Missing Literals:");
+                    for (String lit : expMinusRec) {
+                        System.out.println("        " + lit);
+                    }
                 }
-            }
-            if (recMinusExp.size() != 0) {
-                System.out.println("Final Answerset Excess Literals:");
-                for (String lit : recMinusExp) {
-                    System.out.println("        " + lit);
+                if (recMinusExp.size() != 0) {
+                    System.out.println("Final Answerset Excess Literals:");
+                    for (String lit : recMinusExp) {
+                        System.out.println("        " + lit);
+                    }
                 }
+                testProgramsPassed = false;
+                System.out.println("FAILED\n");
+                return;
             }
-            testProgramsPassed = false;
-            System.out.println("FAILED\n");
-            return;
         }
         System.out.println("PASSED\n");
     }

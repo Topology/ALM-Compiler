@@ -6,24 +6,17 @@ import java.io.StringWriter;
 import java.util.List;
 
 import edu.ttu.krlab.alm.ALMCompiler;
-import edu.ttu.krlab.alm.datastruct.LogicProgramArtifact;
 
-public class SPARCRule extends LogicProgramArtifact {
+public class SPARC_CR_Rule extends SPARCRule {
 
     SPARCLiteral head = null;
     List<SPARCLiteral> body = null;
 
-    public SPARCRule(SPARCLiteral head, List<SPARCLiteral> body) {
+    public SPARC_CR_Rule(SPARCLiteral head, List<SPARCLiteral> body) {
+        super(null,null);
         this.head = head;
         this.body = body;
-    }
-
-    public SPARCLiteral getHead() {
-        return head;
-    }
-
-    public List<SPARCLiteral> getBody() {
-        return body;
+        
     }
 
     @Override
@@ -32,6 +25,7 @@ public class SPARCRule extends LogicProgramArtifact {
 
             // empty rules are used to display general comments.
             super.writeTo(out);
+            out.write("\n");
             return;
         }
         // some rule to write
@@ -43,7 +37,7 @@ public class SPARCRule extends LogicProgramArtifact {
             } else {
                 // body exists but head does not, this is a constraint.
                 // write constraint
-                out.write(":- ");
+                out.write(":+ ");
                 boolean first = true;
                 for (SPARCLiteral lit : body) {
                     if (first) {
@@ -67,7 +61,7 @@ public class SPARCRule extends LogicProgramArtifact {
                 // both head and body exist, this is a normal rule.
                 // write full rule
                 head.writeTo(out);
-                out.write(" :- ");
+                out.write(" :+ ");
                 boolean first = true;
                 for (SPARCLiteral lit : body) {
                     if (first) {

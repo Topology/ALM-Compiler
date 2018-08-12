@@ -70,6 +70,10 @@ public abstract class ALM {
     public static final String SPECIAL_FUNCTION_SINK = "sink";
     public static final String SPECIAL_FUNCTION_SOURCE = "source";
     public static final String SPECIAL_FUNCTION_OCCURS = "occurs";
+    public static final String SPECIAL_FUNCTION_PLANNING_PROBLEM_GOAL = "planning_problem_goal";
+    public static final String SPECIAL_FUNCTION_PLANNING_PROBLEM_SUCCESS = "planning_problem_success";
+    public static final String SPECIAL_FUNCTION_PLANNING_PROBLEM_SOMETHING_HAPPENED = "planning_problem_something_happened";
+    public static final String SPECIAL_FUNCTION_PLANNING_PROBLEM_ALLOW_ACTIONS = "planning_problem_allow_actions";
     public static final String RULES_STATIC_FUNCTIONS = "Auxiliary Rules For Static Functions";
     public static final String RULES_FLUENT_FUNCTIONS = "Auxiliary Rules For Fluent Functions";
     public static final String AXIOMS_DYNAMIC_CAUSAL_LAWS = "Axioms - Dynamic Causal Laws";
@@ -97,10 +101,13 @@ public abstract class ALM {
     public static final String HISTORY_HAPPENED = "happened";
     public static final String HISTORY_OBSERVED = "observed";
     public static final String HISTORY = "History";
+    public static final String CURRENT_TIME = "current_time";
     public static final String SOLVER_MODE = "Solver Mode";
     public static final String SOLVER_MODE_TP = "Solver Mode: Temporal Projection";
     public static final String SOLVER_MODE_PP = "Solver Mode: Planning Problem";
     public static final String SOLVER_MODE_DP = "Solver Mode: Diagnostic Problem";
+    public static final String SKIP_TRANSLATION_RULES = "Rules Copied Without Translation, Time Injected Manually.";
+    public static final String CR_RULES = "CR Rules, Copied Without Translation.";
     
 
 

@@ -40,6 +40,11 @@ import edu.ttu.krlab.answerset.parser.AnswerSet;
 import edu.ttu.krlab.answerset.parser.DLVAnswerSetParser;
 import edu.ttu.krlab.answerset.parser.SPARCWrapper;
 import java.io.BufferedReader;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ALMCompiler {
 
@@ -50,17 +55,46 @@ public class ALMCompiler {
     // bugfixes
     private static final boolean DEBUG_VERSION = true;
 
+    private static void setDefaultSettingsForPaper(ALMCompilerSettings s, String[] args) throws IOException {
+        Path relativeCWD = Paths.get("");
+        String cwd = relativeCWD.toAbsolutePath().toString();
+        File file = new File(args[0]);
+        String fname = file.getName();
+        String sep = File.separator;
+        s.setErrorDestination(ALMCompilerSettings.STD_ERR);
+        s.setFinalAnswerSetDestination(cwd + sep + "output" + sep + fname + sep + fname + ".ans");
+        s.setIntermediateASPfDestination(null);
+        s.setIntermediateAnswerSetDestination(null);
+        s.setPreModelDestination(null);
+        s.setLibraryLocation(cwd + sep + "library");
+        s.setSPARCLocation(cwd + sep + "sparc" + sep + "sparc.jar");
+        s.setSolverLocation(cwd + sep + "clingo");
+        s.setSolverType("clingo");
+        s.setSymbolTableDestination(null);
+        s.setSystemDescriptionFileName(file.getCanonicalPath().toString());
+        s.setTransitionModelDestination(cwd + sep + "output" + sep + fname + sep + fname + ".sparc");
+    }
+
     /**
      * @param args
      */
     public static void main(String[] args) {
 
-        System.err.println("ALM Translator Version: " + VERSION);
+        System.err.println("CALM Version: " + VERSION);
 
         s = new ALMCompilerSettings();
         s.processSystemProperties();
 
-        s.processCommandlineArgs(args);
+        try {
+            if (args.length == 1) {
+                setDefaultSettingsForPaper(s, args);
+            } else {
+                s.processCommandlineArgs(args);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(ALMCompiler.class.getName()).log(Level.SEVERE, null, ex);
+            return;
+        }
 
         SymbolTable rootST = new SymbolTable("Whole Theory", null); //This is the root symbol table. 
         er = new ErrorReport();

@@ -1269,4 +1269,12 @@ public class ALMModuleListener implements ALMListener {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public void enterCurrent_time(ALMParser.Current_timeContext ctx) {
+    }
+
+    @Override
+    public void exitCurrent_time(ALMParser.Current_timeContext ctx) {
+    }
+
 }

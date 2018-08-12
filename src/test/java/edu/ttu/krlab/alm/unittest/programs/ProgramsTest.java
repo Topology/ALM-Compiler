@@ -23,6 +23,11 @@ public class ProgramsTest extends UnitTestingBase {
         testProgram("multi-module-country.alm", "multi-module-country.answerset");
         testProgram("npainting.alm", "npainting.answerset");
         testProgram("named_entity_library.alm", "named_entity_library.answerset");
+        testProgram("coin_flip_plan.alm", "coin_flip_plan.answerset");
         testProgramsFinished();
+    }
+    
+    public static void main(String[] args){
+        new ProgramsTest().programsTest();
     }
 }

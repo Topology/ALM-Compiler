@@ -31,6 +31,8 @@ public class SymbolTable {
     final private Map<String, Set<ConstantEntry>> globalCEMap;
     final private Map<ALMTerm, ConstantEntry> CDMap; //structure populated
     private int maxStep = -1;
+    private int currentTime = 0;
+    private boolean currentTimeSet = false;
 
     final private Set<String> modes;
     //private variables instantiated by all symbol tables in tree. 
@@ -947,6 +949,42 @@ public class SymbolTable {
     public void addIntegerOccurrence(int parseInt) {
         // TODO Auto-generated method stub
 
+    }
+
+    public void addHistoryTimeStep(int i) {
+        SymbolTable root = null;
+        if (rootST != null) {
+            root = rootST;
+        } else {
+            root = this;
+        }
+
+        if (!root.currentTimeSet) {
+            root.currentTime = i >= root.currentTime ? i + 1 : root.currentTime;
+        }
+    }
+
+    /**
+     * Updates the maxSteps by shifting + currentTime.
+     *
+     * @return
+     */
+    public int getCurrentTime() {
+        if (rootST == null) {
+            return currentTime;
+        }
+        return rootST.currentTime;
+    }
+
+    public void setCurrentTime(int currentTime) {
+        SymbolTable root = null;
+        if (rootST != null) {
+            root = rootST;
+        } else {
+            root = this;
+        }
+        root.currentTime = currentTime;
+        root.currentTimeSet = true;
     }
 
 }

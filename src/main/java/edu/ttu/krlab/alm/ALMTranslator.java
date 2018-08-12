@@ -28,6 +28,8 @@ import edu.ttu.krlab.alm.datastruct.sparc.SPARCSortNotDefined;
 import edu.ttu.krlab.alm.datastruct.type.Type;
 import edu.ttu.krlab.alm.datastruct.type.TypeChecker;
 import edu.ttu.krlab.answerset.parser.AnswerSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class ALMTranslator {
 
@@ -797,9 +799,12 @@ public abstract class ALMTranslator {
                 CreateHistory(tm, st, aspf, er);
             }
             if (st.isModeActive(ALM.SOLVER_MODE_PP)) {
-
+                CreatePlanning(tm, st, aspf, er);
             }
         }
+        AddRulesThatSkipTranslation(tm, st, aspf, er);
+        AddCrRulesThatSkipTranslation(tm, st, aspf, er);
+
         //LoadFactsFromPreModelAnswerSet(tm, as, s); // TOO NAIVE, NEED TO FILTER FACTS FROM MISSING SORT INSTANCES. 
     }
 
@@ -1168,8 +1173,243 @@ public abstract class ALMTranslator {
         }
     }
 
+    private static void AddRulesThatSkipTranslation(SPARCProgram tm, SymbolTable st, ASPfProgram aspf, ErrorReport er) {
+        List<ASPfRule> rules = aspf.getRules(ALM.SKIP_TRANSLATION_RULES);
+        if (rules != null && !rules.isEmpty()) {
+            tm.createSection(ALM.SKIP_TRANSLATION_RULES);
+            for (ASPfRule ar : aspf.getRules(ALM.SKIP_TRANSLATION_RULES)) {
+                SPARCLiteral head = (ALMTerm) ar.getHead();
+                List<SPARCLiteral> body = new ArrayList<>();
+                for (ASPfLiteral aspfLit : ar.getBody()) {
+                    body.add((ALMTerm) aspfLit);
+                }
+                tm.newSPARCRule(ALM.SKIP_TRANSLATION_RULES, head, body).copyComments(ar);
+            }
+        }
+    }
+
+    private static void AddCrRulesThatSkipTranslation(SPARCProgram tm, SymbolTable st, ASPfProgram aspf, ErrorReport er) {
+        List<ASPfRule> rules = aspf.getRules(ALM.CR_RULES);
+        if (rules != null && !rules.isEmpty()) {
+            tm.createSection(ALM.CR_RULES);
+            for (ASPfRule ar : aspf.getRules(ALM.CR_RULES)) {
+                SPARCLiteral head = (ALMTerm) ar.getHead();
+                List<SPARCLiteral> body = new ArrayList<>();
+                for (ASPfLiteral aspfLit : ar.getBody()) {
+                    body.add((ALMTerm) aspfLit);
+                }
+                tm.newSPARC_CR_Rule(ALM.CR_RULES, head, body).copyComments(ar);
+            }
+        }
+    }
+
     /**
-     * Translates the observed history into rules of the program.
+     * Translates the goal state and planning rules into rules of the SPARC program.
+     *
+     * @param tm SPARCProgram that rules from facts of history will be added to.
+     * @param st The SymbolTable of the ALMCompiler.
+     * @param aspf The ASPf Program containing the History section parsed from the system description.
+     */
+    private static void CreatePlanning(SPARCProgram tm, SymbolTable st, ASPfProgram aspf, ErrorReport er) {
+        tm.createSection(ALM.SOLVER_MODE_PP);
+        for (ASPfRule ar : aspf.getRules(ALM.SOLVER_MODE_PP)) {
+            TranslateRule(ar, st, tm, ALM.SOLVER_MODE_PP);
+        }
+
+        //VARIABLES
+        ALMTerm A = new ALMTerm("A", ALMTerm.VAR);
+        ALMTerm I = new ALMTerm("I", ALMTerm.VAR);
+        ALMTerm I_inc = new ALMTerm("I+1", ALMTerm.VAR);
+        ALMTerm I2 = new ALMTerm("I2", ALMTerm.VAR);
+
+        
+        //Create Current Time Declaration
+        SPARCPredicate current_time = new SPARCPredicate(ALM.CURRENT_TIME);
+        SPARCPredicate allow_actions = new SPARCPredicate(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_ALLOW_ACTIONS);
+        try {
+            current_time.addSPARCSort(tm.getSPARCSort(ALM.SORT_TIMESTEP));
+            tm.addSPARCPredicate(current_time);
+            
+            allow_actions.addSPARCSort(tm.getSPARCSort(ALM.SORT_TIMESTEP));
+            tm.addSPARCPredicate(allow_actions);
+        } catch (SPARCSortNotDefined | PredicateAlreadyDeclared ex) {
+            ALMCompiler.IMPLEMENTATION_FAILURE("Creating Planning Problem", "Adding Current Time. ");
+        }
+        
+
+        /**
+         * ADD Current Time
+         */
+        ALMTerm currentTime = new ALMTerm(ALM.CURRENT_TIME, ALMTerm.FUN,
+                new ALMTerm(Integer.toString(st.getCurrentTime()), ALMTerm.ID));
+        SPARCRule r = tm.newSPARCRule(ALM.SOLVER_MODE_PP, currentTime, null);
+        r.addComment("Current Time:  1 + the maximum time step used in the history.");
+        
+        
+        
+        //LITERAL goal(I)
+        ALMTerm goal_I = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_GOAL, ALMTerm.FUN, I);
+
+        /**
+         * START: Literal Collection For Condition of I >= I2 current_time(I2).
+         */
+        List<SPARCLiteral> geq_current_time = new ArrayList<>();
+
+        //LITERAL current_time(I2)
+        ALMTerm current_time_I2 = new ALMTerm(ALM.CURRENT_TIME, ALMTerm.FUN, I2);
+        //geq_current_time.add(current_time_I2);
+
+        //LITERAL I >= I2
+        ALMTerm I_geq_I2 = new ALMTerm(ALM.SYMBOL_GEQ, ALMTerm.TERM_RELATION, I, I2);
+        //geq_current_time.add(I_geq_I2);
+        
+        /**
+         * START: allow_actions(I) :+ after current time.
+         */
+        ALMTerm allowActions = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_ALLOW_ACTIONS, ALMTerm.FUN, I);
+        geq_current_time.add(allowActions);
+        
+        List<SPARCLiteral> allowActions_body = new ArrayList<>();
+        allowActions_body.add(current_time_I2);
+        allowActions_body.add(I_geq_I2);
+        
+        SPARCRule allow_ar = tm.newSPARCRule(ALM.SOLVER_MODE_PP, allowActions, allowActions_body);
+        //SPARCRule allow_ar = tm.newSPARC_CR_Rule(ALM.SOLVER_MODE_PP, allowActions, allowActions_body);
+        //allow_ar.addComment("This constraint restoring rule minimizes the length of plans.");
+        allow_ar.addComment("Allows planning actions to occur at this time step.");
+        /**
+         * END: allow_actions(I) :+ after current time.
+         */
+        /**
+         * END: Literal Collection For Condition of I >= I2 current_time(I2).
+         */
+
+        /**
+         * START: success :- goal(I), after current time.
+         */
+        //success_head
+        ALMTerm success_head = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_SUCCESS, ALMTerm.FUN);
+
+        //success_body 
+        List<SPARCLiteral> success_body = new ArrayList<>();
+        success_body.add(goal_I);
+        success_body.addAll(geq_current_time);
+
+        //rule indicating success of planning problem. 
+        SPARCRule success_ar = tm.newSPARCRule(ALM.SOLVER_MODE_PP, success_head, success_body);
+        success_ar.addComment("The planning problem is successfully solved when the goal state is achieved at or after the current time.");
+        /**
+         * END: success :- goal(I), after current time.
+         */
+
+        /**
+         * START :- not success.
+         */
+        //not_success
+        ALMTerm not_success = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_SUCCESS, ALMTerm.FUN);
+        not_success.setSign(ALMTerm.SIGN_NOT);
+
+        //not_success_body
+        List<SPARCLiteral> not_success_body = new ArrayList<>();
+        not_success_body.add(not_success);
+
+        //rule impossible not success.
+        SPARCRule impossible_not_success_ar = tm.newSPARCRule(ALM.SOLVER_MODE_PP, null, not_success_body);
+        impossible_not_success_ar.addComment("The planning problem must be solved (have at least 1 answer set).");
+        /**
+         * END :- not success.
+         */
+
+        /**
+         * START: smth_happend(I):- occurs(A,I), after current time.
+         */
+        //occurs
+        ALMTerm occurs = new ALMTerm(ALM.SPECIAL_FUNCTION_OCCURS, ALMTerm.FUN, A, I);
+
+        //occurs_body
+        List<SPARCLiteral> occurs_body = new ArrayList<>();
+        occurs_body.add(occurs);
+        occurs_body.addAll(geq_current_time);
+
+        //something_happened_head
+        SPARCLiteral smthng_happened = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_SOMETHING_HAPPENED, ALMTerm.FUN, I);
+
+        //something_happened_ar
+        SPARCRule something_happened_ar = tm.newSPARCRule(ALM.SOLVER_MODE_PP, smthng_happened, occurs_body);
+        something_happened_ar.addComment("A planning problem generated action has occurred.");
+        /**
+         * END: smth_happend(I):- occurs(A,I), after current time.
+         */
+
+        /**
+         * START: :- not smth_happened(I), smth_happened(I+1), I+1 <= max time step, after current time.
+         */
+        //Add Constraint: Compactness of planned actions. 
+        //not something happened at I
+        ALMTerm not_something_happened_I = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_SOMETHING_HAPPENED, ALMTerm.FUN, I);
+        not_something_happened_I.setSign(ALMTerm.SIGN_NOT);
+
+        //something happened at I+1
+        ALMTerm something_happened_I_inc = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_SOMETHING_HAPPENED, ALMTerm.FUN, I_inc);
+
+        //upper bound on I+1
+        ALMTerm I_inc_leq_max_step = new ALMTerm(ALM.SYMBOL_LEQ, ALMTerm.TERM_RELATION, I_inc, new ALMTerm(Integer.toString(st.getMaxSteps()), ALMTerm.ID));
+
+        //body constraint
+        List<SPARCLiteral> sh_constraint = new ArrayList<>();
+        sh_constraint.add(not_something_happened_I);
+        sh_constraint.add(something_happened_I_inc);
+        sh_constraint.add(I_inc_leq_max_step);
+        sh_constraint.addAll(geq_current_time);
+
+        SPARCRule sh_constraint_ar = tm.newSPARCRule(ALM.SOLVER_MODE_PP, null, sh_constraint);
+        sh_constraint_ar.addComment("Solutions to planning problems must have contiguous actions.");
+        /**
+         * END: :- not smth_happened(I), smth_happened(I+1), I+1 <= max time step, after current time.
+         */
+
+        
+        /**
+         * START: occurs(A,I) :+ instance(A,I), after current time
+         */
+        //CR Rule
+        //occurs head
+        ALMTerm occurs_head = new ALMTerm(ALM.SPECIAL_FUNCTION_OCCURS, ALMTerm.FUN, A, I);
+        //instance body
+        ALMTerm instance = new ALMTerm(ALM.SPECIAL_FUNCTION_INSTANCE, ALMTerm.FUN, A, new ALMTerm(ALM.SORT_ACTIONS, ALMTerm.ID));
+        List<SPARCLiteral> instance_body = new ArrayList<>();
+        instance_body.add(instance);
+        instance_body.add(allowActions);
+        //instance_body.addAll(geq_current_time);
+
+        //CR Rule
+        SPARCRule cr_ar = tm.newSPARC_CR_Rule(ALM.SOLVER_MODE_PP, occurs_head, instance_body);
+        cr_ar.addComment("Generate actions through consistency restoring rules until planning problem is solved.");
+        /**
+         * END: occurs(A,I) :+ instance(A,I), after current time
+         */
+
+        /**
+         * START: :- not smth_happened(I), not goal(I).
+         */
+        // not goal(I)
+        ALMTerm not_goal_I =  new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_GOAL, ALMTerm.FUN, I);
+        not_goal_I.setSign(ALMTerm.SIGN_NOT);
+        
+        List<SPARCLiteral> action_constraint_body = new ArrayList<>();
+        action_constraint_body.add(not_something_happened_I);
+        action_constraint_body.add(not_goal_I);
+        action_constraint_body.addAll(geq_current_time);
+        
+        SPARCRule action_constraint = tm.newSPARCRule(ALM.SOLVER_MODE_PP, null, action_constraint_body);
+        action_constraint.addComment("Goal cannot be reached until after all actions in history have occurred.");
+        /**
+         * END: :- not smth_happened(I), not goal(I).
+         */
+    }
+
+    /**
+     * Translates the observed history into rules of the SPARC program.
      *
      * @param tm SPARCProgram that rules from facts of history will be added to.
      * @param st The SymbolTable of the ALMCompiler.
@@ -1213,16 +1453,16 @@ public abstract class ALMTranslator {
                     "Universe Sort Undefined.  This should never happen.");
         }
 
-        //Create Observed Predicate Declaration. 
         SPARCPredicate observed_predicate = new SPARCPredicate(ALM.HISTORY_OBSERVED);
+        SPARCPredicate happened_predicate = new SPARCPredicate(ALM.HISTORY_HAPPENED);
         try {
+            //Create Observed Predicate Declaration. 
             observed_predicate.addSPARCSort(fluents_sort);
             observed_predicate.addSPARCSort(tm.getSPARCSort(ALM.SORT_UNIVERSE));
             observed_predicate.addSPARCSort(tm.getSPARCSort(ALM.SORT_TIMESTEP));
             tm.addSPARCPredicate(observed_predicate);
 
             //Create Happened Predicate Declaration.
-            SPARCPredicate happened_predicate = new SPARCPredicate(ALM.HISTORY_HAPPENED);
             happened_predicate.addSPARCSort(tm.getSPARCSort(ALM.SORT_ACTIONS));
             happened_predicate.addSPARCSort(tm.getSPARCSort(ALM.SORT_TIMESTEP));
             tm.addSPARCPredicate(happened_predicate);
@@ -1346,7 +1586,7 @@ public abstract class ALMTranslator {
                         } // when v = false, no sign to add to f. 
                         body.add(f_I);
                         r = tm.newSPARCRule(ALM.HISTORY_OMEGA_NON_INTIAL_OBSERVATIONS, null, body);
-                        r.addComment("HISTORY: " + head.toString());
+                        r.addComment("HISTORY Reality Constraint Value: " + head.toString());
                     } else {
                         //non boolean case : <-- observed(f(args), v, I), dom_f(args, I),  not f(args, v, I). 
                         ALMTerm f_ext = new ALMTerm(f.getName(), ALMTerm.FUN);
@@ -1358,8 +1598,21 @@ public abstract class ALMTranslator {
 
                         body.add(f_ext);
                         r = tm.newSPARCRule(ALM.HISTORY_OMEGA_NON_INTIAL_OBSERVATIONS, null, body);
-                        r.addComment("HISTORY: " + head.toString());
+                        r.addComment("HISTORY Reality Constraint Value: " + head.toString());
                     }
+
+                    ALMTerm not_dom_f_I = new ALMTerm(ALM.DOM_PREFIX + f.getName(), ALMTerm.FUN);
+                    not_dom_f_I.getArgs().addAll(f.getArgs());
+                    not_dom_f_I.addArg(I);
+                    not_dom_f_I.setSign(ALMTerm.SIGN_NOT);
+
+                    List<SPARCLiteral> body2 = new ArrayList<>();
+                    body2.add(head);
+                    body2.add(not_dom_f_I);
+
+                    r = tm.newSPARCRule(ALM.HISTORY_OMEGA_NON_INTIAL_OBSERVATIONS, null, body2);
+                    r.addComment("HISTORY Reality Constraint Domain Defined: " + head.toString());
+
                 }
             } else {
                 ALMCompiler.IMPLEMENTATION_FAILURE("Processing History",
@@ -1433,8 +1686,13 @@ public abstract class ALMTranslator {
                         if (f.isStatic()) {
                             head = thead;
                         } else if (f.isFluent()) {
-                            // construct corresponding sparc literal
-                            head = new_SPARCLiteral_Boolean_Fluent(thead.getSign(), f, thead.getArgs(), timestep + timeAdd);
+                            if (f.isDefined()) {
+                                // construct corresponding sparc literal
+                                head = new_SPARCLiteral_Boolean_Fluent(thead.getSign(), f, thead.getArgs(), timestep);
+                            } else {
+                                // construct corresponding sparc literal
+                                head = new_SPARCLiteral_Boolean_Fluent(thead.getSign(), f, thead.getArgs(), timestep + timeAdd);
+                            }
                         } else {
                             ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
                                     "Non Static Or Fluent Function [" + f.getFunctionName() + " at head of rule");

@@ -31,17 +31,17 @@ structure coin_flip
     constant definitions
         heads = front
         tails = back
-temporal projection
+
+planning problem
 max steps 6
+
 history 
 observed(showing(dime), heads, 0).
-happened(flip(dime), 0).
-observed(showing(nickel), tails, 0).
-happened(flip(nickel), 0).
-%%%% Hiding a coin makes the side shown undefined.  
-happened(hide(nickel), 1).
+observed(showing(nickel),heads, 0).
+observed(showing(quarter), heads,0).
 happened(flip(dime), 2).
-happened(flip(nickel), 2).
-happened(flip(dime), 4).
-happened(flip(nickel), 4).
+
+goal = {showing(dime) = heads, showing(nickel)= tails, -dom_showing(quarter)}
+
+
 %End of File

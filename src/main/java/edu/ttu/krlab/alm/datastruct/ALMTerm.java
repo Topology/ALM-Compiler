@@ -4,18 +4,14 @@ import static edu.ttu.krlab.alm.datastruct.type.Type.ANY_TYPE;
 import static edu.ttu.krlab.alm.datastruct.type.Type.EMPTY_TYPE;
 
 /**
- * This class is a massive kludge. It's basically an in-memory hybrid object
- * model to represents all objects in ALM and logic program. Anything of the
- * form: -? STRING_1 -? STRING_1 ( STRING_2, ..., STRING_N) and recursively. The
- * type attribute indicates which it is. The "writeTo" function renders the
- * ALMTerm in the appropriate flattened string form bysed on type The sign can
- * be set and is relevant if the type supports the sign This implements both the
- * literal interfaces for ASPf and SPARC. This class is the nexus for changing
- * stylistic rendering on output. This class is the target of using ALM.Parse*
- * which handles many literal and terms as ParserRuleContexts When constructing
- * an ALMTerm you use this pattern: ALMTerm foo = new ALMTerm(<STRING_1>,
- * ALMTERM.<TYPE>, <PARSER_RULE_CONTEXT>) foo.addArg(<ALMTerm>);
- * foo.setSign(<BOOLEAN>);
+ * This class is a massive kludge. It's basically an in-memory hybrid object model to represents all objects in ALM and
+ * logic program. Anything of the form: -? STRING_1 -? STRING_1 ( STRING_2, ..., STRING_N) and recursively. The type
+ * attribute indicates which it is. The "writeTo" function renders the ALMTerm in the appropriate flattened string form
+ * bysed on type The sign can be set and is relevant if the type supports the sign This implements both the literal
+ * interfaces for ASPf and SPARC. This class is the nexus for changing stylistic rendering on output. This class is the
+ * target of using ALM.Parse* which handles many literal and terms as ParserRuleContexts When constructing an ALMTerm
+ * you use this pattern: ALMTerm foo = new ALMTerm(<STRING_1>, ALMTERM.<TYPE>, <PARSER_RULE_CONTEXT>)
+ * foo.addArg(<ALMTerm>); foo.setSign(<BOOLEAN>);
  *
  */
 import java.io.BufferedWriter;
@@ -80,6 +76,9 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
 
     private void defaultInit() {
         this.args = null;
+        if (type.compareTo(ALMTerm.FUN) == 0) {
+            this.args = new ArrayList<>();
+        }
         this.sign = ALMTerm.SIGN_POS; // positive by default
         typechecker = null;
 
@@ -105,7 +104,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         this.prc = null;
         defaultInit();
         for (ALMTerm arg : arguments) {
-            this.addArg(arg);
+            addArg(arg);
         }
 
     }
@@ -116,7 +115,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         this.prc = prc;
         defaultInit();
         for (ALMTerm arg : arguments) {
-            this.addArg(arg);
+            addArg(arg);
         }
 
     }
@@ -127,7 +126,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         this.prc = loc.getParserRuleContext();
         defaultInit();
         for (ALMTerm arg : arguments) {
-            this.addArg(arg);
+            addArg(arg);
         }
     }
 
@@ -160,6 +159,9 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     }
 
     public ALMTerm addArg(int index, ALMTerm arg) {
+        if (args == null) {
+            args = new ArrayList<ALMTerm>();
+        }
         args.set(index, arg);
         return this;
     }
@@ -270,25 +272,19 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     private static SortType BOOLEANS_TYPE = null;
 
     /**
-     * Determines the type of the ALMTerm and performs recursive typecheck on
-     * sub-ALMTerms. The given TypeChecker is populated with mappings from the
-     * toString of the ALMTerm to the type determined for it. Any failure to
-     * determine an adequate type produces a semantic error. The expected type
-     * from enclosing ALMTerms is passed forward in the recursive type-check
-     * algorithm.
+     * Determines the type of the ALMTerm and performs recursive typecheck on sub-ALMTerms. The given TypeChecker is
+     * populated with mappings from the toString of the ALMTerm to the type determined for it. Any failure to determine
+     * an adequate type produces a semantic error. The expected type from enclosing ALMTerms is passed forward in the
+     * recursive type-check algorithm.
      *
      * returns null when the ALMTerm does not have a type determined for it.
      *
-     * @param tc The TypeChecker storing type information between this and other
-     * related ALMTerms.
-     * @param st The Symbol Table for looking up functions and constants and
-     * other sort information.
+     * @param tc The TypeChecker storing type information between this and other related ALMTerms.
+     * @param st The Symbol Table for looking up functions and constants and other sort information.
      * @param er The semantic error reporter.
-     * @param expected The expected type from the enclosing ALMTerm to this
-     * ALMTerm. null indicates any valid type.
-     * @return The narrowest type determined for this ALMTerm. EMPTY_TYPE is
-     * returned when the type of the ALMTerm cannot be determined or a type
-     * mismatch occurs with what is expected.
+     * @param expected The expected type from the enclosing ALMTerm to this ALMTerm. null indicates any valid type.
+     * @return The narrowest type determined for this ALMTerm. EMPTY_TYPE is returned when the type of the ALMTerm
+     * cannot be determined or a type mismatch occurs with what is expected.
      */
     private SortType typeCheck(TypeChecker tc, SymbolTable st, ErrorReport er, SortType expected) {
         if (typechecker == null) {
@@ -740,8 +736,8 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
 
     public String toSortInstance() {
         switch (this.type) {
-            case ALMTerm.SORT: 
-                return "#"+getSort();
+            case ALMTerm.SORT:
+                return "#" + getSort();
             case ALMTerm.VAR:
                 if (typechecker == null) {
                     return ALM.SORT_UNKNOWN;
@@ -887,8 +883,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     }
 
     /**
-     * recursively register variables with the given set from this ALMTerm and
-     * its sub-ALMTerms.
+     * recursively register variables with the given set from this ALMTerm and its sub-ALMTerms.
      *
      * @param variables The set to accumulate variable names with.
      */
@@ -906,9 +901,8 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     }
 
     /**
-     * Recursively traverses the ALMTerm looking substructure that matches the
-     * pattern to replace with the given replacement ALMTerm. Variable names are
-     * allowed to differ, but variable occurrences are required to match
+     * Recursively traverses the ALMTerm looking substructure that matches the pattern to replace with the given
+     * replacement ALMTerm. Variable names are allowed to differ, but variable occurrences are required to match
      * structurally.
      *
      * @param pattern The structure that must match.
@@ -930,9 +924,8 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     }
 
     /**
-     * Recursively Compares this ALMTerm to the given pattern allowing for
-     * variable name differences. This does not allow for loose matches where
-     * variables can be matched to non-variable ALMTerms.
+     * Recursively Compares this ALMTerm to the given pattern allowing for variable name differences. This does not
+     * allow for loose matches where variables can be matched to non-variable ALMTerms.
      *
      * @param pattern The pattern to match against.
      * @return True if there is a structural match, otherwise false is returned.

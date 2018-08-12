@@ -1,5 +1,6 @@
 /bin/
 /target/
+/solvers/
 *.classpath
 *.project
 *.DS_Store
