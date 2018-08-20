@@ -100,9 +100,9 @@ structure blocksWorld
 			actor = X
             dest = Y
 
-%planning problem
+planning problem
 
-temporal projection
+%temporal projection
 max steps 6
 
 history
@@ -110,9 +110,9 @@ history
 observed(location(b1), t, 0).
 observed(location(b2), t, 0).
 observed(location(b3), t, 0).
-happened(put(b2, b3), 1).
-happened(put(b1, b2), 2). 
+%happened(put(b2, b3), 1).
+%happened(put(b1, b2), 2). 
 % Our goal is to have b1 on b2, b2 on b3 and b3 on table.
-%goal = {location(b1) = b2, location(b2) = b3, location(b3) = t}
+goal = {location(b1) = b2, location(b2) = b3, location(b3) = t}
 
 %End of File
