@@ -1128,7 +1128,7 @@ public abstract class ALMTranslator {
                 args.add(Inc);
                 body.add(not_dom_f_Inc);
                 r = tm.newSPARCRule(ALM.RULES_FLUENT_FUNCTIONS, neg_dom_f_Inc, body);
-                r.addComment("Law Of Intertia for negated domain functions [" + dom_f_name + "].");
+                r.addComment("Law Of Inertia for negated domain functions [" + dom_f_name + "].");
             }
         }
     }
@@ -1866,14 +1866,27 @@ public abstract class ALMTranslator {
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term", "Boolean function ["
                                 + f.getQualifiedFunctionName() + "] is occurring nested within a term");
                     }
+                    
+                    //NORMALIZE TERM BY TRANSLATING SUB-TERMS
+                    List<ALMTerm> normalizedArgs = new ArrayList<>();
+                    for(ALMTerm arg : term.getArgs()){
+                        switch(arg.getType()){
+                            case ALMTerm.FUN:
+                                normalizedArgs.add(TranslateTerm(arg,body, st, tc, timestep));
+                                break;
+                            default: 
+                                normalizedArgs.add(arg);
+                        }
+                    }
+                    
                     //The function occurring as a term denotes the value assigned to it in ASP{f}.  
                     //The function must be replaced by a variable carrying its value.  This variable 
                     //is added as the final argument of the literal in SPARC since functions are 
                     //modeled as predicates.  
                     if (f.isStatic()) {
-                        body.add(new_SPARCLiteral_NonBoolean_Static(f, term.getArgs(), new_var));
+                        body.add(new_SPARCLiteral_NonBoolean_Static(f, normalizedArgs, new_var));
                     } else if (f.isFluent()) {
-                        body.add(new_SPARCLiteral_NonBoolean_Fluent(f, term.getArgs(), new_var, timestep));
+                        body.add(new_SPARCLiteral_NonBoolean_Fluent(f, normalizedArgs, new_var, timestep));
                     } else {
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term",
                                 "Could not create sparc literal for term [" + term.toString() + "]");

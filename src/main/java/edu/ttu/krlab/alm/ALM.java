@@ -256,6 +256,11 @@ public abstract class ALM {
     // object_constant: ID ( '(' term (',' term)* ')')?; //Pattern for any object
     // instance of any sort.
     private static ALMTerm ParseObject(Object_constantContext con) {
+        //check if integer. 
+        IntegerContext integerCon = con.integer();
+        if(integerCon != null){
+            return new ALMTerm(integerCon.getText(), ALMTerm.ID, con);
+        }
         IdContext id = con.id();
         List<TermContext> terms = con.term();
         if (terms == null || terms.size() == 0) {

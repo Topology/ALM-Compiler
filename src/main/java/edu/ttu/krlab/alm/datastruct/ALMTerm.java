@@ -202,9 +202,20 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                     sort = ALM.SORT_INTEGERS;
                     break;
                 case ALMTerm.ID:
-                //NOT SUPPORT YET, Likely need to look up for matching instance or constant and use parent sort. 
                 case ALMTerm.FUN:
-                //NOT SUPPORT YET, Likely need to look up functor in instance and use parent sort. 
+                    //treated like variable, query the type checker for reported constant uses.  
+                    if (typechecker == null) {
+                        sort = ALM.SORT_UNKNOWN;
+                        return sort;
+                    }
+                    SortType sortType2 = typechecker.getNarrowestSortType(this);
+                    if (sortType2.isSingleton()) {
+                        sort = sortType2.getSingleton().getSortName();
+                    } else {
+                        ALMCompiler.IMPLEMENTATION_FAILURE("toSortInstance",
+                                "Union Sort not handled here.  Whole section needs to be re-written. ");
+                    }
+                    break;
                 default:
                     ALMCompiler.IMPLEMENTATION_FAILURE("Sort As String", "Unhandled type [" + this.type + "]");
             }
@@ -315,7 +326,9 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                     ConstantEntry cnst = constSet.iterator().next();
                     SortType cnstType = tc.getNarrowestSortType(cnst);
 
-                    if (!cnstType.isSubtypeOf(expected)) {
+                    //Checks Type Compatibility, that one is a subsort of the orther.  Rule will only fire for common subsort.  
+                    SortType intersect = Type.intersect(cnstType, expected);
+                    if (!intersect.isSubtypeOf(expected)) {
                         // type mismatch occurred.
                         er.newSemanticError(SemanticError.TYP003).add(this).add(expected).add(cnstType);
                         return EMPTY_TYPE;
@@ -412,15 +425,23 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                         if (leftType != null && rightType != null) {
                             // we need to make sure that the intersection of the types is non-empty and
                             // re-type check the broader type with the narrower type.
-                            if (leftType.isSubtypeOf(rightType)) {
-                                rightType = args.get(1).typeCheck(tc, st, er, leftType);
-                            } else if (rightType.isSubtypeOf(leftType)) {
-                                leftType = args.get(0).typeCheck(tc, st, er, rightType);
-                            } else {
-                                // Neither side is the subtype of the other, type mismatch results.
-                                er.newSemanticError(SemanticError.TYP003).add(this).add(leftType).add(rightType);
+                            SortType intersectionType = Type.intersect(leftType, rightType);
+                            if(intersectionType != Type.EMPTY_TYPE){
+                                args.get(1).typeCheck(tc, st, er, intersectionType);
+                                args.get(0).typeCheck(tc, st, er, intersectionType);
+                            }else {
+                                er.newSemanticError(SemanticError.TYP003).add(this).add(leftType).add(rightType);                                
                             }
-                            return Type.intersect(rightType, leftType);
+//                            if (leftType.isSubtypeOf(rightType)) {
+//                                rightType = args.get(1).typeCheck(tc, st, er, leftType);
+//                            } else if (rightType.isSubtypeOf(leftType)) {
+//                                leftType = args.get(0).typeCheck(tc, st, er, rightType);
+//                            } else {    
+//                                // Neither side is the subtype of the other, type mismatch results.
+//                                er.newSemanticError(SemanticError.TYP003).add(this).add(leftType).add(rightType);
+//                            }
+//                             return Type.intersect(leftType, rightType);
+                            return intersectionType;
                         }
                         // else If a type could not be determined for either the left or the right, then
                         // the respective type checking has already recorded the appropriate error.
@@ -524,10 +545,12 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                                 args.get(i).typeCheck(tc, st, er, Type.getSortType(sig.get(i)));
                             }
                             SortType rangeType = Type.getSortType(sig.get(sig.size() - 1));
-                            if (!rangeType.isSubtypeOf(expected)) {
+                            SortType intersection = Type.intersect(rangeType, expected);
+                            if (intersection == Type.EMPTY_TYPE) {
                                 er.newSemanticError(SemanticError.TYP003).add(this).add(expected).add(rangeType);
                             }
-                            return rangeType;
+                            //return rangeType;
+                            return intersection;
                         } else if (constants != null && constants.size() > 0) {
                             // Currently there should be only one constant in the set.
                             // Future versions may support constant overloading based on signature.
@@ -734,7 +757,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         this.type = type;
     }
 
-    public String toSortInstance() {
+    public String toSortInstance(boolean isGroundEnumeration) {
         switch (this.type) {
             case ALMTerm.SORT:
                 return "#" + getSort();
@@ -762,7 +785,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                         } else {
                             out.append(", ");
                         }
-                        out.append(arg.toSortInstance());
+                        out.append(arg.toSortInstance(isGroundEnumeration));
                     }
                     out.append(")");
                 }
@@ -771,7 +794,12 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
             case ALMTerm.ID:
             case ALMTerm.BOOL:
             case ALMTerm.INT:
-                return this.name;
+                if(isGroundEnumeration){
+                    return this.name;
+                } else {
+                    return "#" + getSort();
+                }
+                
             default:
                 ALMCompiler.IMPLEMENTATION_FAILURE("SortInstance As String", "Unhandled type [" + this.type + "]");
                 return null;

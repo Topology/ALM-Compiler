@@ -173,7 +173,7 @@ public class SemanticError {
         err.write("ErrorID: " + this.errID + "\n");
         err.write("Message: " + this.getErrorMessage() + "\n");
         err.write("Explanation: " + this.getErrorExplanation() + "\n");
-        err.write("Recommendation: " + this.getErrorRecommendation() + "\n");
+        err.write("Recommendation: " + this.getErrorRecommendation() + "\n\n");
         err.flush();
     }
 

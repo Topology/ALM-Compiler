@@ -766,6 +766,7 @@ public class SymbolTable {
                 for (ConstantEntry c : otherSTEntries) {
                     if (c.getArguments().equals(arguments)) {
                         constEntry = c;
+                        c.addSortsForConstant(parent_sorts);
                         break;
                     }
                 }

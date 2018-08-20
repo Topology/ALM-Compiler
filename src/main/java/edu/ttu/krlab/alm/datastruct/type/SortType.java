@@ -13,6 +13,10 @@ public interface SortType {
 
 	boolean isSubtypeOf(SortType other);
 
+        boolean isCompatible(SortType other);
+        
+        SortType getGreatestCommonSubsort(SortType other);
+        
 	boolean isSingleton();
 
 	SortEntry getSingleton();

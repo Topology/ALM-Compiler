@@ -10,6 +10,7 @@ import java.util.Set;
 
 import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.Location;
+import java.util.Collections;
 
 public class SortEntry {
 
@@ -25,10 +26,11 @@ public class SortEntry {
 
     public SortEntry(String sortname, Location loc) {
         sortName = sortname;
-        if (loc == null)
+        if (loc == null) {
             this.loc = new Location();
-        else
+        } else {
             this.loc = loc;
+        }
         parentSorts = new HashSet<SortEntry>();
         childSorts = new HashSet<SortEntry>();
         attributes = new HashSet<NormalFunctionEntry>();
@@ -66,8 +68,9 @@ public class SortEntry {
     public Set<NormalFunctionEntry> getAttributes() {
         Set<NormalFunctionEntry> attributes = new HashSet<NormalFunctionEntry>();
         attributes.addAll(this.attributes);
-        for (SortEntry parent : this.parentSorts)
+        for (SortEntry parent : this.parentSorts) {
             attributes.addAll(parent.getAttributes());
+        }
         return attributes;
     }
 
@@ -76,8 +79,9 @@ public class SortEntry {
     }
 
     public void writeTo(BufferedWriter out, Set<SortEntry> printed) throws IOException {
-        if (printed.contains(this))
+        if (printed.contains(this)) {
             return;
+        }
 
         //Make sure all parent sorts printed first. 
         Iterator<SortEntry> itP = parentSorts.iterator();
@@ -92,8 +96,9 @@ public class SortEntry {
         while (itP.hasNext()) {
             SortEntry parent = itP.next();
             out.write(parent.getSortName());
-            if (itP.hasNext())
+            if (itP.hasNext()) {
                 out.write(", ");
+            }
         }
         out.write("\n");
         out.write("sort.children: ");
@@ -101,8 +106,9 @@ public class SortEntry {
         while (itC.hasNext()) {
             SortEntry child = itC.next();
             out.write(child.getSortName());
-            if (itC.hasNext())
+            if (itC.hasNext()) {
                 out.write(", ");
+            }
         }
         out.write("\n");
         out.write("sort.attributes:\n");
@@ -138,13 +144,17 @@ public class SortEntry {
     }
 
     public boolean subsortof(SortEntry sort) {
-        if (sort == null)
+        if (sort == null) {
             return false;
-        if (this == sort)
+        }
+        if (this == sort) {
             return true;
-        for (SortEntry parent : this.parentSorts)
-            if (parent.subsortof(sort))
+        }
+        for (SortEntry parent : this.parentSorts) {
+            if (parent.subsortof(sort)) {
                 return true;
+            }
+        }
 
         return false;
     }
@@ -171,8 +181,9 @@ public class SortEntry {
         if (constantsSetIsFresh) {
             return constants;
         } else {
-            if (constants == null)
+            if (constants == null) {
                 constants = new HashSet<>();
+            }
             getConstantsHelp(constants);
             constantsSetIsFresh = true;
             return constants;
@@ -181,9 +192,8 @@ public class SortEntry {
 
     /**
      * Recursively descends the childSort tree to collect all the ConstantEntries from anys descendant SingletonSorts
-     * 
-     * @param constants
-     *            A Set of ConstantEntry to accumulate the contents of SingletonSorts into.
+     *
+     * @param constants A Set of ConstantEntry to accumulate the contents of SingletonSorts into.
      */
     private void getConstantsHelp(Set<ConstantEntry> constants) {
         if (this.isSingletonSort()) {
@@ -197,10 +207,11 @@ public class SortEntry {
 
     private void descendantSortEntryAdded(SortEntry sort) {
         constantsSetIsFresh = false;
-        if (parentSorts != null)
+        if (parentSorts != null) {
             for (SortEntry parent : parentSorts) {
                 parent.descendantSortEntryAdded(sort);
             }
+        }
     }
 
     public void removeSortInstanceWithName(String name) {
@@ -211,7 +222,54 @@ public class SortEntry {
                 break;
             }
         }
-        if (matching != null)
+        if (matching != null) {
             instances.remove(matching);
+        }
+    }
+
+    public Set<SortEntry> getGreatestCommonSubsorts(SortEntry otherSort) {
+        if (otherSort == null) {
+            return Collections.EMPTY_SET;
+        }
+        Set<SortEntry> intersection = getAllSubsorts();
+        Set<SortEntry> otherAllSubsorts = otherSort.getAllSubsorts();
+        Set<SortEntry> toDelete = new HashSet<>();
+        for (SortEntry se : intersection) {
+            if (!otherAllSubsorts.contains(se)) {
+                toDelete.add(se);
+            }
+        }
+        intersection.removeAll(toDelete);
+        //this is the intersection.  Now need to purge any sort with a parent in the set.  
+        toDelete.clear();
+        for (SortEntry se : intersection) {
+            for (SortEntry parent : se.getParentSorts()) {
+                if (intersection.contains(parent)) {
+                    toDelete.add(se);
+                }
+            }
+        }
+        intersection.removeAll(toDelete);
+        return intersection;
+    }
+
+    public Set<SortEntry> getAllSubsorts() {
+        Set<SortEntry> allSubSorts = new HashSet<>();
+        getAllSubsortsHelp(this, allSubSorts);
+        return allSubSorts;
+    }
+
+    private static void getAllSubsortsHelp(SortEntry se, Set<SortEntry> subSorts) {
+        if (se == null) {
+            return;
+        }
+        if (subSorts.contains(se)) {
+            //terminating condition;
+            return;
+        }
+        subSorts.add(se);
+        for (SortEntry childSort : se.childSorts) {
+            getAllSubsortsHelp(childSort, subSorts);
+        }
     }
 }

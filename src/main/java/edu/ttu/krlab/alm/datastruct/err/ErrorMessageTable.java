@@ -442,6 +442,13 @@ public abstract class ErrorMessageTable {
                 "Consider adding an instance(Var, sort) literal to the body of the rule.");
         errorMetaData.put(SemanticError.TYP001, typ001);
 
+        // TYP002
+        ErrorMetaDataBase typ002 = new ErrorMetaDataBase(SemanticError.TYP002,
+                "The sorts inferred for variable [1] are not compatible.",
+                "Every variable must have a single sort from which it obtains its possible values.",
+                "Check that usage of the variable and ensure all usages have a common subsort.");
+        errorMetaData.put(SemanticError.TYP002, typ002);
+        
         // TYP003
         ErrorMetaDataBase typ003 = new ErrorMetaDataBase(SemanticError.TYP003,
                 "Sort mismatch in expression [1].  Sort [2] was expected but a term of sort [3] occurred.",

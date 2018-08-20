@@ -105,10 +105,14 @@ public class ALMCompiler {
         SPARCProgram tm = new SPARCProgram();
         List<AnswerSet> tm_as = new ArrayList<AnswerSet>();
         tm.addComment("Final Program For Transition Diagram");
-
-        ALMCompiler.Compile(s, rootST, er, aspf, pm, pm_as, tm, tm_as);
-        if (er.hasErrors()) {
+        try {
+            ALMCompiler.Compile(s, rootST, er, aspf, pm, pm_as, tm, tm_as);
+            if (er.hasErrors()) {
+                ALMCompiler.reportErrors(er, s);
+            }
+        } catch (Exception ex) {
             ALMCompiler.reportErrors(er, s);
+            throw ex;
         }
     }
 

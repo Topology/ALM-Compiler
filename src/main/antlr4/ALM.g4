@@ -137,9 +137,10 @@ ZERO: [0]+; //TOKEN For ZERO, not a non-terminal in ALM BNF, used in 'integer'  
  * <comparison_rel> -> COMP_REL
  */
 
-// RECOVER KEYWORDS INTO IDENTIFIER
+// RECOVER KEYWORDS  && INTEGERS  INTO IDENTIFIER
 
-id : ID | MOD | SORT | STATE | CONSTRAINTS | FUNCTION | DECLARATIONS | 
+id : OCCURS | INSTANCE | IS_A | HAS_CHILD | HAS_PARENT | LINK | SOURCE | SINK |  SUBSORT  | 
+     DOM | ID | MOD | SORT | STATE | CONSTRAINTS | FUNCTION | DECLARATIONS | 
      DEFINITIONS | SYSTEM | DESCRIPTION | THEORY | MODULE | IMPORT | FROM |
      DEPENDS | ON | ATTRIBUTES | OBJECT | CONSTANT | STATICS | FLUENTS |
      BASIC | DEFINED | TOTAL | AXIOMS | DYNAMIC | CAUSAL | LAWS | EXECUTABILITY |
@@ -173,7 +174,7 @@ alm_name : id | VAR;
  * */
 
 
-object_constant: id ( '(' term (',' term)*   ')')?; //Pattern for any object instance of any sort.
+object_constant: (id ( '(' term (',' term)*   ')')? | integer); //Pattern for any object instance of any sort.
 function_term: object_constant;  // the distinction here is that function_terms denote functions even though they have the same syntactic structure as object_constants. 
 
 term: bool | VAR | id | integer | function_term | expression; //terms can appear on either side of EQ operators and denote values of sorts. 
@@ -213,7 +214,9 @@ literal: atom | '-' atom |  term relation term ;//<literal> not including specia
 
 occurs_literal:  occurs_atom | '-' occurs_atom; 
 
+
 /* ALM FILE */
+
 alm_file : (system_description | theory | module) EOF;
 
 /* ALM SYSTEM DESCRIPTION */
@@ -222,8 +225,8 @@ library_name: alm_name;
 sys_desc_name: alm_name;
 system_description  : SYSTEM DESCRIPTION sys_desc_name theory (structure solver_mode?)? EOF;    //<system_description>
 
-/* ALM THEORY */
 
+/* ALM THEORY */
 
 theory_name: alm_name; 
 theory: (THEORY theory_name sequence_of_modules) | (IMPORT theory_name FROM library_name);//<theory>
@@ -275,17 +278,21 @@ one_function_decl: (TOTAL)? function_name ':' sort_name (('*' sort_name )* RIGHT
 
 
 
+
 pos_fun_def: function_term EQ term | function_term | '-' function_term;
 neg_fun_def: function_term NEQ term;
 fun_def : (pos_fun_def | neg_fun_def);
 
+
+
 /* ALM AXIOMS */
 
 axioms: AXIOMS (dynamic_causal_laws | executability_conditions | state_constraints | function_definitions)+ ;//<axioms>,<remainder_axioms>
-dynamic_causal_laws: DYNAMIC CAUSAL LAWS (one_dynamic_causal_law)+;
-executability_conditions: EXECUTABILITY CONDITIONS (one_executability_condition)+;
-state_constraints: STATE CONSTRAINTS (one_state_constraint)+;
-function_definitions: FUNCTION DEFINITIONS (one_definition)+;
+dynamic_causal_laws: DYNAMIC CAUSAL LAWS (one_dynamic_causal_law)*;
+executability_conditions: EXECUTABILITY CONDITIONS (one_executability_condition)*;
+state_constraints: STATE CONSTRAINTS (one_state_constraint)*;
+function_definitions: FUNCTION DEFINITIONS (one_definition)*;
+
 
  /* DYNAMIC CAUSAL LAW */
  

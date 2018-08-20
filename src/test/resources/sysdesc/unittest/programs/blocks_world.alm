@@ -1,0 +1,118 @@
+% This is based on AL description in Gelfond and Kahl's book
+% -- YL, Aug 2018
+system description blocksWorld
+theory blocksWorld
+% this module depends on moving module in basicMotion file
+module moving
+			sort declarations
+				points, things :: universe
+				agents :: things
+				move :: actions
+					attributes
+						actor : agents
+						origin : points
+						dest : points
+			function declarations
+				statics
+					basic
+						symmetric_connectivity : booleans
+						transitive_connectivity : booleans
+				fluents
+					basic
+						connected : points * points -> booleans
+						total location : things -> points
+			axioms
+				dynamic causal laws
+					occurs(X) causes location(A) = D if instance(X, move),actor(X) = A,dest(X) = D.
+				state constraints
+					connected(X, X).
+					connected(X, Y) if connected(Y, X),symmetric_connectivity.
+					-connected(X, Y) if -connected(Y, X),symmetric_connectivity.
+					connected(X, Z) if connected(X, Y),connected(Y, Z),transitive_connectivity.
+				executability conditions
+					impossible occurs(X) if instance(X, move),actor(X) = A, location(A) != origin(X).
+					impossible occurs(X) if instance(X, move),actor(X) = A, location(A) = dest(X).
+					impossible occurs(X) if instance(X, move),actor(X) = A, location(A) = O,dest(X) = D,-connected(O, D).
+module blocksWorld 
+	depends on moving
+		sort declarations
+			% sort for blocks
+			block :: points, agents
+			% actions put(B, L): move block B to location L
+			put :: move
+		constant declarations
+			% t for table in the problem
+			t : points
+		function declarations
+			fluents 
+				defined
+					% above(B1, B2) is true if block B1 is above B2
+					above: block * points -> booleans
+		axioms
+			state constraints
+				% one block can not be a location of two blocks
+				false if location(B1) = L,
+					location(B2) = L,
+					B1 != B2,
+					instance(L, block). %%%% added. 
+			function definitions
+				% X is above Y if location(X) is Y or above Y
+				above(X ,Y) if location(X) = Y.
+				% above(X, Y) if location(X) = Z, above(Z, Y)
+				% above(X, Y) if above(location(X), Y).  %%% should this work??? 
+				% above(X,Y) if above(Z,Y), location(X) = Z, instance(Z, block). 
+				above(X,Y) if above(X,Z), above(Z,Y).
+			executability conditions
+				% put(X, Y) not possible if there
+				% is a block on X.
+				impossible occurs(X) if
+					instance(X, put),
+					actor(X) = B,
+					location(B1) = B. %%%% ??? fix type checking, this should work now. 
+				% put(X, Y) is not possible if there
+				% is a block on Y.
+				% ideally, we should be able to use sort as a predicate,
+				% e.g., here we would like to say B is a block: block(B).
+				% Since we cannot use sort block, we use a workaround: B != t(able)
+				impossible occurs(X) if
+					instance(X, put),
+					dest(X) = B,
+					B != t,
+					location(B1) = B.
+				% when concurrent actions allowed, we need to coordinate
+				% the actions - put(B1, L), put(B2, B1) - the origin of
+				% a put action cannot be the destination of another put action
+				impossible occurs(X) if
+					instance(X, put),
+					occurs(Y),
+					X != Y,
+					instance(Y, put),
+					actor(X) != dest(Y).
+structure blocksWorld
+	instances
+		b1, b2, b3 in block
+        t in points
+        % put(X, Y) move blocks X to Y, so origin and dest
+        % are X and Y respectively. We set X as actor.
+        % put(X, Y) might not be a good subsort of move.
+        % It may be better to take it a subsort of carry.
+        put(X, Y) in put where X != Y
+			actor = X
+            dest = Y
+
+%planning problem
+
+temporal projection
+max steps 6
+
+history
+% initially all three blocks b1 to b3 are on table
+observed(location(b1), t, 0).
+observed(location(b2), t, 0).
+observed(location(b3), t, 0).
+happened(put(b2, b3), 1).
+happened(put(b1, b2), 2). 
+% Our goal is to have b1 on b2, b2 on b3 and b3 on table.
+%goal = {location(b1) = b2, location(b2) = b3, location(b3) = t}
+
+%End of File

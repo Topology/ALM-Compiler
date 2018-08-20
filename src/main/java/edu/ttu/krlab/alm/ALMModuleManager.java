@@ -16,6 +16,7 @@ import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
 import edu.ttu.krlab.alm.parser.ALMLexer;
 import edu.ttu.krlab.alm.parser.ALMModuleListener;
 import edu.ttu.krlab.alm.parser.ALMParser;
+import edu.ttu.krlab.alm.parser.ALMParser.Alm_fileContext;
 import edu.ttu.krlab.alm.parser.ALMParser.ModuleContext;
 import edu.ttu.krlab.alm.parser.ALMParser.System_descriptionContext;
 import edu.ttu.krlab.alm.parser.ALMSyntaxErrorListener;
@@ -27,7 +28,7 @@ public class ALMModuleManager {
     private ErrorReport er;
     private Map<String, ModuleContext> imports = new HashMap<>();
     private Set<String> unresolvedImports = new HashSet<>();
-    private Map<String, System_descriptionContext> resolvedImports = new HashMap<>();
+    private Map<String, Alm_fileContext> resolvedImports = new HashMap<>();
     private Set<String> unresolvedModules = new HashSet<>();
     private Map<String, ModuleContext> resolvedModules = new HashMap<>();
     private Map<ModuleContext, String> moduleContextReferences = new HashMap<>();
@@ -138,7 +139,7 @@ public class ALMModuleManager {
                 }
 
                 //get any existing import for the theory. 
-                System_descriptionContext existing = resolvedImports.get(theoryReference);
+                Alm_fileContext existing = resolvedImports.get(theoryReference);
                 if (existing == null) {
                     //import the theory from the library since it doesn't exist.
                     //get the filename of the system description containin the theory. 
@@ -162,7 +163,7 @@ public class ALMModuleManager {
                         libParser.addErrorListener(new ALMSyntaxErrorListener(er));
                         libParser.addParseListener(new ALMModuleListener(this));
                         //pare the theory
-                        existing = libParser.system_description();
+                        existing = libParser.alm_file();
                         //record the parsed theory.
                         resolvedImports.put(theoryReference, existing);
                     }

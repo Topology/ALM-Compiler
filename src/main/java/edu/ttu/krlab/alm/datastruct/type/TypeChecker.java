@@ -1,5 +1,6 @@
 package edu.ttu.krlab.alm.datastruct.type;
 
+import edu.ttu.krlab.alm.ALMCompiler;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -66,7 +67,7 @@ public class TypeChecker {
         while (variables.contains(newVar)) {
             newVar = baseVar + (count++);
         }
-        varTypes.put(baseVar, type);
+        varTypes.put(newVar, type);
         return newVar;
     }
 
@@ -139,6 +140,21 @@ public class TypeChecker {
             constTypes.put(cnst, constType);
         }
         return constType;
+    }
+
+    public SortType getNarrowestSortType(ALMTerm constTerm) {
+
+        //This usage is assumed to be for a constant reference that needs to be looked up in the symbol table. 
+        String name = constTerm.getName();
+        int argSize = constTerm.getArgs().size();
+        Set<ConstantEntry> constants = st.getConstantEntries(name, argSize);
+        if (constants.size() == 1) {
+            return getNarrowestSortType(constants.iterator().next());
+        } else {
+            ALMCompiler.IMPLEMENTATION_FAILURE("Resolving Sort Of Constant", "Too many matching constants to resolve.");
+        }
+
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

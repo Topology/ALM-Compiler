@@ -53,14 +53,14 @@ public class SPARCSort extends LogicProgramArtifact {
 		expression = null;
 		if (si.isGround()) {
 			if (this.groundTerms == null)
-				this.groundTerms = si.toSortInstance();
+				this.groundTerms = si.toSortInstance(true);
 			else
-				this.groundTerms = this.groundTerms + ", " + si.toSortInstance();
+				this.groundTerms = this.groundTerms + ", " + si.toSortInstance(true);
 		} else {
 			if (this.patterns == null) {
-				this.patterns = si.toSortInstance();
+				this.patterns = si.toSortInstance(false);
 			} else {
-				this.patterns = this.patterns + " + " + si.toSortInstance();
+				this.patterns = this.patterns + " + " + si.toSortInstance(false);
 			}
 		}
 	}

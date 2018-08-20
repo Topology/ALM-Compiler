@@ -1261,12 +1261,10 @@ public class ALMModuleListener implements ALMListener {
 
     @Override
     public void enterAlm_file(ALMParser.Alm_fileContext ctx) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void exitAlm_file(ALMParser.Alm_fileContext ctx) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override

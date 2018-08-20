@@ -165,7 +165,8 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void exitInteger(ALMParser.IntegerContext ctx) {
-        st.addIntegerOccurrence(Integer.parseInt(ctx.toString()));
+        String number = ctx.getText();
+        st.addIntegerOccurrence(Integer.parseInt(number));
     }
 
     /**
@@ -1137,15 +1138,15 @@ public class ALMBaseListener implements ALMListener {
             try {
                 SortEntry sort = st.getSortEntry(sort_name.getText());
                 Set<SortEntry> children = sort.getChildSorts();
-                if (children.size() == 0) {
+//                if (children.size() == 0) {
                     sort_entries.add(sort);
-                } else {
-                    // sort was not source sort.
-                    SemanticError se = er.newSemanticError(SemanticError.CND001);
-                    se.add(ctx); // location of const declaration.
-                    se.add(sort_name);
-                    se.add(children.iterator().next().getLocation());
-                }
+//                } else {
+//                    // sort was not source sort.
+//                    SemanticError se = er.newSemanticError(SemanticError.CND001);
+//                    se.add(ctx); // location of const declaration.
+//                    se.add(sort_name);
+//                    se.add(children.iterator().next().getLocation());
+//                }
             } catch (SortNotFoundException e1) {
                 // sort was not declared in the hierarchy
                 er.newSemanticError(SemanticError.CND003).add(sort_name);
@@ -1430,6 +1431,7 @@ public class ALMBaseListener implements ALMListener {
             } catch (SortNotFoundException e) {
                 // All sorts must be declared in hierarchy
                 er.newSemanticError(SemanticError.FND002).add(sctx);
+                return; //cannot proceed due to signature failure. 
             }
         }
 
@@ -2468,10 +2470,10 @@ public class ALMBaseListener implements ALMListener {
                 ALMTerm is_a_head = null;
                 // If the sort is a source sort add is_a otherwise add instance
                 Set<SortEntry> childSorts = sort_entry.getChildSorts();
-                if (childSorts.size() != 0) {
-                    //declaring instances for non-source sorts (leaves) is not supported in this version of ALM. 
-                    er.newSemanticError(SemanticError.SID002).add(obj_const).add(sort_entry);
-                }
+//                if (childSorts.size() != 0) {
+//                    //declaring instances for non-source sorts (leaves) is not supported in this version of ALM. 
+//                    er.newSemanticError(SemanticError.SID002).add(obj_const).add(sort_entry);
+//                }
 
                 is_a_head = new ALMTerm(ALM.SPECIAL_FUNCTION_IS_A, ALMTerm.FUN);
 
@@ -2794,6 +2796,9 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void exitObserved(ObservedContext ctx) {
+        if (er.hasErrors()) {
+            return; //cannot process history until BAT is sound.
+        }
         ALMTerm f = ALM.ParseALMTerm(ctx.function_term());
         ALMTerm t = ALM.ParseTerm(ctx.term());
         int i = Integer.parseInt(ctx.nat_num().getText());
@@ -2834,6 +2839,9 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void exitHappened(HappenedContext ctx) {
+        if (er.hasErrors()) {
+            return; //cannot process history until BAT is sound.
+        }
         ALMTerm a = ALM.ParseALMTerm(ctx.object_constant());
         int i = Integer.parseInt(ctx.nat_num().getText());
 

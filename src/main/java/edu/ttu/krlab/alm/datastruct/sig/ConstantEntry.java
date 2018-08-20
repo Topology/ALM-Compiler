@@ -152,4 +152,8 @@ public class ConstantEntry {
         return CDMap.get(objConst);
     }
 
+    void addSortsForConstant(List<SortEntry> parent_sorts) {
+        sourceSorts.addAll(parent_sorts);
+    }
+
 }

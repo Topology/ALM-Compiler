@@ -1,0 +1,54 @@
+% This is based on AL description in Gelfond and Kahl's book
+% -- YL, Aug 2018
+system description briefcase
+theory briefcase
+module briefcase
+    sort declarations    
+        clasp :: universe
+        toggle :: actions
+            attributes
+              claspToToggle: clasp
+    constant declarations
+        1, 2 : clasp
+    function declarations
+        fluents
+            basic
+				% up(C) - the clasp is up
+                up: clasp -> booleans
+        defined
+            % open: the brief case is open.
+            open: booleans
+    axioms
+        dynamic causal laws
+            % toggle(X) toggles clasp X
+            occurs(X) causes up(C) if
+              instance(X, toggle),
+              claspToToggle(X) = C,
+              -up(C).
+
+            occurs(X) causes -up(C) if
+              instance(X, toggle),
+              claspToToggle(X) = C,
+              up(C).
+
+    function definitions
+        % briefcase is open if both clasps are up
+        open if up(1), up(2). 
+structure briefcase
+    instances
+    % 1, 2 in clasp
+    toggle(C) in toggle
+        claspToToggle = C
+
+planning problem
+max steps 3
+
+history
+% initially all three blocks b1 to b3 are on table
+observed(up(1), false, 0).
+observed(up(2), false, 0).
+
+% Our goal is to have b1 on b2, b2 on b3 and b3 on table.
+goal = {open}
+
+%End of File
