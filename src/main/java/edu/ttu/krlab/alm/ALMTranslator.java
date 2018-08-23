@@ -1661,7 +1661,7 @@ public abstract class ALMTranslator {
 
         TypeChecker tc = ar.getTypeChecker();
         if (tc == null) {
-            tc = new TypeChecker(st);
+            tc = new TypeChecker(st,null);
         }
 
         // Translate HEAD

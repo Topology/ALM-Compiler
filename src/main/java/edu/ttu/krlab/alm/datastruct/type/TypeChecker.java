@@ -10,7 +10,10 @@ import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
 import edu.ttu.krlab.alm.datastruct.err.SemanticError;
 import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
+import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
+import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
+import java.util.Iterator;
 
 public class TypeChecker {
 
@@ -20,11 +23,13 @@ public class TypeChecker {
     private final Map<String, SortType> varTypes = new HashMap<>();
 
     private SymbolTable st;
+    private ErrorReport er;
     private boolean typeChecked = false;
     private boolean passed = false;
 
-    public TypeChecker(SymbolTable st) {
+    public TypeChecker(SymbolTable st, ErrorReport er) {
         this.st = st;
+        this.er = er;
     }
 
     public boolean typeCheckPasses(ErrorReport er) {
@@ -142,19 +147,38 @@ public class TypeChecker {
         return constType;
     }
 
-    public SortType getNarrowestSortType(ALMTerm constTerm) {
+    public SortType getNarrowestSortType(ALMTerm term) {
 
         //This usage is assumed to be for a constant reference that needs to be looked up in the symbol table. 
-        String name = constTerm.getName();
-        int argSize = constTerm.getArgs().size();
+        String name = term.getName();
+        int argSize = term.getArgs().size();
         Set<ConstantEntry> constants = st.getConstantEntries(name, argSize);
-        if (constants.size() == 1) {
+        int numMatch = constants.size();
+        if (numMatch == 1) {
             return getNarrowestSortType(constants.iterator().next());
+        } else if (numMatch > 1) {
+            Iterator<ConstantEntry> it = constants.iterator();
+            ConstantEntry first = it.next();
+            ConstantEntry second = it.next();
+            er.newSemanticError(SemanticError.CND007).add(term).add(first).add(second);
+            SortType intersect = Type.intersect(getNarrowestSortType(first), getNarrowestSortType(second));
+            while (it.hasNext()) {
+                intersect = Type.intersect(intersect, getNarrowestSortType(it.next()));
+            }
+            return intersect;
         } else {
-            ALMCompiler.IMPLEMENTATION_FAILURE("Resolving Sort Of Constant", "Too many matching constants to resolve.");
+            //there are no matching constants.   This could be a no-argument function?.  
+            Set<FunctionEntry> functions = st.getFunctionEntries(name);
+            int numFunctions = functions.size();
+            if (numFunctions == 1) {
+                FunctionEntry f = functions.iterator().next();
+                SortEntry range = f.getRangeSort();
+                return Type.getSortType(range);
+            } else {
+                ALMCompiler.IMPLEMENTATION_FAILURE("Get Narrowest Sort Of Term", "Unexpected case for tern :" + term.toString());
+            }
+            return Type.EMPTY_TYPE;
         }
-
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

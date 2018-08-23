@@ -1,0 +1,89 @@
+system description npainting
+	theory basic_painting
+		module painting
+			sort declarations
+				%we need agents, colors and objects in this universe%
+				things :: universe
+				agents :: things
+				colors :: things
+				objects :: things
+
+				%the action paint as done by an actor using a color on object wall %
+                paint :: actions
+					attributes
+						actor : agents
+						wall : objects
+						color : colors
+			function declarations
+				statics
+					basic
+						%darker(X, Y) is true if color X is darker than Y%
+						darker : colors * colors -> booleans
+				fluents
+					basic
+						%painted(A,O) = C denotes agent A has painted object O with color C% 
+						total painted: agents * objects -> colors
+						%agentHasColor(A) = C denotes agent A has color C to paint with%
+						total agentHasColor : agents -> colors								
+						%objectHasColor (O) = C denotes object O has color  C %
+                        total objectHasColor : objects -> colors
+						
+                     defined
+						%appropriateColor(O,C) is true when color C is the appropriate color for object O
+						appropriateColor: objects * colors -> booleans
+			axioms
+				dynamic causal laws
+					%occurence of instance X of action paint where actor is A and wall object is O and color is C causes 
+					%the wall object O to have color C as long as C is the appropriate color for wall object O %    
+					occurs(X) causes painted(A,O) =C if 
+									instance(X,paint), 
+									actor(X) = A, 
+									wall(X) = O, 
+									color(X) = C, appropriateColor(O,C).
+
+					%At this point we do not need state constraints on agent having only one color at a time 
+					%or object having only one color at a  time because they are functions 
+					%and functions can have only one value by definition%
+                state constraints
+                %Object O has color C is Actor A painted object O with color C
+                objectHasColor(O) = C if
+                    painted(A,O) = C.
+
+                executability conditions
+					% it is impossible for an instance of action paint to occur where actor is A, 
+					%wall object is O and color is C if the agent A does not have the color C%
+					impossible occurs(X) if
+                                        instance(X,paint),
+										actor(X) = A, 
+										wall(X) = O, 
+										color(X) = C,
+                                        agentHasColor(A) != C.
+                                        % bugy for now: -(agentHasColor(A) = C).
+
+                function definitions
+					%color C is an appropriate color for object O if object  O has
+					%color C1 and color C is darker than C1%
+                    appropriateColor(O,C) if 
+											objectHasColor(O) = C1, darker(C,C1).
+structure jenny_paint_wall
+	instances
+		yellow, white in colors
+		wall_1 in objects
+		jenny in agents
+		painting(A,W,C) in paint
+				actor = A
+				wall = W
+				color = C
+	value of statics
+		darker(yellow,white).
+
+temporal projection
+max steps 3
+history
+  % observed(painted(jenny, wall_1), false, 0). % ?? wrong sort not detected.
+  observed(painted(jenny, wall_1), white, 0).
+  observed(agentHasColor(jenny), yellow, 0).
+  % we need to give a color to the wall_1.
+  % if we don't observe the color of wall_1, it will be unknown.
+  observed(objectHasColor(wall_1), white, 0).
+  happened(painting(jenny, wall_1, yellow), 0).

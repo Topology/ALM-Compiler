@@ -1139,7 +1139,7 @@ public class ALMBaseListener implements ALMListener {
                 SortEntry sort = st.getSortEntry(sort_name.getText());
                 Set<SortEntry> children = sort.getChildSorts();
 //                if (children.size() == 0) {
-                    sort_entries.add(sort);
+                sort_entries.add(sort);
 //                } else {
 //                    // sort was not source sort.
 //                    SemanticError se = er.newSemanticError(SemanticError.CND001);
@@ -1167,12 +1167,12 @@ public class ALMBaseListener implements ALMListener {
                         SortEntry sort = st.getSortEntry(arg.toString());
                         Set<SortEntry> children = sort.getChildSorts();
                         arguments.add(sort);
-                        if (children.size() != 0) {
-                            SortEntry childsort = children.iterator().next();
-                            er.newSemanticError(SemanticError.CND002).add(arg.getLocation())
-                                    .add(childsort.getLocation());
-                            schema_passed = false;
-                        }
+//                        if (children.size() != 0) {
+//                            SortEntry childsort = children.iterator().next();
+//                            er.newSemanticError(SemanticError.CND002).add(arg.getLocation())
+//                                    .add(childsort.getLocation());
+//                            schema_passed = false;
+//                        }
                     } catch (SortNotFoundException e) {
                         er.newSemanticError(SemanticError.CND004).add(arg.getLocation());
                         schema_passed = false;
@@ -1786,7 +1786,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // Need To Type Check Literals
-        TypeChecker typeChecker = new TypeChecker(st);
+        TypeChecker typeChecker = new TypeChecker(st, er);
         occurs_atom.typeCheck(typeChecker, st, er);
         instance_atom.typeCheck(typeChecker, st, er);
         for (ALMTerm lit : literals) {
@@ -1891,7 +1891,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // TYPE CHECKING
-        TypeChecker vtc = new TypeChecker(st);
+        TypeChecker vtc = new TypeChecker(st,er);
         for (ALMTerm lit : lits) {
             lit.typeCheck(vtc, st, er);
         }
@@ -1967,6 +1967,9 @@ public class ALMBaseListener implements ALMListener {
             }
         }
 
+        boolean moveRHStoBody = false;
+        SortEntry rhsSort = null;
+
         // SEMANTIC ERROR CHECKING
         if (head != null) {
             // CHECK FORM OF HEAD LITERAL, either Term Relation or Function.
@@ -1991,14 +1994,15 @@ public class ALMBaseListener implements ALMListener {
                 ALMTerm oterm = head.getArg(1);
                 if (oterm != null) {
                     if (!oterm.isVariable()) {
-                        SortEntry rangeSort = sig.get(sig.size() - 1);
+                        rhsSort = sig.get(sig.size() - 1);
                         boolean match = false;
-                        for (ConstantEntry ce : rangeSort.getConstants()) {
+                        for (ConstantEntry ce : rhsSort.getConstants()) {
                             match = ce.matches(oterm);
                         }
                         if (!match) {
-                            er.newSemanticError(SemanticError.AXM009).add(headFunction).add(oterm)
-                                    .add(sig.get(sig.size() - 1));
+                            moveRHStoBody = true;
+//                            er.newSemanticError(SemanticError.AXM009).add(headFunction).add(oterm)
+//                                    .add(sig.get(sig.size() - 1));
                         }
                     }
                 }
@@ -2009,7 +2013,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // Variable Type Checking
-        TypeChecker vm = new TypeChecker(st);
+        TypeChecker vm = new TypeChecker(st,er);
         for (ALMTerm lit : lits) {
             lit.typeCheck(vm, st, er);
         }
@@ -2030,6 +2034,15 @@ public class ALMBaseListener implements ALMListener {
                 for (ALMTerm lit : lits) {
                     body.add(lit);
                 }
+            }
+
+            if (moveRHStoBody) {
+                ALMTerm rhs = head.getArg(1);
+                String var = vm.newVariable("V", Type.getSortType(rhsSort));
+                ALMTerm varTerm = new ALMTerm(var, ALMTerm.VAR, head.getLocation());
+                head.getArgs().set(1, varTerm);
+                ALMTerm termEq = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, varTerm, rhs);
+                body.add(termEq);
             }
 
             ASPfRule r = aspf.newRule(ALM.AXIOMS_STATE_CONSTRAINTS, head, body);
@@ -2112,7 +2125,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // VARIABLE TYPE CHECKING
-        TypeChecker vm = new TypeChecker(st);
+        TypeChecker vm = new TypeChecker(st,er);
         for (ALMTerm lit : lits) {
             lit.typeCheck(vm, st, er);
         }
@@ -2401,7 +2414,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // TypeCheck ALMTerms and verify that attribute definitions are actual attributes for the sort. 
-        TypeChecker tc = new TypeChecker(st);
+        TypeChecker tc = new TypeChecker(st,er);
         for (ALMTerm si : sort_instances) {
             si.registerVariablesWith(tc);
         }
@@ -2653,7 +2666,7 @@ public class ALMBaseListener implements ALMListener {
         }
         // do we have body in the values of statics?
         // type checking
-        TypeChecker vm = new TypeChecker(st);
+        TypeChecker vm = new TypeChecker(st,er);
         head.typeCheck(vm, st, er);
 
         aspf.newRule(ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS, head, body);
@@ -2712,6 +2725,10 @@ public class ALMBaseListener implements ALMListener {
         boolean error_occurred = false;
         String type = lit.getType();
         String name = lit.getName();
+        List<ALMTerm> args = lit.getArgs();
+        for(ALMTerm arg : args){
+            error_occurred = termHasSemanticErrors(arg) || error_occurred;
+        }
         switch (type) {
             case ALMTerm.TERM_RELATION:
                 // TODO: Massive Amount Of Work Here...
@@ -2745,6 +2762,45 @@ public class ALMBaseListener implements ALMListener {
                 // Nothing Else Should Occur As Literal
                 ALMCompiler.IMPLEMENTATION_FAILURE("Semantic Check Of Literals",
                         "ALMTerm [" + lit.toString() + "] is not a literal");
+        }
+        return error_occurred;
+    }
+    
+    public boolean termHasSemanticErrors(ALMTerm term){
+        boolean error_occurred = false;
+        String type = term.getType();
+        String name = term.getName();
+        List<ALMTerm> args = term.getArgs();
+        for(ALMTerm arg : args){
+            error_occurred = termHasSemanticErrors(arg) || error_occurred;
+        }
+        switch(type){
+            case ALMTerm.ID: 
+                boolean inSymbolTable = false;
+                //these are either constants or no-argument functions.  Just verify exists in symbol table. 
+                Set<ConstantEntry> matchingConstants = st.getConstantEntries(name);
+                if(matchingConstants.size() > 0){
+                    inSymbolTable = true;
+                }
+                if(!inSymbolTable){
+                    Set<FunctionEntry> functions = st.getFunctionEntries(name);
+                    for(FunctionEntry f : functions){
+                        if(f.getSignature().size() == 1){
+                            inSymbolTable = true;
+                        }
+                    }
+                }
+                if(!inSymbolTable){
+                    er.newSemanticError(SemanticError.CND008).add(term);
+                    error_occurred = true;
+                }
+                break;
+            case ALMTerm.INT:
+                break;
+            case ALMTerm.FUN:
+                break;
+            case ALMTerm.VAR:
+                break;
         }
         return error_occurred;
     }
@@ -3032,7 +3088,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         //Type Check Literals
-        TypeChecker tc = new TypeChecker(st);
+        TypeChecker tc = new TypeChecker(st,er);
         for (ASPfLiteral lit : lits) {
             lit.typeCheck(tc, st, er);
         }
