@@ -74,6 +74,8 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     private ParserRuleContext prc;
     private TypeChecker typechecker;
 
+    private static SymbolTable st = null;
+    
     private void defaultInit() {
         this.args = null;
         if (type.compareTo(ALMTerm.FUN) == 0) {
@@ -711,8 +713,17 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                 out.write(this.name);
                 break;
             case ALMTerm.FUN:
+                String nameToUse = this.name;
+                if(st!= null){
+                    //lookup fully qualified name of function. 
+                    Set<FunctionEntry> functions = st.getFunctionEntries(name, this.args.size());
+                    if(functions.size() > 0 ){
+                        //TODO:  do fine grained resolution if size > 1
+                        nameToUse = functions.iterator().next().getQualifiedFunctionName();
+                    }
+                }
                 out.write(this.sign);
-                out.write(this.name);
+                out.write(nameToUse);
                 if (this.args != null && this.args.size() > 0) {
                     boolean first = true;
                     out.write("(");
@@ -987,5 +998,10 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         }
         //all arguments match
         return true;
+    }
+    
+    
+    public static void setSymbolTable(SymbolTable symbolTable){
+        st = symbolTable;
     }
 }

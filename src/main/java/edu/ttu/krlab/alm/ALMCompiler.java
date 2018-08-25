@@ -206,6 +206,7 @@ public class ALMCompiler {
             rootST.addDependency(processModuleToSymbolTable(s, rootST, mc, amm, aspf, er, start, finished));
         }
         rootST.flatten();
+        ALMTerm.setSymbolTable(rootST); // symbol table to use for writing out propert names of functions. 
     }
 
     private static SymbolTable processModuleToSymbolTable(ALMCompilerSettings s, SymbolTable rootST, ModuleContext mc, ALMModuleManager amm,
