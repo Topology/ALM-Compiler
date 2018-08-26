@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import edu.ttu.krlab.alm.datastruct.ALMTerm;
+import edu.ttu.krlab.alm.datastruct.Location;
+import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
 import edu.ttu.krlab.alm.parser.ALMParser;
 import edu.ttu.krlab.alm.parser.ALMParser.Arithmetic_termContext;
 import edu.ttu.krlab.alm.parser.ALMParser.AtomContext;
@@ -51,6 +53,7 @@ public abstract class ALM {
 
     public static final String SORT_UNKNOWN = null;
     public static final String SORT_INTEGERS = "integers";
+    public static final String SORT_COMPARABLE_INTEGERS_SUBSORT = "comparable_integers_subsort";
 
     public static final String SORT_TIMESTEP = "timeStep";
 
@@ -108,18 +111,17 @@ public abstract class ALM {
     public static final String SOLVER_MODE_DP = "Solver Mode: Diagnostic Problem";
     public static final String SKIP_TRANSLATION_RULES = "Rules Copied Without Translation, Time Injected Manually.";
     public static final String CR_RULES = "CR Rules, Copied Without Translation.";
-    
-
 
     // literal: atom | '-' atom | term relation term ;
     public static ALMTerm ParseLiteral(LiteralContext litcon) {
         AtomContext acon = litcon.atom();
         if (acon != null) {
             ALMTerm atomterm = ALM.ParseAtom(acon);
-            if (litcon.getChild(0) instanceof TerminalNode)
+            if (litcon.getChild(0) instanceof TerminalNode) {
                 atomterm.setSign(ALMTerm.SIGN_NEG);
-            else
+            } else {
                 atomterm.setSign(ALMTerm.SIGN_POS);
+            }
             return atomterm;
         } else if (litcon.term() != null) {
             ALMTerm left = ALM.ParseTerm(litcon.term(0));
@@ -165,7 +167,6 @@ public abstract class ALM {
     }
 
     // instance_atom: INSTANCE '(' var_or_obj ',' sort_name ')';
-
     public static ALMTerm ParseInstanceAtom(Instance_atomContext ia) {
         ALMTerm left = ALM.ParseVarObj((ALMParser.Var_or_objContext) ia.getChild(2));
         ALMTerm right = ALM.ParseSortName((ALMParser.Sort_nameContext) ia.getChild(4));
@@ -194,33 +195,36 @@ public abstract class ALM {
 
     // sort_name: predefined_sorts | UNIVERSE | ACTIONS | ID;
     private static ALMTerm ParseSortName(Sort_nameContext sn) {
-        if (sn.predefined_sorts() != null)
+        if (sn.predefined_sorts() != null) {
             return ALM.ParsePredefinedSort(sn.predefined_sorts());
-        else if (sn.UNIVERSE() != null)
+        } else if (sn.UNIVERSE() != null) {
             return new ALMTerm(sn.UNIVERSE().getText(), ALMTerm.SORT, sn);
-        else if (sn.ACTIONS() != null)
+        } else if (sn.ACTIONS() != null) {
             return new ALMTerm(sn.ACTIONS().getText(), ALMTerm.SORT, sn);
-        else if (sn.id() != null)
+        } else if (sn.id() != null) {
             return new ALMTerm(sn.id().getText(), ALMTerm.ID, sn);
+        }
         return null;
     }
 
     // predefined_sorts: BOOLEANS | INTEGERS | integer_range;
     private static ALMTerm ParsePredefinedSort(Predefined_sortsContext ps) {
-        if (ps.BOOLEANS() != null)
+        if (ps.BOOLEANS() != null) {
             return new ALMTerm(ps.BOOLEANS().getText(), ALMTerm.SORT, ps);
-        else if (ps.INTEGERS() != null)
+        } else if (ps.INTEGERS() != null) {
             return new ALMTerm(ps.INTEGERS().getText(), ALMTerm.SORT, ps);
-        else if (ps.integer_range() != null)
+        } else if (ps.integer_range() != null) {
             return ALM.ParseIntRange(ps.integer_range());
+        }
         return null;
     }
 
     // integer_range: '[' integer '..' integer ']';
     private static ALMTerm ParseIntRange(Integer_rangeContext ir) {
-        ALMTerm left = ALM.ParseInteger(ir.integer(0));
-        ALMTerm right = ALM.ParseInteger(ir.integer(1));
-        return new ALMTerm(ir.getText(), ALMTerm.SORT, ir).addArg(left).addArg(right);
+        int low = Integer.parseInt(ir.integer(0).getText());
+        int high = Integer.parseInt(ir.integer(1).getText());
+        SortEntry rangeSort = ALMTerm.getSymbolTable().getIntegerRangeSort(low, high, new Location(ir));
+        return new ALMTerm(rangeSort.getSortName(), ALMTerm.SORT, ir);
     }
 
     // integer : ZERO | POSINT | NEGINT;
@@ -230,18 +234,21 @@ public abstract class ALM {
 
     // var_or_obj: (object_constant | VAR);
     private static ALMTerm ParseVarObj(Var_or_objContext vo) {
-        if (vo.object_constant() != null)
+        if (vo.object_constant() != null) {
             return ALM.ParseObject(vo.object_constant());
-        else if (vo.VAR() != null)
+        } else if (vo.VAR() != null) {
             return new ALMTerm(vo.VAR().getText(), ALMTerm.VAR, vo);
+        }
         return null;
     }
 
     public static ALMTerm ParseALMTerm(ParserRuleContext con) {
-        if (con instanceof ALMParser.Object_constantContext)
+        if (con instanceof ALMParser.Object_constantContext) {
             return ALM.ParseObject((ALMParser.Object_constantContext) con);
-        if (con instanceof ALMParser.Function_termContext)
+        }
+        if (con instanceof ALMParser.Function_termContext) {
             return ALM.ParseFunction((ALMParser.Function_termContext) con);
+        }
 
         return null;
     }
@@ -258,7 +265,7 @@ public abstract class ALM {
     private static ALMTerm ParseObject(Object_constantContext con) {
         //check if integer. 
         IntegerContext integerCon = con.integer();
-        if(integerCon != null){
+        if (integerCon != null) {
             return new ALMTerm(integerCon.getText(), ALMTerm.ID, con);
         }
         IdContext id = con.id();
@@ -267,8 +274,9 @@ public abstract class ALM {
             return new ALMTerm(id.getText(), ALMTerm.ID, con);
         } else {
             ALMTerm fterm = new ALMTerm(id.getText(), ALMTerm.FUN, con);
-            for (TermContext tcon : terms)
+            for (TermContext tcon : terms) {
                 fterm.addArg(ALM.ParseTerm(tcon));
+            }
             return fterm;
         }
     }
@@ -309,12 +317,13 @@ public abstract class ALM {
 
         ALMTerm expr;
         TerminalNode op = (TerminalNode) expression.getChild(1);
-        if (SYMBOL_PLUS.compareTo(op.getText()) == 0)
+        if (SYMBOL_PLUS.compareTo(op.getText()) == 0) {
             expr = new ALMTerm(op.getText(), ALMTerm.MATH_ADD, expression);
-        else if (SYMBOL_SUB.compareTo(op.getText()) == 0)
+        } else if (SYMBOL_SUB.compareTo(op.getText()) == 0) {
             expr = new ALMTerm(op.getText(), ALMTerm.MATH_SUB, expression);
-        else
+        } else {
             return null;
+        }
         expr.addArg(left);
         expr.addArg(right);
 
@@ -327,9 +336,9 @@ public abstract class ALM {
         if (aterm.arithmetic_term() == null) {
             // could be factor^factor or factor.
             List<FactorContext> factors = aterm.factor();
-            if (factors.size() == 1)
+            if (factors.size() == 1) {
                 return ALM.ParseFactor(factors.get(0));
-            else {
+            } else {
                 ALMTerm exponent = new ALMTerm(ALM.SYMBOL_EXP, ALMTerm.MATH_EXP, aterm);
                 exponent.addArg(ALM.ParseFactor(factors.get(0)));
                 exponent.addArg(ALM.ParseFactor(factors.get(1)));
@@ -339,14 +348,15 @@ public abstract class ALM {
             // arithmetic term is present.
             ALMTerm arith;
             TerminalNode op = (TerminalNode) aterm.getChild(1);
-            if (SYMBOL_MULT.compareTo(op.getText()) == 0)
+            if (SYMBOL_MULT.compareTo(op.getText()) == 0) {
                 arith = new ALMTerm(op.getText(), ALMTerm.MATH_MULT, aterm);
-            else if (SYMBOL_DIV.compareTo(op.getText()) == 0)
+            } else if (SYMBOL_DIV.compareTo(op.getText()) == 0) {
                 arith = new ALMTerm(op.getText(), ALMTerm.MATH_DIV, aterm);
-            else if (SYMBOL_MOD.compareTo(op.getText()) == 0)
+            } else if (SYMBOL_MOD.compareTo(op.getText()) == 0) {
                 arith = new ALMTerm(op.getText(), ALMTerm.MATH_MOD, aterm);
-            else
+            } else {
                 return null;
+            }
             arith.addArg(ALM.ParseArithmetic(aterm.arithmetic_term()));
             arith.addArg(ALM.ParseFactor(aterm.factor(0)));
             return arith;
@@ -356,19 +366,22 @@ public abstract class ALM {
     // factor: VAR | '-' VAR | integer | function_term | '-' function_term | '('
     // expression ')' | '-' '(' expression ')';
     private static ALMTerm ParseFactor(FactorContext factor) {
-        if (factor.integer() != null)
+        if (factor.integer() != null) {
             return new ALMTerm(factor.getText(), ALMTerm.INT, factor);
-        if (factor.function_term() != null)
+        }
+        if (factor.function_term() != null) {
             return ALM.ParseFunction(factor.function_term());
+        }
         TerminalNode first = (TerminalNode) factor.getChild(0);
         if (SYMBOL_SUB.compareTo(first.getText()) == 0) {
             ALMTerm neg = new ALMTerm("-", ALMTerm.MATH_NEG, factor);
-            if (factor.VAR() != null)
+            if (factor.VAR() != null) {
                 neg.addArg(new ALMTerm(factor.getText(), ALMTerm.VAR, factor));
-            else if (factor.function_term() != null)
+            } else if (factor.function_term() != null) {
                 neg.addArg(ALM.ParseFunction(factor.function_term()));
-            else if (factor.expression() != null)
+            } else if (factor.expression() != null) {
                 neg.addArg(ALM.ParseExpression(factor.expression()));
+            }
             return neg;
         } else if (SYMBOL_OPEN_PAREN.compareTo(first.getText()) == 0) {
             return ALM.ParseExpression(factor.expression());
@@ -379,10 +392,11 @@ public abstract class ALM {
 
     // fun_def : (pos_fun_def | neg_fun_def);
     public static ALMTerm ParseFunDef(Fun_defContext fun_def) {
-        if (fun_def.pos_fun_def() != null)
+        if (fun_def.pos_fun_def() != null) {
             return ALM.ParsePosFunDef(fun_def.pos_fun_def());
-        else if (fun_def.neg_fun_def() != null)
+        } else if (fun_def.neg_fun_def() != null) {
             return ALM.ParseNegFunDef(fun_def.neg_fun_def());
+        }
         return null;
     }
 
@@ -401,8 +415,9 @@ public abstract class ALM {
             return new ALMTerm(SYMBOL_EQ, ALMTerm.TERM_RELATION, pfd).addArg(left).addArg(right);
         } else {
             ALMTerm function = ALM.ParseFunction(pfd.function_term());
-            if (pfd.function_term() != pfd.getChild(0))
+            if (pfd.function_term() != pfd.getChild(0)) {
                 function.setSign(ALMTerm.SIGN_NEG); // the first child was not the function term
+            }
             return function;
         }
     }
@@ -423,8 +438,9 @@ public abstract class ALM {
         ParseTree first = olc.getChild(0);
         Occurs_atomContext oc_atom = olc.occurs_atom();
         ALMTerm parsed_oc_atom = ALM.ParseOccursAtom(oc_atom);
-        if (first != oc_atom)
+        if (first != oc_atom) {
             parsed_oc_atom.setSign(ALMTerm.SIGN_NEG);
+        }
         return parsed_oc_atom;
     }
 

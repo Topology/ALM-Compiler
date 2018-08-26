@@ -765,10 +765,18 @@ public abstract class ALMTranslator {
                 TranslateRule(ar, st, pm, ALM.AXIOMS_DEFINITIONS_STATIC);
             }
         }
+        
     }
 
     private static void PreModelSortInstancesAndAttributeDefinitions(SPARCProgram pm, SymbolTable st,
             ASPfProgram aspf) {
+        
+        
+        pm.createSection(ALM.THEORY_CONSTANT_DECLARATIONS);
+        for (ASPfRule ar : aspf.getRules(ALM.THEORY_CONSTANT_DECLARATIONS)) {
+            TranslateRule(ar, st, pm, ALM.THEORY_CONSTANT_DECLARATIONS);
+        }
+        
         pm.createSection(ALM.STRUCTURE_SORT_INSTANCES);
         for (ASPfRule ar : aspf.getRules(ALM.STRUCTURE_SORT_INSTANCES)) {
             TranslateRule(ar, st, pm, ALM.STRUCTURE_SORT_INSTANCES);

@@ -728,6 +728,7 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void enterModule(ModuleContext ctx) {
+        ALMTerm.setSymbolTable(st);
     }
 
     @Override
@@ -806,6 +807,11 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void exitInteger_range(ALMParser.Integer_rangeContext ctx) {
+        List<ALMParser.IntegerContext> integers = ctx.integer();
+        Integer low = Integer.parseInt(integers.get(0).getText());
+        Integer high = Integer.parseInt(integers.get(1).getText());
+        //insert semantic error check for low > high, if needed. 
+        st.getIntegerRangeSort(low, high, new Location(ctx));        
     }
 
     /**
@@ -897,7 +903,7 @@ public class ALMBaseListener implements ALMListener {
     public void exitOne_sort_decl(ALMParser.One_sort_declContext ctx) {
 
         // collect lists of parts
-        List<IdContext> IDs = ctx.id();
+        List<ALMParser.New_sort_nameContext> newSorts = ctx.new_sort_name();
         List<Sort_nameContext> sort_names = ctx.sort_name();
         AttributesContext attributes_section = ctx.attributes();
         List<One_attribute_declContext> attributes = null;
@@ -930,19 +936,24 @@ public class ALMBaseListener implements ALMListener {
         // Create New Sort Entries for IDS, throw semantic error if they exist
         // already.
         List<SortEntry> child_sorts = new ArrayList<SortEntry>();
-        for (IdContext ID : IDs) {
-            try {
-                child_sorts.add(st.createSortEntry(ID.getText(), new Location(ID)));
-            } catch (DuplicateSortException e2) {
-                // child sort entry already exists inside symbol table.
-                er.newSemanticError(SemanticError.SRT005).add(ID);
+        for (ALMParser.New_sort_nameContext newSort : newSorts) {
+            if(newSort.id() != null){
+                try {
+                    child_sorts.add(st.createSortEntry(newSort.id().getText(), new Location(newSort)));
+                } catch (DuplicateSortException e2) {
+                    // child sort entry already exists inside symbol table.
+                    er.newSemanticError(SemanticError.SRT005).add(newSort);
+                }
+            } else {
+                Integer low  = Integer.parseInt(newSort.integer_range().integer(0).getText());
+                Integer high = Integer.parseInt(newSort.integer_range().integer(1).getText());
+                child_sorts.add(st.getIntegerRangeSort(low, high, new Location(newSort)));
             }
         }
 
         // link parent and child together in symbol table.
         for (SortEntry parent : parent_sorts) {
             for (SortEntry child : child_sorts) {
-                parent.addChildSort(child);
                 child.addParentSort(parent);
                 // // if parent sorts have attribute the child should has them as well
                 // Set<NormalFunctionEntry> parentAttributes = parent.getAttributes();
@@ -1130,6 +1141,21 @@ public class ALMBaseListener implements ALMListener {
         // collect ANTLR4 entities into appropriate lists.
         List<Object_constantContext> object_constants = ctx.object_constant();
         List<Sort_nameContext> sort_names = ctx.sort_name();
+        List<ALMParser.One_attribute_defContext> attr_defs = null;
+        if (ctx.attribute_defs() != null) {
+            attr_defs = ctx.attribute_defs().one_attribute_def();
+            if (sort_names.size() > 1 && !attr_defs.isEmpty()) {
+                er.newSemanticError(SemanticError.SID006).add(object_constants).add(sort_names).add(attr_defs);
+            }
+        }
+
+        // Convert Attribute Definitions into ALMTerms for term relations.
+        List<ALMTerm> attribute_defs = new ArrayList<ALMTerm>();
+        if (attr_defs != null) {
+            for (One_attribute_defContext attr_def : attr_defs) {
+                attribute_defs.add(ALM.ParseAttrDef(attr_def));
+            }
+        }
 
         // convert sort_names into sort entries and ensure they are source sorts
         // in the hierarchy
@@ -1152,6 +1178,44 @@ public class ALMBaseListener implements ALMListener {
                 er.newSemanticError(SemanticError.CND003).add(sort_name);
             }
         }
+
+        // TypeCheck ALMTerms and verify that attribute definitions are actual attributes for the sort. 
+        TypeChecker tc = new TypeChecker(st, er);
+
+        for (ALMTerm adef : attribute_defs) {
+            //for each attribute definition
+            //type check the attribute function. 
+            adef.typeCheck(tc, st, er);
+            ALMTerm range = adef.getArg(1);
+            ALMTerm attr = adef.getArg(0);
+            String attr_name = attr.getName();
+            List<ALMTerm> attr_params = attr.getArgs();
+            int param_count = 0;
+            if (attr_params != null) {
+                param_count = attr_params.size();
+            }
+            //verify attribute function belongs to the sorts the instance is compatible with.
+            for (SortEntry s : sort_entries) {
+                //for each sort the instance is declared to belong to.
+                for (FunctionEntry attr_fun : s.getAttributes()) {
+                    //for each attribute function of the sort. 
+                    if (attr_fun.getFunctionName().compareTo(attr_name) == 0) {
+                        // matching attribute function found.
+                        List<SortEntry> sig = attr_fun.getSignature();
+                        if (param_count + 2 != sig.size()) {
+                            //this error may not be accurate if its possible for a sort to have two attributes
+                            //of the same name but different arguments.  
+                            er.newSemanticError("SID005").add(attr.getLocation()).add(attr_fun.getLocation());
+                            continue;
+                        }
+                    }
+                }
+            }
+
+        }
+
+        // body
+        List<ASPfLiteral> body = new ArrayList<ASPfLiteral>();
 
         // create object constants if their arguments are source sorts.
         for (Object_constantContext obj_con : object_constants) {
@@ -1214,7 +1278,7 @@ public class ALMBaseListener implements ALMListener {
                 head.addArg(constTerm);
                 head.addArg(new ALMTerm(sort_entries.get(i).getSortName(), ALMTerm.ID,
                         sort_entries.get(i).getLocation().getParserRuleContext()));
-                List<ASPfLiteral> body = new ArrayList<>();
+                body = new ArrayList<>();
 
                 // If the constant is parameterized by sorts, then it must have instance(X,Y)
                 // for each sort.
@@ -1236,8 +1300,74 @@ public class ALMBaseListener implements ALMListener {
                 }
 
                 //TODO: This needs to be changed to its own constant declaration section.  
-                ASPfRule r = aspf.newRule(ALM.STRUCTURE_SORT_INSTANCES, head, body);
+                ASPfRule r = aspf.newRule(ALM.THEORY_CONSTANT_DECLARATIONS, head, body);
                 r.addComment("Constant [" + obj_const + "] declared for sort [" + sort_entries.get(i) + "].");
+
+                // Create ASPfRules for Attribute Definitions.
+                // Need forloop over attribute definitions.
+                for (ALMTerm attr_def : attribute_defs) {
+                    body = new ArrayList<>();
+                    // The instance(X, sort) declarations need to be added to the body for the domain and range of
+                    // every attribute definition.  Multiple rules are created using the same body and will receive
+                    // the instance declarations for variables as they are added to the common body.
+                    ALMTerm attr_fun = attr_def.getArg(0);
+                    ALMTerm attr_term = attr_def.getArg(1);
+                    List<ALMTerm> funArgs = attr_fun.getArgs();
+                    int dom_size = funArgs.size() + 1; //missing sort argument to function. 
+
+                    //determine matching function. If no matching function can be found, skip.   
+                    Set<FunctionEntry> funs = st.getFunctionEntries(attr_fun.getName(), dom_size);
+                    if (funs.size() < 1) {
+                        continue;
+                    } else if (funs.size() > 1) {
+                        ALMCompiler.IMPLEMENTATION_FAILURE("Parsing Atrribute Definitions",
+                                "Function overloading is not supported in this version of ALM.");
+                    }
+
+                    //instance(X, sort) for attribute arguments. 
+                    FunctionEntry fun = funs.iterator().next();
+                    List<SortEntry> sig = fun.getSignature();
+                    for (int j = 1; j < dom_size; j++) {
+                        ALMTerm instanceOf = new ALMTerm(ALM.SPECIAL_FUNCTION_INSTANCE, ALMTerm.FUN);
+                        instanceOf.addArg(funArgs.get(j - 1));
+                        instanceOf.addArg(new ALMTerm(sig.get(j).getSortName(), ALMTerm.ID));
+                        body.add(instanceOf);
+                    }
+
+                    //instance(X, sort) for attribtue range
+                    ALMTerm rangeInstanceOf = new ALMTerm(ALM.SPECIAL_FUNCTION_INSTANCE, ALMTerm.FUN);
+                    rangeInstanceOf.addArg(attr_term);
+                    rangeInstanceOf.addArg(new ALMTerm(sig.get(dom_size).getSortName(), ALMTerm.ID));
+                    body.add(rangeInstanceOf);
+
+                    //need to create attribute definition rule.
+                    ALMTerm new_fun = new ALMTerm(attr_fun.getName(), ALMTerm.FUN, attr_def.getLocation());
+                    new_fun.addArg(obj_const);
+                    if (attr_fun.getArgs() != null) {
+                        for (ALMTerm arg : attr_fun.getArgs()) {
+                            new_fun.addArg(arg);
+                        }
+                    }
+                    // Construct a new variable for the function to equal.
+                    String new_var_base = attr_fun.getName().substring(0, 1).toUpperCase() + "_";
+                    ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base, Type.ANY_TYPE), ALMTerm.VAR, attr_def.getLocation());
+                    ALMTerm ad_head = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, attr_def.getLocation());
+                    ad_head.addArg(new_fun);
+                    ad_head.addArg(new_var);
+
+                    // add new term relation to body for variable.
+                    List<ASPfLiteral> ad_body = new ArrayList<ASPfLiteral>();
+                    ad_body.addAll(body);
+                    ALMTerm term_relation = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, attr_def.getLocation());
+                    term_relation.addArg(new_var);
+                    term_relation.addArg(attr_term);
+                    ad_body.add(term_relation);
+
+                    ASPfRule ar = aspf.newRule(ALM.THEORY_CONSTANT_DECLARATIONS, ad_head, ad_body);
+                    ar.addComment("Definition of attribute [" + attr_def.getArg(0).getName() + "] for instance ["
+                            + obj_const.toString() + "] of sort [" + sort_entries.get(i).getSortName() + "].");
+
+                }
             }
         }
     }
@@ -1891,7 +2021,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // TYPE CHECKING
-        TypeChecker vtc = new TypeChecker(st,er);
+        TypeChecker vtc = new TypeChecker(st, er);
         for (ALMTerm lit : lits) {
             lit.typeCheck(vtc, st, er);
         }
@@ -2013,7 +2143,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // Variable Type Checking
-        TypeChecker vm = new TypeChecker(st,er);
+        TypeChecker vm = new TypeChecker(st, er);
         for (ALMTerm lit : lits) {
             lit.typeCheck(vm, st, er);
         }
@@ -2125,7 +2255,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // VARIABLE TYPE CHECKING
-        TypeChecker vm = new TypeChecker(st,er);
+        TypeChecker vm = new TypeChecker(st, er);
         for (ALMTerm lit : lits) {
             lit.typeCheck(vm, st, er);
         }
@@ -2178,6 +2308,7 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void enterStructure(ALMParser.StructureContext ctx) {
+        ALMTerm.setSymbolTable(st);
     }
 
     /**
@@ -2414,7 +2545,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         // TypeCheck ALMTerms and verify that attribute definitions are actual attributes for the sort. 
-        TypeChecker tc = new TypeChecker(st,er);
+        TypeChecker tc = new TypeChecker(st, er);
         for (ALMTerm si : sort_instances) {
             si.registerVariablesWith(tc);
         }
@@ -2666,7 +2797,7 @@ public class ALMBaseListener implements ALMListener {
         }
         // do we have body in the values of statics?
         // type checking
-        TypeChecker vm = new TypeChecker(st,er);
+        TypeChecker vm = new TypeChecker(st, er);
         head.typeCheck(vm, st, er);
 
         aspf.newRule(ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS, head, body);
@@ -2726,7 +2857,7 @@ public class ALMBaseListener implements ALMListener {
         String type = lit.getType();
         String name = lit.getName();
         List<ALMTerm> args = lit.getArgs();
-        for(ALMTerm arg : args){
+        for (ALMTerm arg : args) {
             error_occurred = termHasSemanticErrors(arg) || error_occurred;
         }
         switch (type) {
@@ -2765,32 +2896,32 @@ public class ALMBaseListener implements ALMListener {
         }
         return error_occurred;
     }
-    
-    public boolean termHasSemanticErrors(ALMTerm term){
+
+    public boolean termHasSemanticErrors(ALMTerm term) {
         boolean error_occurred = false;
         String type = term.getType();
         String name = term.getName();
         List<ALMTerm> args = term.getArgs();
-        for(ALMTerm arg : args){
+        for (ALMTerm arg : args) {
             error_occurred = termHasSemanticErrors(arg) || error_occurred;
         }
-        switch(type){
-            case ALMTerm.ID: 
+        switch (type) {
+            case ALMTerm.ID:
                 boolean inSymbolTable = false;
                 //these are either constants or no-argument functions.  Just verify exists in symbol table. 
                 Set<ConstantEntry> matchingConstants = st.getConstantEntries(name);
-                if(matchingConstants.size() > 0){
+                if (matchingConstants.size() > 0) {
                     inSymbolTable = true;
                 }
-                if(!inSymbolTable){
+                if (!inSymbolTable) {
                     Set<FunctionEntry> functions = st.getFunctionEntries(name);
-                    for(FunctionEntry f : functions){
-                        if(f.getSignature().size() == 1){
+                    for (FunctionEntry f : functions) {
+                        if (f.getSignature().size() == 1) {
                             inSymbolTable = true;
                         }
                     }
                 }
-                if(!inSymbolTable){
+                if (!inSymbolTable) {
                     er.newSemanticError(SemanticError.CND008).add(term);
                     error_occurred = true;
                 }
@@ -3088,7 +3219,7 @@ public class ALMBaseListener implements ALMListener {
         }
 
         //Type Check Literals
-        TypeChecker tc = new TypeChecker(st,er);
+        TypeChecker tc = new TypeChecker(st, er);
         for (ASPfLiteral lit : lits) {
             lit.typeCheck(tc, st, er);
         }
@@ -3183,12 +3314,10 @@ public class ALMBaseListener implements ALMListener {
 
     @Override
     public void enterAlm_file(ALMParser.Alm_fileContext ctx) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void exitAlm_file(ALMParser.Alm_fileContext ctx) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -3198,6 +3327,14 @@ public class ALMBaseListener implements ALMListener {
     @Override
     public void exitCurrent_time(ALMParser.Current_timeContext ctx) {
         st.setCurrentTime(Integer.parseInt(ctx.nat_num().getText()));
+    }
+
+    @Override
+    public void enterNew_sort_name(ALMParser.New_sort_nameContext ctx) {
+    }
+
+    @Override
+    public void exitNew_sort_name(ALMParser.New_sort_nameContext ctx) {
     }
 
 }

@@ -53,8 +53,7 @@ public class SortEntry {
     }
 
     public void addChildSort(SortEntry child) {
-        childSorts.add(child);
-        child.getParentSorts().add(this);
+        child.addParentSort(this);
     }
 
     public Set<SortEntry> getChildSorts() {
@@ -177,7 +176,7 @@ public class SortEntry {
     }
 
     public Set<ConstantEntry> getConstants() {
-        //caches the set until and does not recalculate it until a descendant sort is added and marks the set as stale.  
+        //caches the set and does not recalculate it until a descendant sort is added and marks the set as stale.  
         if (constantsSetIsFresh) {
             return constants;
         } else {

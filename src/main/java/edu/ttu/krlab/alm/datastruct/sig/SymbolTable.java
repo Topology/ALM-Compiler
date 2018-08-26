@@ -28,6 +28,7 @@ public class SymbolTable {
     final private SortEntry booleans;
     final private SortEntry integers;
     final private SortEntry timestep;
+    final private SortEntry comparable_integers_subsort;
     final private Map<String, Set<ConstantEntry>> globalCEMap;
     final private Map<ALMTerm, ConstantEntry> CDMap; //structure populated
     private int maxStep = -1;
@@ -82,6 +83,7 @@ public class SymbolTable {
             actions = null;
             booleans = null;
             integers = null;
+            comparable_integers_subsort = null;
             timestep = null;
             modes = null;
             CDMap = null;
@@ -93,6 +95,7 @@ public class SymbolTable {
         SortEntry tempActions = null;
         SortEntry tempBooleans = null;
         SortEntry tempIntegers = null;
+        SortEntry tempCIS = null;
         SortEntry tempTimestep = null;
 
         //This is root, initialize it
@@ -120,6 +123,7 @@ public class SymbolTable {
 
             // integer
             tempIntegers = this.createSortEntry(ALM.SORT_INTEGERS, null);
+            tempCIS = this.createSortEntry(ALM.SORT_COMPARABLE_INTEGERS_SUBSORT, null);
 
             // Add special functions
             // SIGNATURES
@@ -220,6 +224,7 @@ public class SymbolTable {
         actions = tempActions;
         booleans = tempBooleans;
         integers = tempIntegers;
+        comparable_integers_subsort = tempCIS;
         timestep = tempTimestep;
     }
 
@@ -314,6 +319,9 @@ public class SymbolTable {
         if (rootST != null) {
             return rootST.getIntegersSortEntry();
         }
+        if (!integers.getParentSorts().contains(universe)) {
+            integers.addParentSort(universe);
+        }
         return integers;
     }
 
@@ -394,6 +402,19 @@ public class SymbolTable {
      * @throws SortNotFoundException if no matching SortEntry could be found.
      */
     public SortEntry getSortEntry(String sortname) throws SortNotFoundException {
+        if (sortname.contains("..")) {
+            //check for occurrence of integer range sort. 
+            String[] parts = sortname.split("\\.\\.");
+            if (parts.length == 2) {
+                try {
+                    Integer low = Integer.parseInt(parts[0]);
+                    Integer high = Integer.parseInt(parts[1]);
+                    return getIntegerRangeSort(low, high, null);
+                } catch (NumberFormatException ex) {
+                    //go on to ID query for sort name. 
+                }
+            }
+        }
         SortEntry sortEntry = getSortEntryHelp(sortname);
         if (sortEntry != null) {
             return sortEntry;
@@ -986,6 +1007,49 @@ public class SymbolTable {
         }
         root.currentTime = currentTime;
         root.currentTimeSet = true;
+    }
+
+    public SortEntry getIntegerRangeSort(Integer low, Integer high, Location loc) {
+        if (low > high) {
+            int temp = low;
+            low = high;
+            high = temp;
+        }
+        String range = "range_" + rsNormalizeNegInt(low) + "_" + rsNormalizeNegInt(high);
+        //Check if it is already in symbol table. 
+        SortEntry rangeSort = null;
+        try {
+            rangeSort = getSortEntry(range);
+        } catch (SortNotFoundException e) {
+            try {
+                //create it.
+                rangeSort = createSortEntry(range, loc);
+                rangeSort.addParentSort(getIntegersSortEntry());
+                for (int i = low; i <= high; i++) {
+                    rangeSort.addSortInstance(new ALMTerm(Integer.toString(i, 10), ALMTerm.INT));
+                }
+                getComparableIntegersSubsort().addParentSort(rangeSort);
+
+            } catch (DuplicateSortException ex) {
+                //will never happen. 
+            }
+        }
+        return rangeSort;
+    }
+
+    private SortEntry getComparableIntegersSubsort() {
+        if (rootST != null) {
+            return rootST.comparable_integers_subsort;
+        }
+        return comparable_integers_subsort;
+    }
+
+    private String rsNormalizeNegInt(Integer i) {
+        if(i < 0){
+            return "neg_"+(i*-1);
+        } else {
+            return "pos_"+i;
+        }
     }
 
 }

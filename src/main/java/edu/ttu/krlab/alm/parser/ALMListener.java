@@ -8,16 +8,6 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  */
 public interface ALMListener extends ParseTreeListener {
 	/**
-	 * Enter a parse tree produced by {@link ALMParser#id}.
-	 * @param ctx the parse tree
-	 */
-	void enterId(ALMParser.IdContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link ALMParser#id}.
-	 * @param ctx the parse tree
-	 */
-	void exitId(ALMParser.IdContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link ALMParser#bool}.
 	 * @param ctx the parse tree
 	 */
@@ -57,6 +47,16 @@ public interface ALMListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitRelation(ALMParser.RelationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#id}.
+	 * @param ctx the parse tree
+	 */
+	void enterId(ALMParser.IdContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#id}.
+	 * @param ctx the parse tree
+	 */
+	void exitId(ALMParser.IdContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ALMParser#alm_name}.
 	 * @param ctx the parse tree
@@ -407,6 +407,16 @@ public interface ALMListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSort_name(ALMParser.Sort_nameContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ALMParser#new_sort_name}.
+	 * @param ctx the parse tree
+	 */
+	void enterNew_sort_name(ALMParser.New_sort_nameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ALMParser#new_sort_name}.
+	 * @param ctx the parse tree
+	 */
+	void exitNew_sort_name(ALMParser.New_sort_nameContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ALMParser#sort_declarations}.
 	 * @param ctx the parse tree

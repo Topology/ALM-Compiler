@@ -75,7 +75,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     private TypeChecker typechecker;
 
     private static SymbolTable st = null;
-    
+
     private void defaultInit() {
         this.args = null;
         if (type.compareTo(ALMTerm.FUN) == 0) {
@@ -428,11 +428,11 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                             // we need to make sure that the intersection of the types is non-empty and
                             // re-type check the broader type with the narrower type.
                             SortType intersectionType = Type.intersect(leftType, rightType);
-                            if(intersectionType != Type.EMPTY_TYPE){
+                            if (intersectionType != Type.EMPTY_TYPE) {
                                 args.get(1).typeCheck(tc, st, er, intersectionType);
                                 args.get(0).typeCheck(tc, st, er, intersectionType);
-                            }else {
-                                er.newSemanticError(SemanticError.TYP003).add(this).add(leftType).add(rightType);                                
+                            } else {
+                                er.newSemanticError(SemanticError.TYP003).add(this).add(leftType).add(rightType);
                             }
 //                            if (leftType.isSubtypeOf(rightType)) {
 //                                rightType = args.get(1).typeCheck(tc, st, er, leftType);
@@ -714,12 +714,20 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                 break;
             case ALMTerm.FUN:
                 String nameToUse = this.name;
-                if(st!= null){
-                    //lookup fully qualified name of function. 
-                    Set<FunctionEntry> functions = st.getFunctionEntries(name, this.args.size());
-                    if(functions.size() > 0 ){
+                if (st != null) {
+                    int argSize = this.args.size();
+                    //first check to see if this resolves with a constant
+                    Set<ConstantEntry> constants = st.getConstantEntries(name, argSize);
+                    if (constants.size() > 0) {
                         //TODO:  do fine grained resolution if size > 1
-                        nameToUse = functions.iterator().next().getQualifiedFunctionName();
+                        nameToUse = constants.iterator().next().toString();
+                    } else {
+                        //lookup fully qualified name of function. 
+                        Set<FunctionEntry> functions = st.getFunctionEntries(name, argSize);
+                        if (functions.size() > 0) {
+                            //TODO:  do fine grained resolution if size > 1
+                            nameToUse = functions.iterator().next().getQualifiedFunctionName();
+                        }
                     }
                 }
                 out.write(this.sign);
@@ -805,12 +813,12 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
             case ALMTerm.ID:
             case ALMTerm.BOOL:
             case ALMTerm.INT:
-                if(isGroundEnumeration){
+                if (isGroundEnumeration) {
                     return this.name;
                 } else {
                     return "#" + getSort();
                 }
-                
+
             default:
                 ALMCompiler.IMPLEMENTATION_FAILURE("SortInstance As String", "Unhandled type [" + this.type + "]");
                 return null;
@@ -999,9 +1007,12 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         //all arguments match
         return true;
     }
-    
-    
-    public static void setSymbolTable(SymbolTable symbolTable){
+
+    public static void setSymbolTable(SymbolTable symbolTable) {
         st = symbolTable;
+    }
+    
+    public static SymbolTable getSymbolTable(){
+        return st;
     }
 }

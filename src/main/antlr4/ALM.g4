@@ -137,6 +137,18 @@ ZERO: [0]+; //TOKEN For ZERO, not a non-terminal in ALM BNF, used in 'integer'  
  * <comparison_rel> -> COMP_REL
  */
 
+
+/*
+ * BASIC PARSER RULES BUILT OUT OF SPECIAL LEXER TOKENS
+ */
+
+bool : TRUE | FALSE;
+
+nat_num : ZERO | POSINT; //<natural_number>
+integer : ZERO | POSINT | NEGINT; //<integer>
+relation: EQ | NEQ | COMP_REL; //<arithmetic_rel>
+
+
 // RECOVER KEYWORDS  && INTEGERS  INTO IDENTIFIER
 
 id : OCCURS | INSTANCE | IS_A | HAS_CHILD | HAS_PARENT | LINK | SOURCE | SINK |  SUBSORT  | 
@@ -149,18 +161,11 @@ id : OCCURS | INSTANCE | IS_A | HAS_CHILD | HAS_PARENT | LINK | SOURCE | SINK | 
      HISTORY | OBSERVED | HAPPENED | PLANNING |  PROBLEM | DIAGNOSTIC | 
      GOAL | SITUATION | WHEN | NORMAL | ACTION | ADDITIONAL | RESTRICTIONS |
      PERMISSIONS | POSSIBLE | AVOID | BOOLEANS | INTEGERS | UNIVERSE | ACTIONS |
-     CURRENT | TIME;
+     CURRENT | TIME | integer;
 
 
-/*
- * BASIC PARSER RULES BUILT OUT OF SPECIAL LEXER TOKENS
- */
 
-bool : TRUE | FALSE;
 
-nat_num : ZERO | POSINT; //<natural_number>
-integer : ZERO | POSINT | NEGINT; //<integer>
-relation: EQ | NEQ | COMP_REL; //<arithmetic_rel>
 
 alm_name : id | VAR;
 
@@ -247,13 +252,13 @@ one_dependency: (theory_name '.')? module_name;
 
 /* ALM SORT DECLARATIONS */
 
-integer_range: '[' integer '..' integer ']';
+integer_range: integer '..' integer ;
 predefined_sorts: BOOLEANS | INTEGERS | integer_range;
-sort_name: predefined_sorts | UNIVERSE | ACTIONS | id;
-
+sort_name: predefined_sorts | UNIVERSE | ACTIONS | id ;
+new_sort_name : id | integer_range;
 
 sort_declarations: SORT DECLARATIONS  (one_sort_decl)+ ;//<sort_declaration><remainder_sort_declaration>
-one_sort_decl: id (',' id)* '::' sort_name (',' sort_name)* attributes?;  //<one_sort_decl>,<sort_name>,<remainder_sort_names>,<remainder_sorts>
+one_sort_decl: new_sort_name (',' new_sort_name)* '::' sort_name (',' sort_name)* attributes?;  //<one_sort_decl>,<sort_name>,<remainder_sort_names>,<remainder_sorts>
 attributes: ATTRIBUTES (one_attribute_decl)+;//<attributes><remainder_attribute_declarations>
 one_attribute_decl: id ':' (sort_name (',' sort_name )* RIGHT_ARROW)? sort_name;//<one_attribue_decl>,<arguments>,<remainder_args>
 
@@ -262,7 +267,7 @@ one_attribute_decl: id ':' (sort_name (',' sort_name )* RIGHT_ARROW)? sort_name;
 /* ALM CONSTANT DECLARATIONS */
   
 constant_declarations: CONSTANT DECLARATIONS (one_constant_decl)+;//<constant_declaraions><remainder_constant_declarations>
-one_constant_decl:   object_constant (',' object_constant)*  ':' sort_name (',' sort_name)*;//<one_constant_decl>,<const_params>,<remainder_const_params>
+one_constant_decl:   object_constant (',' object_constant)*  ':' sort_name (',' sort_name)* attribute_defs?;//<one_constant_decl>,<const_params>,<remainder_const_params>
  
  
  

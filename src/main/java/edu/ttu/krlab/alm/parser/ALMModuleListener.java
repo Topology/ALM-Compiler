@@ -1275,4 +1275,12 @@ public class ALMModuleListener implements ALMListener {
     public void exitCurrent_time(ALMParser.Current_timeContext ctx) {
     }
 
+    @Override
+    public void enterNew_sort_name(ALMParser.New_sort_nameContext ctx) {
+    }
+
+    @Override
+    public void exitNew_sort_name(ALMParser.New_sort_nameContext ctx) {
+    }
+
 }
