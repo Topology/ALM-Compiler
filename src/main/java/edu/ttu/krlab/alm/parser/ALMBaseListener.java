@@ -66,6 +66,8 @@ import edu.ttu.krlab.alm.parser.ALMParser.Solver_modeContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Sort_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Temporal_projectionContext;
 import edu.ttu.krlab.alm.parser.ALMParser.TermContext;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class provides an empty implementation of {@link ALMListener}, which can be extended to create a listener which
@@ -811,7 +813,7 @@ public class ALMBaseListener implements ALMListener {
         Integer low = Integer.parseInt(integers.get(0).getText());
         Integer high = Integer.parseInt(integers.get(1).getText());
         //insert semantic error check for low > high, if needed. 
-        st.getIntegerRangeSort(low, high, new Location(ctx));        
+        st.getIntegerRangeSort(low, high, new Location(ctx));
     }
 
     /**
@@ -937,7 +939,7 @@ public class ALMBaseListener implements ALMListener {
         // already.
         List<SortEntry> child_sorts = new ArrayList<SortEntry>();
         for (ALMParser.New_sort_nameContext newSort : newSorts) {
-            if(newSort.id() != null){
+            if (newSort.id() != null) {
                 try {
                     child_sorts.add(st.createSortEntry(newSort.id().getText(), new Location(newSort)));
                 } catch (DuplicateSortException e2) {
@@ -945,7 +947,7 @@ public class ALMBaseListener implements ALMListener {
                     er.newSemanticError(SemanticError.SRT005).add(newSort);
                 }
             } else {
-                Integer low  = Integer.parseInt(newSort.integer_range().integer(0).getText());
+                Integer low = Integer.parseInt(newSort.integer_range().integer(0).getText());
                 Integer high = Integer.parseInt(newSort.integer_range().integer(1).getText());
                 child_sorts.add(st.getIntegerRangeSort(low, high, new Location(newSort)));
             }
@@ -1926,6 +1928,12 @@ public class ALMBaseListener implements ALMListener {
         if (!typeChecker.typeCheckPasses(er)) {
             error_occurred = true;
         }
+        
+        if(!typeChecker.isActionsSubsort(occurs_atom.getArg(0))){
+            er.newSemanticError(SemanticError.SPF012).add(occurs_atom).add(instance_atom);
+            error_occurred = true;
+        }
+        
 
         // create ASPfRule (time component will be added in translation to
         // SPARC)
@@ -2857,9 +2865,8 @@ public class ALMBaseListener implements ALMListener {
         String type = lit.getType();
         String name = lit.getName();
         List<ALMTerm> args = lit.getArgs();
-        for (ALMTerm arg : args) {
-            error_occurred = termHasSemanticErrors(arg) || error_occurred;
-        }
+        ALMTerm arg0;
+        ALMTerm arg1;
         switch (type) {
             case ALMTerm.TERM_RELATION:
                 // TODO: Massive Amount Of Work Here...
@@ -2869,20 +2876,84 @@ public class ALMBaseListener implements ALMListener {
                 switch (name) {
 
                     case ALM.SPECIAL_FUNCTION_INSTANCE:
+                        arg0 = args.get(0);
+                        error_occurred = termHasSemanticErrors(arg0) || error_occurred;
+                        arg1 = args.get(1);
+                        try {
+                            SortEntry se = st.getSortEntry(arg1.getName());
+                        } catch (SortNotFoundException ex) {
+                            error_occurred = true;
+                            er.newSemanticError(SemanticError.SPF001).add(lit);
+                        }
                         break;
                     case ALM.SPECIAL_FUNCTION_IS_A:
+                        arg0 = args.get(0);
+                        arg1 = args.get(1);
+                        error_occurred = termHasSemanticErrors(arg0) || error_occurred;
+                        try {
+                            SortEntry se = st.getSortEntry(arg1.getName());
+                        } catch (SortNotFoundException ex) {
+                            error_occurred = true;
+                            er.newSemanticError(SemanticError.SPF005).add(lit);
+                        }
                         break;
                     case ALM.SPECIAL_FUNCTION_HAS_CHILD:
+                        arg0 = args.get(0);
+                        try {
+                            SortEntry se = st.getSortEntry(arg0.getName());
+                        } catch (SortNotFoundException ex) {
+                            error_occurred = true;
+                            er.newSemanticError(SemanticError.SPF007).add(lit);
+                        }
                         break;
                     case ALM.SPECIAL_FUNCTION_HAS_PARENT:
+                        arg0 = args.get(0);
+                        try {
+                            SortEntry se = st.getSortEntry(arg0.getName());
+                        } catch (SortNotFoundException ex) {
+                            error_occurred = true;
+                            er.newSemanticError(SemanticError.SPF008).add(lit);
+                        }
                         break;
                     case ALM.SPECIAL_FUNCTION_LINK:
+                        arg0 = args.get(0);
+                        arg1 = args.get(1);
+                        try {
+                            SortEntry se0 = st.getSortEntry(arg1.getName());
+                            SortEntry se1 = st.getSortEntry(arg1.getName());
+                        } catch (SortNotFoundException ex) {
+                            error_occurred = true;
+                            er.newSemanticError(SemanticError.SPF003).add(lit);
+                        }
                         break;
                     case ALM.SPECIAL_FUNCTION_SINK:
+                        arg0 = args.get(0);
+                        try {
+                            SortEntry se = st.getSortEntry(arg0.getName());
+                        } catch (SortNotFoundException ex) {
+                            error_occurred = true;
+                            er.newSemanticError(SemanticError.SPF009).add(lit);
+                        }
                         break;
                     case ALM.SPECIAL_FUNCTION_SOURCE:
+                        arg0 = args.get(0);
+                        try {
+                            SortEntry se = st.getSortEntry(arg0.getName());
+                        } catch (SortNotFoundException ex) {
+                            error_occurred = true;
+                            er.newSemanticError(SemanticError.SPF010).add(lit);
+                        }
                         break;
                     case ALM.SPECIAL_FUNCTION_SUBSORT:
+                        arg0 = args.get(0);
+                        arg1 = args.get(1);
+                        try {
+                            SortEntry se0 = st.getSortEntry(arg1.getName());
+                            SortEntry se1 = st.getSortEntry(arg1.getName());
+                        } catch (SortNotFoundException ex) {
+                            error_occurred = true;
+                            er.newSemanticError(SemanticError.SPF006).add(lit);
+                        }
                         break;
                     default:
                     // TODO: Need To Handle General Boolean Function With
@@ -2890,6 +2961,10 @@ public class ALMBaseListener implements ALMListener {
                 }
                 break;
             default:
+                for (ALMTerm arg : args) {
+                    error_occurred = termHasSemanticErrors(arg) || error_occurred;
+                }
+
                 // Nothing Else Should Occur As Literal
                 ALMCompiler.IMPLEMENTATION_FAILURE("Semantic Check Of Literals",
                         "ALMTerm [" + lit.toString() + "] is not a literal");

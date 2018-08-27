@@ -12,6 +12,7 @@ import edu.ttu.krlab.alm.datastruct.err.SemanticError;
 import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
+import edu.ttu.krlab.alm.datastruct.sig.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
 import java.util.Iterator;
 
@@ -178,6 +179,23 @@ public class TypeChecker {
                 ALMCompiler.IMPLEMENTATION_FAILURE("Get Narrowest Sort Of Term", "Unexpected case for tern :" + term.toString());
             }
             return Type.EMPTY_TYPE;
+        }
+    }
+
+    public boolean isActionsSubsort(ALMTerm arg) {
+        switch (arg.getType()) {
+            case ALMTerm.VAR:
+                SortType type = getNarrowestSortType(arg.getName());
+                return type.isSubtypeOf(Type.getSortType(st.getActionsSortEntry()));
+            case ALMTerm.SORT:
+                try {
+                    SortEntry se = st.getSortEntry(arg.getName());
+                    return se.subsortof(st.getActionsSortEntry());
+                } catch (SortNotFoundException ex) {
+                    return false;
+                }
+            default:
+                return false;
         }
     }
 

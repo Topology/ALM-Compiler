@@ -266,7 +266,7 @@ public abstract class ErrorMessageTable {
         ErrorMetaDataBase axm007 = new ErrorMetaDataBase(SemanticError.AXM007,
                 "Variable  [1] has a sort mismatch between  sort [2] and sort [3]",
                 "If a variable is inferred to have multiple sorts within a statement, the intersection between the sorts must be non-empty.  (one of the sorts must be a descendant of the other in the hierarchy.",
-                "Check the sorts of for the variable and the sorts of other variables in the statement to make sure they are correct.  Consider adding or altering the  â€œInstance(X,Y)â€� literal to indicate variable X is of sort Y.");
+                "Check the sorts of for the variable and the sorts of other variables in the statement to make sure they are correct.  Consider adding or altering the 'Instance(X,Y)' literal to indicate variable X is of sort Y.");
         errorMetaData.put(SemanticError.AXM007, axm007);
 
         // AXM008
@@ -299,12 +299,12 @@ public abstract class ErrorMessageTable {
 
         // SPF001
         ErrorMetaDataBase spf001 = new ErrorMetaDataBase(SemanticError.SPF001,
-                "In instance(X,Y)â€� function [1], the second argument is not a declared sort.",
+                "In instance(X,Y) function [1], the second argument is not a declared sort.",
                 "The instance function takes an object constant or variable for its first argument and the name of a sort for its second argument.",
                 "Either change the second argument to be a sort or add the specification of the sort to the sort declaration section.");
         errorMetaData.put(SemanticError.SPF001, spf001);
 
-        // SPF002
+        // SPF002 -- SUBSUMED BY CND008
         ErrorMetaDataBase spf002 = new ErrorMetaDataBase(SemanticError.SPF002,
                 "In instance(X,Y) function [1], the first argument is not an object constant or variable.",
                 "The instance function takes an object constant or variable for its first argument and the name of a sort for its second argument.",
@@ -318,7 +318,7 @@ public abstract class ErrorMessageTable {
                 "Change the arguments to be names of sorts which have been declared in the sort declaration section.");
         errorMetaData.put(SemanticError.SPF003, spf003);
 
-        // SPF004
+        // SPF004  -- SUBSUMED BY CND008
         ErrorMetaDataBase spf004 = new ErrorMetaDataBase(SemanticError.SPF004,
                 "In is_a(X,Y) function [1], the first argument must be an object constant or variable.",
                 "The is_a(X,Y) function indicates that object X is an instance of sort Y.",
@@ -376,7 +376,7 @@ public abstract class ErrorMessageTable {
         // SPF012
         ErrorMetaDataBase spf012 = new ErrorMetaDataBase(SemanticError.SPF012,
                 "For argument [1] of the occurs function, its declared sort in instance function [2] is not a sub-sort of the actions sort.",
-                "Only variables and constants of sorts that are sub-sorts of the actions sort can occur for X in  â€œoccurs(X)â€�.",
+                "Only variables and constants of sorts that are sub-sorts of the actions sort can occur for X in occurs(X).",
                 "Either refactor the sort hierarchy to ensure the sort is a sub-sort of actions, or change the sort to be an action sub-sort, or remove the axiom.");
         errorMetaData.put(SemanticError.SPF012, spf012);
 
@@ -424,7 +424,7 @@ public abstract class ErrorMessageTable {
         // SFD001
         ErrorMetaDataBase sfd001 = new ErrorMetaDataBase(SemanticError.SFD001,
                 "The function [1] being defined must be a static function. It's declaration [2] does not match.",
-                "Only static functions can be defined in the â€œvalues of staticsâ€� section of the structure.",
+                "Only static functions can be defined in the values of statics section of the structure.",
                 "Either move the non-static function definition to the axiom section or change the declaration of the function to be static.");
         errorMetaData.put(SemanticError.SFD001, sfd001);
 
@@ -458,7 +458,7 @@ public abstract class ErrorMessageTable {
 
         // CDF001
         ErrorMetaDataBase cdf001 = new ErrorMetaDataBase(SemanticError.CDF001,
-                "For constant definition [1], the term to the left of ‘=’ does not match any declared constants.",
+                "For constant definition [1], the term to the left of '=' does not match any declared constants.",
                 "In order to perform constant substitution, a valid constant must be provided.",
                 "Either add a new constant declaration in the theory or change the constant definition to match a valid constant.");
         errorMetaData.put(SemanticError.CDF001, cdf001);
@@ -472,14 +472,14 @@ public abstract class ErrorMessageTable {
 
         // CDF003
         ErrorMetaDataBase cdf003 = new ErrorMetaDataBase(SemanticError.CDF003,
-                "In constant definition [1], the term to the left of ‘=’  is not a ground term.",
+                "In constant definition [1], the term to the left of '=' is not a ground term.",
                 "Constant definitions define substitutions on terms.  This version of ALM only supports simple ground constant substitution.",
                 "Remove the constant definition or change the definition to be for a simple ground constant.");
         errorMetaData.put(SemanticError.CDF003, cdf003);
 
         // CDF004
         ErrorMetaDataBase cdf004 = new ErrorMetaDataBase(SemanticError.CDF004,
-                "In constant definition [1], the term to the right of ‘=’  is not a ground term.",
+                "In constant definition [1], the term to the right of '=' is not a ground term.",
                 "Constant definitions define substitutions on terms.  This version of ALM only supports substitution with ground terms.",
                 "Ensure that the right hand side of the constant definition is a ground term.");
         errorMetaData.put(SemanticError.CDF004, cdf004);
