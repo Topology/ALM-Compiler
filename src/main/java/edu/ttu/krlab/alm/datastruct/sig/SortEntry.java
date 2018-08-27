@@ -1,5 +1,6 @@
 package edu.ttu.krlab.alm.datastruct.sig;
 
+import edu.ttu.krlab.alm.ALM;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;

@@ -27,6 +27,7 @@ public class ProgramsTest extends UnitTestingBase {
         testProgram("briefcase.alm", "briefcase.answerset");
         testProgram("blocks_world.alm", "blocks_world.answerset");
         testProgram("painting.alm", "painting.answerset");
+        testProgram("range_sort.alm", "range_sort.answerset");
         testProgramsFinished();
     }
     

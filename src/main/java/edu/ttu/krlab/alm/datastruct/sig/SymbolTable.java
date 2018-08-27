@@ -15,6 +15,7 @@ import edu.ttu.krlab.alm.ALM;
 import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.Location;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,6 +46,7 @@ public class SymbolTable {
     final private String STName;
     final private Set<SymbolTable> dependencies;  //This is allowd to be circular.  
     final private Map<String, SortEntry> SEMap;
+    final private Map<String, IntegerRangeSortEntry> IRMap;
     /**
      * Constant entries are first retrievable by name and then by their argument signature.
      */
@@ -70,6 +72,7 @@ public class SymbolTable {
         this.STName = STName;
         this.rootST = rootST;
         SEMap = new HashMap<>();
+        IRMap = new HashMap<>();
         CEMap = new HashMap<>();
         singletons = new HashMap<>();
         FEMap = new HashMap<>();
@@ -392,6 +395,32 @@ public class SymbolTable {
             return srt;
         }
     }
+    
+    /**
+     * Creates a new SortEntry of the given sortname in this symbol table if the name of the sort does not exist in this
+     * symbol table or any dependent symbol tables.
+     *
+     * @param sortname The name of the sort to create a SortEntry for.
+     * @param loc The parsed text location for the sort.
+     * @return the new SortEntry
+     * @throws DuplicateSortException if a SortEntry for the given sortname exists already.
+     */
+    public SortEntry createIntegerRangeSortEntry(String sortname, int low, int high, Location loc) throws DuplicateSortException {
+        // Sort Entries must be uniquely named.
+        SortEntry existing;
+        try {
+            existing = getSortEntry(sortname);
+            throw new DuplicateSortException(existing);
+        } catch (SortNotFoundException e) {
+            // Add new Sort Entry at this level.  
+            IntegerRangeSortEntry srt = new IntegerRangeSortEntry(sortname, low, high, loc);
+            IRMap.put(sortname, srt);
+            SEMap.put(sortname, srt);
+            getNodesSpecialSortEntry().addSortInstance(new ALMTerm(srt.getSortName(), ALMTerm.ID));
+            return srt;
+        }
+    }
+
 
     /**
      * Retrieves any existing SortEntry for the given sortname that exists in this symbol table or in any of its
@@ -952,6 +981,7 @@ public class SymbolTable {
         }
         if (rootST != this) {
             rootST.SEMap.putAll(this.SEMap);
+            rootST.IRMap.putAll(this.IRMap);
             rootST.CEMap.putAll(this.CEMap);
             rootST.FEMap.putAll(this.FEMap);
             rootST.DMap.putAll(this.DMap);
@@ -1023,7 +1053,7 @@ public class SymbolTable {
         } catch (SortNotFoundException e) {
             try {
                 //create it.
-                rangeSort = createSortEntry(range, loc);
+                rangeSort = createIntegerRangeSortEntry(range, low, high,  loc);
                 rangeSort.addParentSort(getIntegersSortEntry());
                 for (int i = low; i <= high; i++) {
                     rangeSort.addSortInstance(new ALMTerm(Integer.toString(i, 10), ALMTerm.INT));
@@ -1035,6 +1065,10 @@ public class SymbolTable {
             }
         }
         return rangeSort;
+    }
+    
+    public Collection<IntegerRangeSortEntry> getIntegerRanges(){
+        return IRMap.values();
     }
 
     private SortEntry getComparableIntegersSubsort() {

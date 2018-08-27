@@ -43,6 +43,7 @@ public class SPARCProgram extends LogicProgramArtifact {
             rank.put(ALM.RULES_STATIC_FUNCTIONS, 200);
             rank.put(ALM.AXIOMS_STATE_CONSTRAINTS_STATIC, 300);
             rank.put(ALM.AXIOMS_DEFINITIONS_STATIC, 301);
+            rank.put(ALM.SORT_INTEGER_RANGE, 325);
             rank.put(ALM.THEORY_CONSTANT_DECLARATIONS, 350);
             rank.put(ALM.STRUCTURE_CONSTANT_DEFINITIONS, 400);
             rank.put(ALM.STRUCTURE_SORT_INSTANCES, 401);

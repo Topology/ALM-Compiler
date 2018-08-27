@@ -14,6 +14,7 @@ import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
 import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
 import edu.ttu.krlab.alm.datastruct.sig.DOMFunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
+import edu.ttu.krlab.alm.datastruct.sig.IntegerRangeSortEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
@@ -273,6 +274,23 @@ public abstract class ALMTranslator {
         // ASPF: Static Function Definitions
         PreModelStructureStaticFunctionDefinitions(pm, st, aspf);
 
+        PreModelIntegerRangeSortIsAFacts(pm, st);
+    }
+    
+    private static void PreModelIntegerRangeSortIsAFacts(SPARCProgram pm, SymbolTable st) {
+        pm.createSection(ALM.SORT_INTEGER_RANGE);
+        Set<IntegerRangeSortEntry> irs = new HashSet<>(st.getIntegerRanges());
+        for(IntegerRangeSortEntry ir : irs){
+            int low = ir.getLow();
+            int high = ir.getHigh();
+            ALMTerm rangeName = new ALMTerm(ir.getSortName(), ALMTerm.SORT, ir.getLocation());
+            for(int i = low; i <= high; i++){
+                ALMTerm isA = new ALMTerm(ALM.SPECIAL_FUNCTION_IS_A, ALMTerm.FUN, ir.getLocation());
+                isA.addArg(new ALMTerm(Integer.toString(i), ALMTerm.INT));
+                isA.addArg(rangeName);
+                pm.newSPARCRule(ALM.SORT_INTEGER_RANGE, isA, null);
+            }
+        }
     }
 
     private static void PreModelSortHierarchyRules(SPARCProgram pm, SymbolTable st, ASPfProgram aspf) {

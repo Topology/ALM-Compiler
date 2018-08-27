@@ -182,7 +182,11 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
         if (sort == null) {
             switch (this.type) {
                 case ALMTerm.SORT:
-                    return name;
+                    if (name.compareTo(ALM.SORT_COMPARABLE_INTEGERS_SUBSORT) == 0) {
+                        return ALM.SORT_INTEGERS;
+                    } else {
+                        return name;
+                    }
                 case ALMTerm.VAR:
                     if (typechecker == null) {
                         sort = ALM.SORT_UNKNOWN;
@@ -221,6 +225,9 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                 default:
                     ALMCompiler.IMPLEMENTATION_FAILURE("Sort As String", "Unhandled type [" + this.type + "]");
             }
+        }
+        if(sort.compareTo(ALM.SORT_COMPARABLE_INTEGERS_SUBSORT) == 0){
+            return ALM.SORT_INTEGERS;
         }
         return sort;
     }
@@ -1011,8 +1018,8 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     public static void setSymbolTable(SymbolTable symbolTable) {
         st = symbolTable;
     }
-    
-    public static SymbolTable getSymbolTable(){
+
+    public static SymbolTable getSymbolTable() {
         return st;
     }
 }
