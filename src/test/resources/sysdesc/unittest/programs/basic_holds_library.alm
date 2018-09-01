@@ -1,0 +1,70 @@
+system description bob_and_john
+    theory local
+        % from the basic_motion.alm file in the basic_motion_library 
+        % containing the basic_motion theory, import the move module 
+        % (and dependencies). 
+        import basic_holds from basic_motion_library
+
+    structure holds
+        instances 
+            suitcase in containers
+            dresser in holders
+            pat in agents
+            pants, shirt in holdables
+            baby in living_holdables
+            home, day_care, work, airport, store in points
+            go(X,Y,Z) in moves
+              actor = X
+              origin = Y
+              dest = Z
+
+            pickup(X,Y) in grabs where instance(Y, living_holdables)
+                grabber = X
+                grabbed = Y
+
+            get(X,Y) in grabs where -instance(Y, living_holdables)
+                grabber = X
+                grabbed = Y
+
+            put(X,Y,Z) in puts where Y != Z, X != Z
+                putter = X
+                held = Y
+                target = Z
+
+            putdown(X,Y) in releases
+                releaser = X
+                released = Y
+
+        value of statics
+            symmetric_connectivity.
+            -transitive_connectivity.
+
+planning problem
+%temporal projection
+max steps 20
+history
+observed(connected(home, day_care), true, 0).
+observed(connected(home, work), true, 0).
+observed(connected(home, airport), true, 0).
+observed(connected(home, store), true, 0).
+observed(loc_in(baby), day_care, 0). 
+observed(loc_in(pat), work, 0). 
+observed(loc_in(dresser), home, 0). 
+observed(loc_in(suitcase), store, 0). 
+observed(held_by(pants), dresser, 0). 
+observed(held_by(shirt), dresser, 0). 
+happened(go(pat, work, home), 1). 
+happened(go(pat, home, day_care), 2). 
+happened(pickup(pat, baby), 3). 
+happened(go(pat, day_care, home), 4). 
+happened(putdown(pat, baby), 6). 
+happened(go(pat, home, store), 7). 
+happened(get(pat, suitcase), 8). 
+happened(go(pat, store, home), 9). 
+happened(get(pat, shirt), 11). 
+happened(put(pat, shirt, suitcase), 12). 
+happened(get(pat, pants), 13).
+happened(put(pat, pants, suitcase), 15). 
+happened(pickup(pat, baby), 16). 
+%happened(go(pat, home, airport), 17).
+goal = {loc_in(pat) = airport, loc_in(baby) = airport, loc_in(pants) = airport, loc_in(shirt) = airport}      

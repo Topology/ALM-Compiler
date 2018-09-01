@@ -611,7 +611,7 @@ public class SymbolTable {
                 if (fname == baseName) {
                     funs.add(f);
                 } else {
-                    funs.add(DMap.get(f));
+                    funs.add(getDOMFunction(f));
                 }
             }
         }

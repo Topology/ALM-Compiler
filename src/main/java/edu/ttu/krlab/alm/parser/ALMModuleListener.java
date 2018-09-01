@@ -464,7 +464,6 @@ public class ALMModuleListener implements ALMListener {
     @Override
     public void enterTheory(TheoryContext ctx) {
         // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -478,7 +477,7 @@ public class ALMModuleListener implements ALMListener {
                 if (tctx != null) {
                     //we need to load the library theory and then parse it.
                     String theory_name = tctx.getText();
-                    amm.recordImport(library_name, theory_name);
+                    amm.recordImport(library_name, theory_name, ctx);
                 } else {
                     ALMCompiler.IMPLEMENTATION_FAILURE("import theory", "missing theory name, no semantic error yet.");
                 }
@@ -538,7 +537,7 @@ public class ALMModuleListener implements ALMListener {
             //If this is an import statement, the ALM Module Manager handles the import.
             Theory_nameContext thCtx = ctx.theory_name();
             String theoryName = thCtx == null ? null : thCtx.getText();
-            amm.recordImport(libraryName, theoryName, moduleName, ctx);
+            amm.recordImport(this.currentTheoryName, libraryName, theoryName, moduleName, ctx);
         } else {
             //This module context was defined here.  Add mapping for qualified name.
             try {
@@ -585,7 +584,7 @@ public class ALMModuleListener implements ALMListener {
         String dependencyTheoryName = theoryNameCTX == null ? null : theoryNameCTX.alm_name().getText();
         String dependencyModuleName = ctx.module_name().getText();
 
-        amm.recordModuleDependency(currentTheoryName, currentModuleName, dependencyTheoryName, dependencyModuleName);
+        amm.recordModuleDependency(currentTheoryName, currentModuleName, dependencyTheoryName, dependencyModuleName, ctx.module_name());
 
     }
 

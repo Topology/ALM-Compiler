@@ -168,6 +168,9 @@ public abstract class ALM {
 
     // instance_atom: INSTANCE '(' var_or_obj ',' sort_name ')';
     public static ALMTerm ParseInstanceAtom(Instance_atomContext ia) {
+        if(ia == null){
+            return null;
+        }
         ALMTerm left = ALM.ParseVarObj((ALMParser.Var_or_objContext) ia.getChild(2));
         ALMTerm right = ALM.ParseSortName((ALMParser.Sort_nameContext) ia.getChild(4));
         return new ALMTerm(ia.getChild(0).getText(), ALMTerm.FUN, ia).addArg(left).addArg(right);

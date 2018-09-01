@@ -36,7 +36,7 @@ public class SyntaxError{
 		}
 		if(recErr != null){
 			Vocabulary v = recErr.getRecognizer().getVocabulary();
-			err.write("unexpected token {"+recErr.getOffendingToken().getText()+"}, expected one of "+recErr.getExpectedTokens().toString(v)+".");			
+			err.write("unexpected token {"+recErr.getOffendingToken().getText()+"}, expected one of "+recErr.getExpectedTokens().toString(v)+" while parsing "+recErr.getCtx().getText()+".");			
 		}
 		err.write("\n\n");
 		err.flush();

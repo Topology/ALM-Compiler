@@ -28,6 +28,8 @@ public class ProgramsTest extends UnitTestingBase {
         testProgram("blocks_world.alm", "blocks_world.answerset");
         testProgram("painting.alm", "painting.answerset");
         testProgram("range_sort.alm", "range_sort.answerset");
+        testProgram("basic_motion_library.alm", "basic_motion_library.answerset");
+        testProgram("basic_holds_library.alm", "basic_holds_library.answerset");
         testProgramsFinished();
     }
     

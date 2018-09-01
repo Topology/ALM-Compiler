@@ -1,0 +1,27 @@
+system description bob_and_john
+    theory local 
+        % from the basic_motion.alm file in the basic_motion_library 
+        % containing the basic_motion theory, import the move module 
+        % (and dependencies). 
+        import basic_motion.move from basic_motion_library
+    structure bob_and_john
+        instances
+            bob, john in agents
+            new_york, paris, rome in points
+            go(X,P1,P2) in moves where P1 != P2
+                    actor = X
+                    origin = P1
+                    dest = P2
+            go(X,P) in moves
+                    actor = X
+                    dest = P
+        value of statics
+            symmetric_connectivity.
+            -transitive_connectivity.
+temporal projection
+max steps 6
+history
+observed(connected(X,Y), true, 0).
+observed(loc_in(bob), new_york, 0). 
+observed(loc_in(john), paris, 0). 
+happened(go(john, paris, rome), 2). 

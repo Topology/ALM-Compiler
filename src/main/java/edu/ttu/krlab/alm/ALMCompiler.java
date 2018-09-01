@@ -105,9 +105,11 @@ public class ALMCompiler {
         SPARCProgram tm = new SPARCProgram();
         List<AnswerSet> tm_as = new ArrayList<AnswerSet>();
         tm.addComment("Final Program For Transition Diagram");
+        s.deleteErrorDestinationFile();
         try {
             ALMCompiler.Compile(s, rootST, er, aspf, pm, pm_as, tm, tm_as);
             if (er.hasErrors()) {
+                s.deleteNonErrorDestinationFiles();
                 ALMCompiler.reportErrors(er, s);
             }
         } catch (Exception ex) {

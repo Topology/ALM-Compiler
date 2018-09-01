@@ -226,7 +226,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                     ALMCompiler.IMPLEMENTATION_FAILURE("Sort As String", "Unhandled type [" + this.type + "]");
             }
         }
-        if(sort.compareTo(ALM.SORT_COMPARABLE_INTEGERS_SUBSORT) == 0){
+        if (sort.compareTo(ALM.SORT_COMPARABLE_INTEGERS_SUBSORT) == 0) {
             return ALM.SORT_INTEGERS;
         }
         return sort;
@@ -502,20 +502,24 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
                         return BOOLEANS_TYPE;
                     case ALM.SPECIAL_FUNCTION_IS_A:
                     case ALM.SPECIAL_FUNCTION_INSTANCE:
-                        // The right hand arguments is a sort
-                        SortType rightArgType;
-                        try {
-                            rightArgType = Type.getSortType(st.getSortEntry(args.get(1).getName()));
-                        } catch (SortNotFoundException e) {
-                            rightArgType = null;
-                        }
-                        if (rightArgType != null) {
-                            // Use SortType of right hand argument to type check left hand argument.
-                            args.get(0).typeCheck(tc, st, er, rightArgType);
-                        } else {
-                            // Right hand argument did not resolve to a coherent sort, typecheck against any
-                            // type.
-                            args.get(0).typeCheck(tc, st, er, ANY_TYPE);
+                        //check if instance requirement is positively occurring, if so, add constraint to LHS. 
+                        if (this.sign == ALMTerm.SIGN_POS) {
+                            // The right hand arguments is a sort
+                            SortType rightArgType;
+                            try {
+                                rightArgType = Type.getSortType(st.getSortEntry(args.get(1).getName()));
+                            } catch (SortNotFoundException e) {
+                                er.newSemanticError(SemanticError.SPF001).add(this);
+                                rightArgType = null;
+                            }
+                            if (rightArgType != null) {
+                                // Use SortType of right hand argument to type check left hand argument.
+                                args.get(0).typeCheck(tc, st, er, rightArgType);
+                            } else {
+                                // Right hand argument did not resolve to a coherent sort, typecheck against any
+                                // type.
+                                args.get(0).typeCheck(tc, st, er, ANY_TYPE);
+                            }
                         }
                         if (!BOOLEANS_TYPE.isSubtypeOf(expected)) {
                             er.newSemanticError(SemanticError.TYP003).add(this).add(expected).add(BOOLEANS_TYPE);

@@ -1761,7 +1761,7 @@ public abstract class ALMTranslator {
                         if (ft.isStatic()) {
                             head = new_SPARCLiteral_NonBoolean_Static(ft, left.getArgs(), right);
                         } else if (ft.isFluent()) {
-                            head = new_SPARCLiteral_NonBoolean_Fluent(ft, left.getArgs(), right, timestep + "+1");
+                            head = new_SPARCLiteral_NonBoolean_Fluent(ft, left.getArgs(), right, timestep + timeAdd);
                         } else // Should never happen
                         {
                             ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",

@@ -16,6 +16,7 @@ import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
 import edu.ttu.krlab.alm.datastruct.type.SortType;
 
 public class SemanticError {
+
     // Errors
     public static final String ANS001 = "ANS001";
     public static final String SRT001 = "SRT001";
@@ -88,6 +89,7 @@ public class SemanticError {
     public static final String CDF004 = "CDF004";
     public static final String CDF005 = "CDF005";
     public static final String CDF006 = "CDF006";
+    public static final String IMP001 = "IMP001";
 
     String errID;
     String completeMessage;
@@ -101,24 +103,26 @@ public class SemanticError {
     }
 
     public SemanticError add(Location loc) {
-        if (loc != null)
+        if (loc != null) {
             errorElements.add(new Object() {
                 @Override
                 public String toString() {
-                    return loc.getText() + " at " + loc.getLineCol();
+                    return loc.getText() + " at " + loc.getFileLineCol();
                 }
             });
+        }
         return this;
     }
 
     public SemanticError add(ParserRuleContext location) {
-        if (location != null)
+        if (location != null) {
             add(new Location(location));
+        }
         return this;
     }
-    
-    public SemanticError add(List<? extends ParserRuleContext> location){
-        if(location != null){
+
+    public SemanticError add(List<? extends ParserRuleContext> location) {
+        if (location != null) {
             add(new Location(location));
         }
         return this;
@@ -129,18 +133,21 @@ public class SemanticError {
     }
 
     public String getErrorMessage() {
-        if (emd == null)
+        if (emd == null) {
             return "META DATA MISSING FOR ERROR MESSAGE";
+        }
         // need to perform appropriate substitutions in string.
-        if (completeMessage == null)
+        if (completeMessage == null) {
             createCompleteMessage();
+        }
         return completeMessage;
     }
 
     private void createCompleteMessage() {
         completeMessage = emd.getMessage();
-        if (errorElements == null || errorElements.size() == 0)
+        if (errorElements == null || errorElements.size() == 0) {
             return;
+        }
         int num_subs = this.errorElements.size();
         for (int i = 1; i <= num_subs; i++) {
             String spot = "[" + i + "]";
@@ -151,21 +158,24 @@ public class SemanticError {
 
     private String replaceAll(String text, String spot, String subst) {
         int loc = text.indexOf(spot);
-        if (loc == -1)
+        if (loc == -1) {
             return text;
-        else
+        } else {
             return replaceAll(text.substring(0, loc) + subst + text.substring(loc + spot.length()), spot, subst);
+        }
     }
 
     public String getErrorExplanation() {
-        if (emd == null)
+        if (emd == null) {
             return "META DATA MISSING FOR ERROR EXPLANATION";
+        }
         return emd.getExplanation();
     }
 
     public String getErrorRecommendation() {
-        if (emd == null)
+        if (emd == null) {
             return "META DATA MISSING FOR ERROR RECOMMENDATION";
+        }
         return emd.getRecommendation();
     }
 
@@ -178,45 +188,52 @@ public class SemanticError {
     }
 
     public SemanticError add(TerminalNode termnode) {
-        if (termnode != null)
+        if (termnode != null) {
             return add(new Location(termnode));
+        }
         return this;
     }
 
     public SemanticError add(ALMTerm aterm) {
-        if (aterm != null)
+        if (aterm != null) {
             return add(aterm.getLocation());
+        }
         return this;
 
     }
 
     public SemanticError add(SortEntry se) {
-        if (se != null)
+        if (se != null) {
             return add(se.getLocation());
+        }
         return this;
     }
 
     public SemanticError add(SortType type) {
-        if (type != null)
+        if (type != null) {
             errorElements.add(type);
+        }
         return this;
     }
 
     public SemanticError add(String string) {
-        if (string != null)
+        if (string != null) {
             errorElements.add(string);
+        }
         return this;
     }
 
     public SemanticError add(ConstantEntry cnst) {
-        if (cnst != null)
+        if (cnst != null) {
             add(cnst.getLocation());
+        }
         return this;
     }
 
     public SemanticError add(FunctionEntry fun) {
-        if (fun != null)
+        if (fun != null) {
             add(fun.getLocation());
+        }
         return this;
     }
 

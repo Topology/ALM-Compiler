@@ -10,26 +10,30 @@ public abstract class ErrorMessageTable {
     static Map<String, ErrorMetaData> errorMetaData = null;
 
     public static ErrorMetaData getMetaData(String errorid) {
-        if (initialized == false)
+        if (initialized == false) {
             initialize();
+        }
         return errorMetaData.get(errorid);
     }
 
     public static String getMessage(String errorid) {
-        if (initialized == false)
+        if (initialized == false) {
             initialize();
+        }
         return errorMetaData.get(errorid).getMessage();
     }
 
     public static String getExplanation(String errorid) {
-        if (initialized == false)
+        if (initialized == false) {
             initialize();
+        }
         return errorMetaData.get(errorid).getExplanation();
     }
 
     public static String getRecommendations(String errorid) {
-        if (initialized == false)
+        if (initialized == false) {
             initialize();
+        }
         return errorMetaData.get(errorid).getRecommendation();
     }
 
@@ -82,7 +86,7 @@ public abstract class ErrorMessageTable {
 
         // ATF002
         ErrorMetaDataBase atf002 = new ErrorMetaDataBase(SemanticError.ATF002,
-                "Attribute function [1] signature has references a sort [2] which has not been declared",
+                "The signature of attribute function [1] references a sort [2] which has not been declared",
                 "All sorts used in the signature of an attribute function must be previously declared in the sort hierarchy.",
                 "If the missing sort declaration exists later in the document, move the sort declaration which contains the attribute to a position after the missing sort or add a new sort declaration for the missing sort prior to this sort declaration.");
         errorMetaData.put(SemanticError.ATF002, atf002);
@@ -292,9 +296,16 @@ public abstract class ErrorMessageTable {
 
         // AXM011
         ErrorMetaDataBase axm011 = new ErrorMetaDataBase(SemanticError.AXM011,
-                "For a dynamic causal law, the sort [1] of the variable or constant in the occurs function [1], located in the first instance function [3],  must be a subsort of the actions sort.",
+                "For a dynamic causal law, the sort [1] in the occurs function [2] and located in the first instance function [3],  must be a subsort of the actions sort.",
                 "In a dynamic causal law, the sort in the first instance atom indicates the subsort for the action in the occurs atom at the head of the law.",
                 "Change either the sort used in the first instance atom or change the sort declaration to be a subsort of actions.");
+        errorMetaData.put(SemanticError.AXM011, axm011);
+        
+        //AXM012
+        ErrorMetaDataBase axm012 = new ErrorMetaDataBase(SemanticError.AXM012,
+                "For dynamic causal law [1], the instance atom is either missing or malformed after the 'if'. ",
+                "An instance(X,sort) atom is required to occur immediately after the 'if' where the sort is a subsort of actions.",
+                "Add or fix the instance atom.");
         errorMetaData.put(SemanticError.AXM011, axm011);
 
         // SPF001
@@ -389,9 +400,9 @@ public abstract class ErrorMessageTable {
 
         // SID002
         ErrorMetaDataBase sid002 = new ErrorMetaDataBase(SemanticError.SID002,
-                "Sort [1] is not a source sort and cannot have instances declared.",
-                "Only source sorts (sorts without sub-sorts) may have their interpretation extended with instance declarations.",
-                "Either declare the instances to be of an existing source sort that is a sub-sort to the non-source sort, or declare a new sub-sort of the non-source sort for the instances to belong to.");
+                "Sort [1] is not declared in the sort hierarchy.",
+                "Sorts must be declared in the hierarchy before they can be used.",
+                "Either add the sort declaration to the sort hierarchy or change the sort name to one that is in the hierarchy.");
         errorMetaData.put(SemanticError.SID002, sid002);
 
         // SID003
@@ -448,7 +459,7 @@ public abstract class ErrorMessageTable {
                 "Every variable must have a single sort from which it obtains its possible values.",
                 "Check that usage of the variable and ensure all usages have a common subsort.");
         errorMetaData.put(SemanticError.TYP002, typ002);
-        
+
         // TYP003
         ErrorMetaDataBase typ003 = new ErrorMetaDataBase(SemanticError.TYP003,
                 "Sort mismatch in expression [1].  Sort [2] was expected but a term of sort [3] occurred.",
@@ -497,10 +508,16 @@ public abstract class ErrorMessageTable {
                 "Remove or change the constant definition to be for a simple ground constant.");
         errorMetaData.put(SemanticError.CDF006, cdf006);
 
+        // IMP001
+        ErrorMetaDataBase imp001 = new ErrorMetaDataBase(SemanticError.IMP001,
+                "Module Dependency [1] resolves with more than one imported theory [2] and [3].",
+                "Module dependency must have unique resolutions.",
+                "Remove one of the conflicting import statements or prefix the module dependency with the name of the theory it should import from.");
+        errorMetaData.put(SemanticError.CDF006, cdf006);
+
         // PER ERROR ID = new ErrorMetaDataBase("errorid", "message", "explanation",
         // "recommendation");
         // errorMetaData.put("errorid", emd);
-
     }
 
 }

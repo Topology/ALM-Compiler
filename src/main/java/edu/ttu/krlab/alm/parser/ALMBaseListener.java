@@ -66,8 +66,6 @@ import edu.ttu.krlab.alm.parser.ALMParser.Solver_modeContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Sort_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Temporal_projectionContext;
 import edu.ttu.krlab.alm.parser.ALMParser.TermContext;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * This class provides an empty implementation of {@link ALMListener}, which can be extended to create a listener which
@@ -935,17 +933,22 @@ public class ALMBaseListener implements ALMListener {
             }
         }
 
-        // Create New Sort Entries for IDS, throw semantic error if they exist
-        // already.
+        // Create New Sort Entries for IDS
         List<SortEntry> child_sorts = new ArrayList<SortEntry>();
         for (ALMParser.New_sort_nameContext newSort : newSorts) {
             if (newSort.id() != null) {
+                //check if child sort already exists. 
+                SortEntry child = null;
                 try {
-                    child_sorts.add(st.createSortEntry(newSort.id().getText(), new Location(newSort)));
-                } catch (DuplicateSortException e2) {
-                    // child sort entry already exists inside symbol table.
-                    er.newSemanticError(SemanticError.SRT005).add(newSort);
+                    child = st.getSortEntry(newSort.id().getText());
+                } catch (SortNotFoundException ex) {
+                    try {
+                        child = st.createSortEntry(newSort.id().getText(), new Location(newSort));
+                    } catch (DuplicateSortException ex1) {
+                        //never happens 
+                    }
                 }
+                child_sorts.add(child);
             } else {
                 Integer low = Integer.parseInt(newSort.integer_range().integer(0).getText());
                 Integer high = Integer.parseInt(newSort.integer_range().integer(1).getText());
@@ -1840,7 +1843,8 @@ public class ALMBaseListener implements ALMListener {
             er.newSemanticError(SemanticError.FND009).add(funTerm).add(funs.next()).add(funs.next());
             return null;
         }
-        return matching.iterator().next();
+        FunctionEntry match = matching.iterator().next();
+        return match;
     }
 
     /**
@@ -1863,6 +1867,11 @@ public class ALMBaseListener implements ALMListener {
         List<ALMTerm> literals = new ArrayList<ALMTerm>();
         for (LiteralContext lit : ctx.literal()) {
             literals.add(ALM.ParseLiteral(lit));
+        }
+        
+        if(instance_atom == null){
+            er.newSemanticError(SemanticError.AXM012).add(ctx);
+            return; // this is a fatal error. 
         }
 
         // occurs_atom and instance_atom must share the same variable or term.
@@ -1928,12 +1937,11 @@ public class ALMBaseListener implements ALMListener {
         if (!typeChecker.typeCheckPasses(er)) {
             error_occurred = true;
         }
-        
-        if(!typeChecker.isActionsSubsort(occurs_atom.getArg(0))){
+
+        if (!typeChecker.isActionsSubsort(occurs_atom.getArg(0))) {
             er.newSemanticError(SemanticError.SPF012).add(occurs_atom).add(instance_atom);
             error_occurred = true;
         }
-        
 
         // create ASPfRule (time component will be added in translation to
         // SPARC)
@@ -2505,12 +2513,9 @@ public class ALMBaseListener implements ALMListener {
                 SortEntry se;
                 try {
                     se = st.getSortEntry(sort.getText());
-                    // if (se.getChildSorts().size() > 0)
-                    // er.newSemanticError("SID002").add(new Location(sort));
-                    // else
                     sort_entries.add(se);
                 } catch (SortNotFoundException e) {
-                    // er.newSemanticError("SID002").add(new Location(sort));
+                    er.newSemanticError("SID002").add(new Location(sort));
                 }
             }
         }

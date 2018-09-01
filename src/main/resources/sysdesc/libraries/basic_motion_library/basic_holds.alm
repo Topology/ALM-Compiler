@@ -1,0 +1,152 @@
+theory  basic_holds
+
+    %demonstrates importing entirety of another theory
+    import basic_motion.move from basic_motion_library
+
+    module hold
+        depends on move
+        sort declarations
+
+            %holders exists as things in the universe with the capacity to hold things. 
+            holders :: things
+
+            %holdables are things in the universe. 
+            holdables :: things
+            
+            %There are things which can hold and be held.
+            holdable_holders :: holders, holdables
+
+            %some holdables are alive
+            living_holdables :: holdables
+
+            %agents are holders
+            agents :: holders
+
+        function declarations
+            fluents
+                basic
+                    %fluent function held_by indicates when a holdable is held by a holder. 
+                    held_by: holdables -> holders
+                defined
+                    holding: holders * holdables -> booleans
+
+        axioms
+
+            function definitions
+
+                %X is holding Y if Y is held by X. 
+                holding(X,Y) if held_by(Y) = X. 
+
+                %Transitivity Of Holding
+                holding(X,Z) if holding(X,Y), holding(Y,Z).
+
+            state constraints                
+
+                % impossible for things to hold themselves. 
+                false if held_by(X) = X.
+
+                % a held thing must be in the location of its holder. 
+                false if loc_in(A) = B, loc_in(C) = D, holding(A,C), B != D. 
+
+                % If held, the holdable is forced to be in the same location as the hoder. 
+                loc_in(X) = A if held_by(X) =Y, loc_in(Y) = A. 
+
+            dynamic causal laws
+                %occurs(X) causes loc_in(A) = B if instance(X, moves), actor(X) = C, holding(C,A), dest(X) = B. 
+                
+
+    module grab
+        depends on hold
+        %grabs are actions which have a grabber and a holdable object being grabbed.
+        sort declarations
+            grabs :: actions
+                attributes
+                    grabber: agents
+                    grabbed: holdables
+
+            releases :: actions
+                attributes
+                    releaser : agents
+                    released : holdables
+
+        axioms
+            dynamic causal laws
+                %grabbing causes holding. 
+                occurs(X) causes held_by(Y) = Z if instance(X, grabs), grabber(X) = Z, grabbed(X)= Y. 
+
+                %releasing causes not holding. 
+                occurs(X) causes -dom_held_by(Y) if instance(X, releases), releaser(X) = Z, released(X) = Y, held_by(Y)=Z. 
+
+            executability conditions
+
+                %Cannot grab if being held by any agent
+                impossible occurs(X) if instance(X, grabs), grabber(X) = Y, grabbed(X) = Z, held_by(Z) = A, instance(A, agents). 
+
+                %Cannot grab if not in same location. 
+                impossible occurs(X) if instance(X, grabs), grabber(X) = Y, grabbed(X) = Z, loc_in(Z) = A, loc_in(Y) = B, A != B. 
+
+
+    module container
+        depends on hold
+        sort declarations
+            %containers are holders and holdables. 
+            containers :: holdable_holders
+
+        function declarations
+        fluents
+            defined
+                %function indicating contents of containers at a time step. 
+                contains: containers * holdables -> booleans
+
+        axioms
+            state constraints
+                % living holdables cannot be held by containers. 
+                false if held_by(X) = Y, instance(X, living_holdables), instance(Y, containers).
+
+                %agent can hold at most 1 non-container thing. 
+                false if held_by(X) = Y, held_by(Z)=Y, Z != X, instance(Y, agents), -instance(X, containers), -instance(Z, containers). 
+
+                %agent can hold at most 1 container. 
+                false if held_by(X) = Y, held_by(Z) = Y, Z != X, instance(X, containers), instance(Z, containers). 
+
+            function definitions
+                %direct containment if directly holding. 
+                contains(X,Y) if held_by(Y) = X, instance(X, containers). 
+
+                %transitivity of containment. 
+                contains(X,Z) if contains(X,Y), contains(Y,Z).  
+
+    module put
+        depends on container
+        sort declarations
+        %puts are actions which have a putter, an holdable object being put, and a target holder.  
+        puts :: actions
+            attributes
+                putter : agents
+                held: holdables
+                target : holders
+        
+        axioms
+
+            
+            dynamic causal laws
+
+                %an agent putting a holdable into a holder can occur when the holder and the agent are in the same location. 
+                occurs(X) causes held_by(H) = T if 
+                        instance(X, puts), 
+                        putter(X) = A, 
+                        held(X) = H, 
+                        target(X) = T,
+                        held_by(H) = A,
+                        loc_in(A) = L, 
+                        loc_in(T) = L.
+        
+            executability conditions
+
+                %impossible for an agent to put something they are not holding. 
+                impossible occurs(X) if instance(X, puts), putter(X) = A, held(X) = B, held_by(B) != A. 
+        
+                %impossible for an agent to put something if it is not being held. 
+                impossible occurs(X) if instance(X, puts), putter(X) = A, held(X) = B, -dom_held_by(B). 
+            
+        

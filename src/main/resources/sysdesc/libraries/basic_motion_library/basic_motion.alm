@@ -1,0 +1,70 @@
+theory basic_motion
+    module things 
+        sort declarations
+            things :: universe
+
+    module points
+        sort declarations
+            points :: universe
+
+    module agents
+	depends on things
+        sort declarations
+            agents :: things
+
+    module move
+
+        %demonstrating multi-module dependency. 
+        depends on agents, points
+
+        sort declarations
+
+            %moves are actions that have optional actor, origin, destination attributes. 
+            moves :: actions
+                attributes
+                    actor : agents
+                    origin : points
+                    dest : points
+        function declarations
+            statics
+                basic
+                    %Indicates if our theory is symmetric or asymmetric with respect to connectivity. 
+                    symmetric_connectivity : booleans
+
+                    %Indicates if X being connected to Y and Y connected to Z should be treated as X is connected to Z.
+                    %If not, then moves must be incremental to get from X to Z. 
+                    transitive_connectivity : booleans
+            fluents
+                basic
+                    %function indicating that two locations are connected at a time step. 
+                    total connected : points * points -> booleans
+
+                    %things can have their location specificied.  
+                    total loc_in : things -> points
+        axioms
+            dynamic causal laws
+                %move causes agent of move to be in destination. 
+                occurs(X) causes loc_in(A) = D if instance(X, moves), actor(X) = A, dest(X) = D, origin(X) = O, connected(O,D).
+
+            state constraints
+                %every point is connected to itself. 
+                connected(X, X).
+
+                %enforces symmetric connectectivity if the symmetric_connectivity static function is true.
+                connected(X, Y) if connected(Y, X),symmetric_connectivity.
+
+                %enforces symmetric disconnectivity if the symmetric_connectivity static function is true.
+                -connected(X, Y) if -connected(Y, X),symmetric_connectivity.
+
+                %enforces transitive connectivity if the transitive_connectivity static function is true. 
+                connected(X, Z) if connected(X, Y),connected(Y, Z),transitive_connectivity.
+
+            executability conditions
+                % A move leaving origin X cannot happen if the actor A of the move is not located in X
+                impossible occurs(X) if instance(X, moves),actor(X) = A,loc_in(A) != origin(X).
+
+                % A move cannot have the same origin and destination.  
+                impossible occurs(X) if instance(X, moves),actor(X) = A,loc_in(A) = dest(X).
+
+                % A move cannot happen if the origin and destination are not connected at this time. 
+                impossible occurs(X) if instance(X, moves),actor(X) = A,loc_in(A) = O, dest(X) = D,-connected(O, D).

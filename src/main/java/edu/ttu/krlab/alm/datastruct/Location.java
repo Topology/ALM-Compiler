@@ -94,15 +94,15 @@ public class Location {
         return "[NO TEXT]";
     }
 
-    public String getLineCol() {
+    private String getLineCol() {
         if (token != null) {
-            return String.format("(%d:%d)", token.getLine(), token.getCharPositionInLine());
+            return String.format("%d:%d", token.getLine(), token.getCharPositionInLine());
         } else {
             return "(0,0)";
         }
     }
 
-    public String getFileName() {
+    private String getFileName() {
         String fileName = null;
         if (token != null) {
             fileName =  token.getTokenSource().getSourceName();
@@ -117,5 +117,9 @@ public class Location {
             return fileName;
         }
         return "";
+    }
+
+    public String getFileLineCol() {
+        return "("+getFileName()+":"+getLineCol()+")";
     }
 }

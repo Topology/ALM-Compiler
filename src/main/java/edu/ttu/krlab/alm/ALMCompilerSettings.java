@@ -254,6 +254,47 @@ public class ALMCompilerSettings {
     public void setErrorDestination(String destination) {
         settings.put(ER_DESTINATION, destination);
     }
+    public void deleteErrorDestinationFile() {
+        deleteDestinationFile(ER_DESTINATION);
+    }
+
+    public void deleteNonErrorDestinationFiles(){
+        deleteDestinationFile(FINAL_AS_DESTINATION);
+        deleteDestinationFile(PREMODEL_AS_DESTINATION);
+        deleteDestinationFile(TM_DESTINATION);
+        deleteDestinationFile(PLAN_DESTINATION);
+        deleteDestinationFile(PM_DESTINATION);
+        deleteDestinationFile(TP_DESTINATION);
+    }
+    
+    public void deleteDestinationFiles() {
+        deleteDestinationFile(PM_DESTINATION);
+        deleteDestinationFile(PREMODEL_AS_DESTINATION);
+        deleteDestinationFile(FINAL_AS_DESTINATION);
+        deleteDestinationFile(TM_DESTINATION);
+        deleteDestinationFile(ER_DESTINATION);
+        deleteDestinationFile(ST_DESTINATION);
+        deleteDestinationFile(TP_DESTINATION);
+        deleteDestinationFile(ASPF_DESTINATION);
+        deleteDestinationFile(PLAN_DESTINATION);
+    }
+
+    private void deleteDestinationFile(String destination) {
+        String dest = settings.get(destination);
+        if (dest != null) {
+            switch (dest) {
+                case STD_ERR:
+                case STD_OUT:
+                    break;
+                default:
+                    try {
+                        (new File(dest)).delete();
+                    } catch (Exception ex) {
+
+                    }
+            }
+        }
+    }
 
     public BufferedWriter getErrorDestination() throws IOException {
         String destination = settings.get(ER_DESTINATION);
@@ -445,7 +486,7 @@ public class ALMCompilerSettings {
 
         if (args.length < 1) {
             if (!readyToExecute()) {
-                if(getSPARCLocation() != null && getSystemDescriptionFileName() == null){
+                if (getSPARCLocation() != null && getSystemDescriptionFileName() == null) {
                     System.exit(0); // Solver location provided through system properties, but not system description source
                 }
                 printUsageAndExit();
@@ -1281,7 +1322,7 @@ public class ALMCompilerSettings {
                 }
             }
         }
-        if(sparc_jar != null && alm_program == null){
+        if (sparc_jar != null && alm_program == null) {
             settings.put(SYS_DESC_SOURCE, null);
         }
 
@@ -1295,7 +1336,7 @@ public class ALMCompilerSettings {
                 output_dir = null;
             } else {
                 output_dir = new File(output_dir).getAbsolutePath();
-                String out_dir = output_dir + File.separator + alm_program_name 
+                String out_dir = output_dir + File.separator + alm_program_name
                         + File.separator;
                 settings.put(TM_DESTINATION, out_dir + alm_program_name + "_TM.sparc");
                 settings.put(FINAL_AS_DESTINATION, out_dir + alm_program_name + "_TM.answerset");
@@ -1364,12 +1405,12 @@ public class ALMCompilerSettings {
         if (destination == null) {
             return false;
         }
-        return new File(destination).exists();        
+        return new File(destination).exists();
     }
 
     BufferedReader getFinalAnswerSetDestinationReader() throws FileNotFoundException {
         String destination = settings.get(FINAL_AS_DESTINATION);
-        if(destination == null){
+        if (destination == null) {
             return null;
         }
         return new BufferedReader(new FileReader(new File(destination)));
@@ -1377,10 +1418,10 @@ public class ALMCompilerSettings {
 
     BufferedWriter getFinalAnswerSetDiffDestination() throws IOException {
         String destination = settings.get(FINAL_AS_DESTINATION);
-        if(destination == null){
+        if (destination == null) {
             return null;
         }
-        destination = destination+".diff";
+        destination = destination + ".diff";
         return new BufferedWriter(new FileWriter(new File(destination)));
     }
 
