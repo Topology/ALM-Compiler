@@ -1,0 +1,98 @@
+% You have three pieces of uncooked french toast and one hot pan. 
+% Each one needs to be cooked on both sides. 
+% Each side can be cooked by placing it on the hot pan for one minute. 
+% The pan can only fit two pieces of french toast at once, and only one side of 
+% each at a time. How many minutes does it take to cook all three?
+% 			from:  https://www.cs.utexas.edu/users/vl/tag/discussions.html 
+%			by Anu and Yuanlin, Aug 2018 
+
+system description simple_french_toast
+	theory french_toast
+		module cooking_toast
+			sort declarations
+				things :: universe
+                % NEW a good example for using Herbrand function
+                % to represent two sides of a toast.
+                % toasts :: things
+%   attributes
+%     side1: sides
+%     side2: sides
+%   We need some auxiliary sort for an easy definition of sides of toasts
+%   names :: universe
+
+				toasts :: things
+				sides :: things
+
+                cook_toast_side :: actions
+					attributes
+						toast : toasts
+						side : sides
+						
+			function declarations
+				fluents
+                    basic
+						total is_side_cooked : toasts * sides -> booleans
+					defined
+						toasted : toasts -> booleans
+			axioms
+				dynamic causal laws
+					occurs(X) causes is_side_cooked(T, S) if 
+									instance(X,cook_toast_side), 
+									toast(X) = T, 
+									side(X) = S.
+									
+				executability conditions
+					impossible occurs(X) if 
+										instance(X,cook_toast_side), 
+										is_side_cooked(T, S),
+										toast(X) = T, 
+										side(X) = S.
+
+                    %cannot cook more than two toasts at a time
+                    impossible occurs(X) if
+                        instance(X,cook_toast_side),
+                        toast(X) = T1,
+                        occurs(Y),
+                        instance(Y,cook_toast_side),
+                        toast(Y) = T2,
+                        occurs(Z),
+                        instance(Z,cook_toast_side),
+                        toast(Z) = T3,
+                        T1 != T2,
+                        T2 != T3,
+                        T1 != T3.
+									
+				function definitions
+					toasted(T) if is_side_cooked(T,S1), is_side_cooked(T,S2),S1 != S2.
+					
+
+structure toastbread
+	instances
+		t1,t2,t3 in toasts
+		s1,s2 in sides
+
+		toasting_bread(T,S) in cook_toast_side
+				toast = T
+				side = S
+				
+temporal projection
+max steps 4
+
+history
+% initially all three blocks b1 to b3 are on table
+observed(is_side_cooked(t1,s1),false, 0).
+observed(is_side_cooked(t1,s2),false, 0).
+observed(is_side_cooked(t2,s1),false, 0).
+observed(is_side_cooked(t2,s2),false, 0).
+observed(is_side_cooked(t3,s1),false, 0).
+observed(is_side_cooked(t3,s2),false, 0).
+happened(toasting_bread(t1,s1), 0).
+happened(toasting_bread(t2,s1), 0).
+happened(toasting_bread(t3,s1), 1).
+happened(toasting_bread(t2,s2), 1).
+happened(toasting_bread(t1,s2), 2).
+happened(toasting_bread(t3,s2), 2).
+
+
+% Our goal is to have b1 on b2, b2 on b3 and b3 on table.
+% goal = {toasted(t1),toasted(t2),toasted(t3)}

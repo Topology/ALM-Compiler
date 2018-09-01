@@ -30,6 +30,8 @@ public class ProgramsTest extends UnitTestingBase {
         testProgram("range_sort.alm", "range_sort.answerset");
         testProgram("basic_motion_library.alm", "basic_motion_library.answerset");
         testProgram("basic_holds_library.alm", "basic_holds_library.answerset");
+        testProgram("frenchtoast.alm", "frenchtoast.answerset");
+        testProgram("frenchtoast_plan.alm", "frenchtoast_plan.answerset");
         testProgramsFinished();
     }
     
