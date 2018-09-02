@@ -77,6 +77,7 @@ public class SemanticError {
     public static final String SID004 = "SID004";
     public static final String SID005 = "SID005";
     public static final String SID006 = "SID006";
+    public static final String SID007 = "SID007";
     public static final String SFD001 = "SFD001";
     public static final String SFD002 = "SFD002";
     public static final String TYP001 = "TYP001";
@@ -90,6 +91,10 @@ public class SemanticError {
     public static final String CDF005 = "CDF005";
     public static final String CDF006 = "CDF006";
     public static final String IMP001 = "IMP001";
+    public static final String NAM001 = "IMP001";
+    public static final String NAM002 = "IMP002";
+    public static final String NAM003 = "IMP003";
+    public static final String NAM004 = "IMP004";
 
     String errID;
     String completeMessage;

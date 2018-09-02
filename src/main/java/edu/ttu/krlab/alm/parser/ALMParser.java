@@ -5653,11 +5653,11 @@ public class ALMParser extends Parser {
 	}
 
 	public static class One_instance_defContext extends ParserRuleContext {
-		public List<Object_constantContext> object_constant() {
-			return getRuleContexts(Object_constantContext.class);
+		public List<Var_or_objContext> var_or_obj() {
+			return getRuleContexts(Var_or_objContext.class);
 		}
-		public Object_constantContext object_constant(int i) {
-			return getRuleContext(Object_constantContext.class,i);
+		public Var_or_objContext var_or_obj(int i) {
+			return getRuleContext(Var_or_objContext.class,i);
 		}
 		public TerminalNode IN() { return getToken(ALMParser.IN, 0); }
 		public List<Sort_nameContext> sort_name() {
@@ -5698,7 +5698,7 @@ public class ALMParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(834);
-			object_constant();
+			var_or_obj();
 			setState(839);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
@@ -5708,7 +5708,7 @@ public class ALMParser extends Parser {
 				setState(835);
 				match(T__1);
 				setState(836);
-				object_constant();
+				var_or_obj();
 				}
 				}
 				setState(841);
@@ -7536,8 +7536,8 @@ public class ALMParser extends Parser {
 		"\u0339\3\2\2\2\u0339\u008b\3\2\2\2\u033a\u033b\5\16\b\2\u033b\u033c\7"+
 		"\24\2\2\u033c\u033d\5\22\n\2\u033d\u008d\3\2\2\2\u033e\u0340\7I\2\2\u033f"+
 		"\u0341\5\u0090I\2\u0340\u033f\3\2\2\2\u0341\u0342\3\2\2\2\u0342\u0340"+
-		"\3\2\2\2\u0342\u0343\3\2\2\2\u0343\u008f\3\2\2\2\u0344\u0349\5\16\b\2"+
-		"\u0345\u0346\7\4\2\2\u0346\u0348\5\16\b\2\u0347\u0345\3\2\2\2\u0348\u034b"+
+		"\3\2\2\2\u0342\u0343\3\2\2\2\u0343\u008f\3\2\2\2\u0344\u0349\5\24\13\2"+
+		"\u0345\u0346\7\4\2\2\u0346\u0348\5\24\13\2\u0347\u0345\3\2\2\2\u0348\u034b"+
 		"\3\2\2\2\u0349\u0347\3\2\2\2\u0349\u034a\3\2\2\2\u034a\u034c\3\2\2\2\u034b"+
 		"\u0349\3\2\2\2\u034c\u034d\7E\2\2\u034d\u0352\5P)\2\u034e\u034f\7\4\2"+
 		"\2\u034f\u0351\5P)\2\u0350\u034e\3\2\2\2\u0351\u0354\3\2\2\2\u0352\u0350"+

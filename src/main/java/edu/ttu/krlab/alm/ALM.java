@@ -168,7 +168,7 @@ public abstract class ALM {
 
     // instance_atom: INSTANCE '(' var_or_obj ',' sort_name ')';
     public static ALMTerm ParseInstanceAtom(Instance_atomContext ia) {
-        if(ia == null){
+        if (ia == null) {
             return null;
         }
         ALMTerm left = ALM.ParseVarObj((ALMParser.Var_or_objContext) ia.getChild(2));
@@ -246,6 +246,9 @@ public abstract class ALM {
     }
 
     public static ALMTerm ParseALMTerm(ParserRuleContext con) {
+        if (con instanceof ALMParser.Var_or_objContext) {
+            return ALM.ParseVarObj((ALMParser.Var_or_objContext) con);
+        }
         if (con instanceof ALMParser.Object_constantContext) {
             return ALM.ParseObject((ALMParser.Object_constantContext) con);
         }

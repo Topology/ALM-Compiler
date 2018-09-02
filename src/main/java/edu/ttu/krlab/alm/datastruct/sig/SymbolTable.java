@@ -1,5 +1,9 @@
 package edu.ttu.krlab.alm.datastruct.sig;
 
+import edu.ttu.krlab.alm.datastruct.sig.exception.SortNotFoundException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.DuplicateSortException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.DuplicateConstantException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.DuplicateFunctionException;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +19,7 @@ import edu.ttu.krlab.alm.ALM;
 import edu.ttu.krlab.alm.ALMCompiler;
 import edu.ttu.krlab.alm.datastruct.ALMTerm;
 import edu.ttu.krlab.alm.datastruct.Location;
+import edu.ttu.krlab.alm.datastruct.sig.exception.NameCollisionException;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -216,7 +221,7 @@ public class SymbolTable {
             occurs.setFluent();
             occurs.setTotal();
             occurs.setDefined();
-        } catch (DuplicateFunctionException | DuplicateSortException ex) {
+        } catch (DuplicateFunctionException | DuplicateSortException | NameCollisionException ex) {
             //should never happen.
             Logger.getLogger(SymbolTable.class.getName()).log(Level.SEVERE, null, ex);
             ALMCompiler.IMPLEMENTATION_FAILURE("Symbol Table Initialization", "Unexpected Exception: " + ex);
@@ -395,7 +400,7 @@ public class SymbolTable {
             return srt;
         }
     }
-    
+
     /**
      * Creates a new SortEntry of the given sortname in this symbol table if the name of the sort does not exist in this
      * symbol table or any dependent symbol tables.
@@ -420,7 +425,6 @@ public class SymbolTable {
             return srt;
         }
     }
-
 
     /**
      * Retrieves any existing SortEntry for the given sortname that exists in this symbol table or in any of its
@@ -524,7 +528,13 @@ public class SymbolTable {
     }
 
     public NormalFunctionEntry createFunctionEntry(String funname, List<SortEntry> signature, Location loc)
-            throws DuplicateFunctionException {
+            throws DuplicateFunctionException, NameCollisionException {
+
+        Set<ConstantEntry> colliding = getConstantEntries(funname);
+        if (colliding.size() > 0) {
+            throw new NameCollisionException(funname, colliding.iterator().next().getLocation());
+        }
+
         // Check conditions for whether or not its safe to declare the functions
         // Specifically the function to be created does not have the same function name
         // and signature.
@@ -788,9 +798,15 @@ public class SymbolTable {
      * @param loc The syntactic element relating to the declaration of the constants.
      * @return the ConstantEntry created in the symbol table.
      * @throws DuplicateConstantException if the exact constant has already been declared for one of the parent_sorts.
+     * @throws NameCollisionException if there is a function with the same name.
      */
     public ConstantEntry createConstantEntry(String constname, List<SortEntry> arguments, List<SortEntry> parent_sorts,
-            Location loc) throws DuplicateConstantException {
+            Location loc) throws DuplicateConstantException, NameCollisionException {
+
+        Set<FunctionEntry> collidingFunctions = getFunctionEntries(constname);
+        if (collidingFunctions.size() > 0) {
+            throw new NameCollisionException(constname, collidingFunctions.iterator().next().getLocation());
+        }
 
         ConstantEntry constEntry = null;
         // first retrieve any existing matching ConstantEntry.
@@ -1053,7 +1069,7 @@ public class SymbolTable {
         } catch (SortNotFoundException e) {
             try {
                 //create it.
-                rangeSort = createIntegerRangeSortEntry(range, low, high,  loc);
+                rangeSort = createIntegerRangeSortEntry(range, low, high, loc);
                 rangeSort.addParentSort(getIntegersSortEntry());
                 for (int i = low; i <= high; i++) {
                     rangeSort.addSortInstance(new ALMTerm(Integer.toString(i, 10), ALMTerm.INT));
@@ -1066,8 +1082,8 @@ public class SymbolTable {
         }
         return rangeSort;
     }
-    
-    public Collection<IntegerRangeSortEntry> getIntegerRanges(){
+
+    public Collection<IntegerRangeSortEntry> getIntegerRanges() {
         return IRMap.values();
     }
 
@@ -1079,10 +1095,10 @@ public class SymbolTable {
     }
 
     private String rsNormalizeNegInt(Integer i) {
-        if(i < 0){
-            return "neg_"+(i*-1);
+        if (i < 0) {
+            return "neg_" + (i * -1);
         } else {
-            return "pos_"+i;
+            return "pos_" + i;
         }
     }
 

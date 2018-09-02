@@ -1,0 +1,23 @@
+system description test
+    theory test
+      module test
+        sort declarations
+
+            things :: universe
+            locations :: universe
+            elevations :: universe
+               attributes
+                  top: locations
+
+            things_with_elevations :: things
+
+    structure attribute_test
+        instances
+
+            top2(X) in locations where instance(X, elevations)
+
+            X in elevations where instance(X, things_with_elevations)
+                top = top2(X)
+
+            box in things_with_elevations
+               

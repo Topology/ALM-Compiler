@@ -16,7 +16,7 @@ import edu.ttu.krlab.alm.datastruct.sig.DOMFunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.IntegerRangeSortEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
-import edu.ttu.krlab.alm.datastruct.sig.SortNotFoundException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
 import edu.ttu.krlab.alm.datastruct.sparc.PredicateAlreadyDeclared;
 import edu.ttu.krlab.alm.datastruct.sparc.SPARCLiteral;
@@ -1920,9 +1920,8 @@ public abstract class ALMTranslator {
                     // return the variable as the function's replacement.
                     return new_var;
                 } else {
-                    ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                            "Term  [" + term.toString() + "] Is Not In The Symbol Table");
-                    // Should be caught by semantic error.
+                    //TODO THIS NEEDS A FORMAL CHECK FOR HERBRAND TERM EXISTENCE OTHERWISE THROUGH ERROR. 
+                    return term;
                 }
             default:
                 ALMTerm copy = new ALMTerm(term.getName(), term.getType());

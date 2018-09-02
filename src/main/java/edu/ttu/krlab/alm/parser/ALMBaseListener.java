@@ -22,14 +22,16 @@ import edu.ttu.krlab.alm.datastruct.aspf.ASPfRule;
 import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
 import edu.ttu.krlab.alm.datastruct.err.SemanticError;
 import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
-import edu.ttu.krlab.alm.datastruct.sig.DuplicateConstantException;
-import edu.ttu.krlab.alm.datastruct.sig.DuplicateFunctionException;
-import edu.ttu.krlab.alm.datastruct.sig.DuplicateSortException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.DuplicateConstantException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.DuplicateFunctionException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.DuplicateSortException;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.NormalFunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
-import edu.ttu.krlab.alm.datastruct.sig.SortNotFoundException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
+import edu.ttu.krlab.alm.datastruct.sig.exception.NameCollisionException;
+import edu.ttu.krlab.alm.datastruct.type.SortType;
 import edu.ttu.krlab.alm.datastruct.type.Type;
 import edu.ttu.krlab.alm.datastruct.type.TypeChecker;
 import edu.ttu.krlab.alm.parser.ALMParser.Action_conditionsContext;
@@ -94,7 +96,7 @@ import edu.ttu.krlab.alm.parser.ALMParser.TermContext;
  * @author Edward Wertz
  */
 public class ALMBaseListener implements ALMListener {
-
+    
     private SymbolTable st;
     private ErrorReport er;
     private ASPfProgram aspf;
@@ -106,13 +108,13 @@ public class ALMBaseListener implements ALMListener {
     boolean basicType = false;
     boolean definedType = false;
     boolean totalType = false;
-
+    
     public ALMBaseListener(ALMCompilerSettings settings, SymbolTable st, ASPfProgram aspf, ErrorReport er) {
         this.s = settings;
         this.st = st;
         this.aspf = aspf;
         this.er = er;
-
+        
         aspf.createSection(ALM.AXIOMS_DYNAMIC_CAUSAL_LAWS);
         aspf.createSection(ALM.AXIOMS_EXECUTABILITY_CONDITIONS);
         aspf.createSection(ALM.AXIOMS_STATE_CONSTRAINTS);
@@ -730,11 +732,11 @@ public class ALMBaseListener implements ALMListener {
     public void enterModule(ModuleContext ctx) {
         ALMTerm.setSymbolTable(st);
     }
-
+    
     @Override
     public void exitModule(ModuleContext ctx) {
     }
-
+    
     @Override
     public void enterModule_name(ALMParser.Module_nameContext ctx) {
     }
@@ -771,7 +773,7 @@ public class ALMBaseListener implements ALMListener {
     @Override
     public void exitSequence_of_modules(ALMParser.Sequence_of_modulesContext ctx) {
     }
-
+    
     @Override
     public void enterModule_body(ALMParser.Module_bodyContext ctx) {
     }
@@ -1012,9 +1014,16 @@ public class ALMBaseListener implements ALMListener {
                                 er.newSemanticError(SemanticError.ATF004).add(attribute)
                                         .add(matching.iterator().next().getLocation());
                             } else {
-                                NormalFunctionEntry attr = st.createFunctionEntry(attr_name, full_sig,
-                                        new Location(attribute));
-
+                                NormalFunctionEntry attr;
+                                try {
+                                    attr = st.createFunctionEntry(attr_name, full_sig,
+                                            new Location(attribute));
+                                } catch (NameCollisionException ex) {
+                                    er.newSemanticError(SemanticError.NAM001).add(attribute).add(ex.getLocation());
+                                    //this is a fatal error.  
+                                    return;
+                                }
+                                
                                 attr.setAttribute();
                                 attr.setStatic();
                                 child.addAttribute(attr);
@@ -1023,7 +1032,7 @@ public class ALMBaseListener implements ALMListener {
                                 ALMTerm domf = new ALMTerm(ALM.DOM_PREFIX + attr.getQualifiedFunctionName(),
                                         ALMTerm.FUN, attribute);
                                 ALMTerm fun = new ALMTerm(attr.getQualifiedFunctionName(), ALMTerm.FUN, attribute);
-
+                                
                                 int num_args = attr.getSignature().size() - 1;
                                 for (int i = 0; i < num_args; i++) {
                                     ALMTerm argi = new ALMTerm("X" + i, ALMTerm.VAR);
@@ -1031,14 +1040,14 @@ public class ALMBaseListener implements ALMListener {
                                     fun.addArg(argi);
                                     i++;
                                 }
-
+                                
                                 ALMTerm funRelation = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION);
                                 funRelation.addArg(fun);
                                 funRelation.addArg(new ALMTerm("Y", ALMTerm.VAR));
-
+                                
                                 List<ASPfLiteral> body = new ArrayList<ASPfLiteral>();
                                 body.add(funRelation);
-
+                                
                                 ASPfRule r = aspf.newRule(ALM.AXIOMS_DEFINITIONS_STATIC, domf, body);
                                 r.addComment("Definition for dom_f being positive when attribute function ["
                                         + attr.getFunctionName() + "] of sort [" + child.getSortName()
@@ -1048,7 +1057,7 @@ public class ALMBaseListener implements ALMListener {
                             FunctionEntry original = e.getFunctionEntry();
                             er.newSemanticError(SemanticError.ATF003).add(attribute).add(original.getLocation());
                         }
-
+                        
                     }
                 }
             }
@@ -1186,7 +1195,7 @@ public class ALMBaseListener implements ALMListener {
 
         // TypeCheck ALMTerms and verify that attribute definitions are actual attributes for the sort. 
         TypeChecker tc = new TypeChecker(st, er);
-
+        
         for (ALMTerm adef : attribute_defs) {
             //for each attribute definition
             //type check the attribute function. 
@@ -1216,7 +1225,7 @@ public class ALMBaseListener implements ALMListener {
                     }
                 }
             }
-
+            
         }
 
         // body
@@ -1225,7 +1234,7 @@ public class ALMBaseListener implements ALMListener {
         // create object constants if their arguments are source sorts.
         for (Object_constantContext obj_con : object_constants) {
             ALMTerm obj_const = ALM.ParseALMTerm(obj_con);
-
+            
             boolean schema_passed = true;
             // check to make sure all parameters are source sorts in hierarchy.
             List<ALMTerm> args = obj_const.getArgs();
@@ -1246,14 +1255,14 @@ public class ALMBaseListener implements ALMListener {
                         er.newSemanticError(SemanticError.CND004).add(arg.getLocation());
                         schema_passed = false;
                     }
-
+                    
                 }
             }
-
+            
             ConstantEntry constEntry = null;
             if (schema_passed) {
                 try {
-
+                    
                     constEntry = st.createConstantEntry(obj_const.getName(), arguments, sort_entries,
                             new Location(ctx));
                 } catch (DuplicateConstantException e) {
@@ -1261,7 +1270,11 @@ public class ALMBaseListener implements ALMListener {
                     Set<SortEntry> duplicated = e.getPreviouslyDeclaredSorts();
                     er.newSemanticError(SemanticError.CND005).add(obj_const.getLocation())
                             .add(duplicated.iterator().next());
-
+                    
+                } catch (NameCollisionException ex) {
+                    er.newSemanticError(SemanticError.NAM002).add(obj_const).add(ex.getLocation());
+                    //this is a fatal error. 
+                    return;
                 }
             } else {
                 return; //nothing else to do here due to error. 
@@ -1277,7 +1290,7 @@ public class ALMBaseListener implements ALMListener {
                 } else {
                     constTerm = new ALMTerm(obj_const.getName(), ALMTerm.ID);
                 }
-
+                
                 ALMTerm head = null;
                 head = new ALMTerm(ALM.SPECIAL_FUNCTION_IS_A, ALMTerm.FUN);
                 head.addArg(constTerm);
@@ -1293,13 +1306,13 @@ public class ALMBaseListener implements ALMListener {
                     for (int j = 0; j < argSize; j++) {
                         ALMTerm Sj = new ALMTerm(SVar + j, ALMTerm.VAR);
                         constTerm.addArg(Sj);
-
+                        
                         ALMTerm sortj = new ALMTerm(sortArgs.get(i).getSortName(), ALMTerm.ID);
-
+                        
                         ALMTerm instanceTerm = new ALMTerm(ALM.SPECIAL_FUNCTION_INSTANCE, ALMTerm.FUN);
                         instanceTerm.addArg(Sj);
                         instanceTerm.addArg(sortj);
-
+                        
                         body.add(instanceTerm);
                     }
                 }
@@ -1367,11 +1380,11 @@ public class ALMBaseListener implements ALMListener {
                     term_relation.addArg(new_var);
                     term_relation.addArg(attr_term);
                     ad_body.add(term_relation);
-
+                    
                     ASPfRule ar = aspf.newRule(ALM.THEORY_CONSTANT_DECLARATIONS, ad_head, ad_body);
                     ar.addComment("Definition of attribute [" + attr_def.getArg(0).getName() + "] for instance ["
                             + obj_const.toString() + "] of sort [" + sort_entries.get(i).getSortName() + "].");
-
+                    
                 }
             }
         }
@@ -1541,19 +1554,19 @@ public class ALMBaseListener implements ALMListener {
     // <remainder_args>
     @Override
     public void exitOne_function_decl(ALMParser.One_function_declContext ctx) {
-
+        
         totalType = false; // assume not total until we find the total keyword
 
         ParseTree firstchild = ctx.getChild(0);
         Function_nameContext fun_name = ctx.function_name();
-
+        
         if (firstchild != fun_name) // The keyword total is present;
         {
             totalType = true;
         }
-
+        
         String funName = fun_name.getText();
-
+        
         List<Sort_nameContext> sort_names = ctx.sort_name();
 
         // convert to a list of sort-entries
@@ -1580,7 +1593,14 @@ public class ALMBaseListener implements ALMListener {
 
         // create then entry in the symbol table for the function.
         try {
-            FunctionEntry f = st.createFunctionEntry(funName, signature, new Location(ctx));
+            FunctionEntry f;
+            try {
+                f = st.createFunctionEntry(funName, signature, new Location(ctx));
+            } catch (NameCollisionException ex) {
+                er.newSemanticError(SemanticError.NAM004).add(fun_name).add(ex.getLocation());
+                //this is a fatal error. 
+                return;
+            }
             if (fluentType) {
                 f.setFluent();
             }
@@ -1601,7 +1621,7 @@ public class ALMBaseListener implements ALMListener {
             // of this rule.
             ALMTerm domf = new ALMTerm(ALM.DOM_PREFIX + f.getFunctionName(), ALMTerm.FUN, fun_name);
             ALMTerm fun = new ALMTerm(f.getFunctionName(), ALMTerm.FUN, fun_name);
-
+            
             int num_args = f.getSignature().size() - 1;
             for (int i = 0; i < num_args; i++) {
                 ALMTerm argi = new ALMTerm("X" + i, ALMTerm.VAR);
@@ -1609,14 +1629,14 @@ public class ALMBaseListener implements ALMListener {
                 fun.addArg(argi);
                 i++;
             }
-
+            
             ALMTerm funRelation = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION);
             funRelation.addArg(fun);
             funRelation.addArg(new ALMTerm("Y", ALMTerm.VAR));
-
+            
             List<ASPfLiteral> body = new ArrayList<ASPfLiteral>();
             body.add(funRelation);
-
+            
             if (fluentType) {
                 if (basicType) {
                     ASPfRule r = aspf.newRule(ALM.AXIOMS_STATE_CONSTRAINTS_FLUENT, domf, body);
@@ -1642,7 +1662,7 @@ public class ALMBaseListener implements ALMListener {
             // description.
             er.newSemanticError(SemanticError.FND008).add(ctx).add(prev_decl.getLocation());
         }
-
+        
     }
 
     /**
@@ -1819,7 +1839,7 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void exitFunction_definitions(ALMParser.Function_definitionsContext ctx) {
-
+        
     }
 
     /**
@@ -1832,7 +1852,7 @@ public class ALMBaseListener implements ALMListener {
     @Override
     public void enterOne_dynamic_causal_law(ALMParser.One_dynamic_causal_lawContext ctx) {
     }
-
+    
     private FunctionEntry getFunctionEntry(ALMTerm funTerm, int domSize, SymbolTable st, ErrorReport er) {
         Set<FunctionEntry> matching = st.getFunctionEntries(funTerm.getName(), domSize);
         if (matching.size() < 1) {
@@ -1868,7 +1888,7 @@ public class ALMBaseListener implements ALMListener {
         for (LiteralContext lit : ctx.literal()) {
             literals.add(ALM.ParseLiteral(lit));
         }
-
+        
         if (instance_atom == null) {
             er.newSemanticError(SemanticError.AXM012).add(ctx);
             return; // this is a fatal error. 
@@ -1925,7 +1945,7 @@ public class ALMBaseListener implements ALMListener {
                 error_occurred = true;
             }
         }
-
+        
         if (error_occurred) {
             return;
             //structural semantic errors supercede type checking semantic errors.
@@ -1939,11 +1959,11 @@ public class ALMBaseListener implements ALMListener {
         for (ALMTerm lit : literals) {
             lit.typeCheck(typeChecker, st, er);
         }
-
+        
         if (!typeChecker.typeCheckPasses(er)) {
             error_occurred = true;
         }
-
+        
         if (!typeChecker.isActionsSubsort(occurs_atom.getArg(0))) {
             er.newSemanticError(SemanticError.SPF012).add(occurs_atom).add(instance_atom);
             error_occurred = true;
@@ -2041,7 +2061,7 @@ public class ALMBaseListener implements ALMListener {
                 error_occurred = true;
             }
         }
-
+        
         if (error_occurred) {
             return;
             //structural semantic errors supercede type checking semantic errors.
@@ -2056,11 +2076,11 @@ public class ALMBaseListener implements ALMListener {
         for (ALMTerm occurs : occurs_lits) {
             occurs.typeCheck(vtc, st, er);
         }
-
+        
         if (!vtc.typeCheckPasses(er)) {
             error_occurred = true;
         }
-
+        
         if (!error_occurred) {
             // ADD RULE TO ASPfProgram
             // The ASPfRule has no head, all literals in the body.
@@ -2073,7 +2093,7 @@ public class ALMBaseListener implements ALMListener {
             for (ALMTerm lit : lits) {
                 body.add(lit);
             }
-
+            
             ASPfRule r = aspf.newRule(ALM.AXIOMS_EXECUTABILITY_CONDITIONS, null, body);
             r.addComment("Executability Condition for when [" + occ_atom.getArg(0).getName()
                     + "] is impossible to execute.");
@@ -2124,7 +2144,7 @@ public class ALMBaseListener implements ALMListener {
                 lits.add(ALM.ParseLiteral(lit));
             }
         }
-
+        
         boolean moveRHStoBody = false;
         SortEntry rhsSort = null;
 
@@ -2135,7 +2155,7 @@ public class ALMBaseListener implements ALMListener {
             if (head.getType() == ALMTerm.TERM_RELATION) {
                 headFunction = head.getArg(0);
             }
-
+            
             FunctionEntry head_function = getFunctionEntry(headFunction, headFunction.getArgs().size(), st, er);
             // head function must be basic
             if (head_function != null) {
@@ -2145,7 +2165,7 @@ public class ALMBaseListener implements ALMListener {
                         error_occurred = true;
                     }
                 }
-
+                
                 List<SortEntry> sig = head_function.getSignature();
                 // entity on right hand side must be variable or object constant of range sort
                 // of function.
@@ -2174,7 +2194,7 @@ public class ALMBaseListener implements ALMListener {
         for (ALMTerm lit : lits) {
             error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
         }
-
+        
         if (error_occurred) {
             return;
             //structural semantic errors supercede type checking semantic errors.
@@ -2189,11 +2209,11 @@ public class ALMBaseListener implements ALMListener {
         if (head != null) {
             head.typeCheck(vm, st, er);
         }
-
+        
         if (!vm.typeCheckPasses(er)) {
             error_occurred = true;
         }
-
+        
         if (!error_occurred) {
 
             // Construct ASPf Rule
@@ -2204,7 +2224,7 @@ public class ALMBaseListener implements ALMListener {
                     body.add(lit);
                 }
             }
-
+            
             if (moveRHStoBody) {
                 ALMTerm rhs = head.getArg(1);
                 String var = vm.newVariable("V", Type.getSortType(rhsSort));
@@ -2213,7 +2233,7 @@ public class ALMBaseListener implements ALMListener {
                 ALMTerm termEq = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, varTerm, rhs);
                 body.add(termEq);
             }
-
+            
             ASPfRule r = aspf.newRule(ALM.AXIOMS_STATE_CONSTRAINTS, head, body);
             if (head != null) {
                 if (head.getType() == ALMTerm.FUN) {
@@ -2225,7 +2245,7 @@ public class ALMBaseListener implements ALMListener {
                 r.addComment("State Constraint: This condition is impossible in all states.");
             }
         }
-
+        
     }
 
     /**
@@ -2297,7 +2317,7 @@ public class ALMBaseListener implements ALMListener {
         for (ALMTerm lit : lits) {
             error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
         }
-
+        
         if (error_occurred) {
             return;
             //structural semantic errors supercede type checking semantic errors.
@@ -2310,11 +2330,11 @@ public class ALMBaseListener implements ALMListener {
             lit.typeCheck(vm, st, er);
         }
         head.typeCheck(vm, st, er);
-
+        
         if (!vm.typeCheckPasses(er)) {
             error_occurred = true;
         }
-
+        
         if (!error_occurred) {
             List<ASPfLiteral> body = new ArrayList<ASPfLiteral>();
             for (ALMTerm lit : lits) {
@@ -2346,7 +2366,7 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void exitStructure_name(ALMParser.Structure_nameContext ctx) {
-
+        
     }
 
     /**
@@ -2370,7 +2390,7 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void exitStructure(ALMParser.StructureContext ctx) {
-
+        
     }
 
     /**
@@ -2416,11 +2436,11 @@ public class ALMBaseListener implements ALMListener {
      */
     @Override
     public void exitOne_constant_def(ALMParser.One_constant_defContext ctx) {
-
+        
         boolean error_occurred = false;
         Object_constantContext leftObjConstant = ctx.object_constant();
         TermContext rightTerm = ctx.term();
-
+        
         ALMTerm obj_const = ALM.ParseALMTerm(leftObjConstant);
         ALMTerm objConstVal = ALM.ParseTerm(rightTerm);
 
@@ -2440,12 +2460,12 @@ public class ALMBaseListener implements ALMListener {
             //Constant Definition in this version of ALM only supports simple constants. 
             er.newSemanticError(SemanticError.CDF006).add(obj_const);
         }
-
+        
         if (!objConstVal.isGround()) {
             error_occurred = true;
             er.newSemanticError(SemanticError.CDF004).add(objConstVal);
         }
-
+        
         if (!error_occurred) {
             ConstantEntry ce = st.getMatchingConstantEntry(obj_const);
             if (ce == null) {
@@ -2525,7 +2545,7 @@ public class ALMBaseListener implements ALMListener {
         // Sorts
         // Literals
         // Attribute Definitions
-        List<ALMParser.Object_constantContext> instances = ctx.object_constant();
+        List<ALMParser.Var_or_objContext> instances = ctx.var_or_obj();
         List<ALMParser.Sort_nameContext> sorts = ctx.sort_name();
         List<ALMParser.LiteralContext> literals = ctx.literal();
         List<ALMParser.One_attribute_defContext> attr_defs = null;
@@ -2536,8 +2556,7 @@ public class ALMBaseListener implements ALMListener {
             }
         }
 
-        // Turn list of sort_names into a list of SortEntries in the symbol
-        // table.
+        // Turn list of sort_names into a list of SortEntries from the symbol table.
         List<SortEntry> sort_entries = new ArrayList<SortEntry>();
         for (ALMParser.Sort_nameContext sort : sorts) {
             String sort_text = sort.getText();
@@ -2553,19 +2572,26 @@ public class ALMBaseListener implements ALMListener {
                 }
             }
         }
-
+        
+        boolean error_occurred = false;
         // Convert object_constants into a list of ALMTerms and check they
         // qualify as sort instances.
-        // A sort instance is either a ground function term, or it is a schema.
+        // A sort instance is either a ground function term, or it is a schema, or a variable.
         // If it is a schema, the sort information about the variables will need
         // to be added
         // after parsing the rules. This will be handled later in the function.
         // object_constant: ID ( '(' term (',' term)* ')')?;
         List<ALMTerm> sort_instances = new ArrayList<ALMTerm>();
-        for (ALMParser.Object_constantContext inst : instances) {
+        for (ALMParser.Var_or_objContext inst : instances) {
             ALMTerm aterm = ALM.ParseALMTerm(inst);
             if (aterm == null) {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Structure Instance", "Failed To Parse ALMTerm:" + inst.getText());
+                er.newSemanticError(SemanticError.SID007).add(inst);
+                continue;
+            }
+            Set<FunctionEntry> colliding = st.getFunctionEntries(aterm.getName());
+            if (colliding.size() > 0) {
+                er.newSemanticError(SemanticError.NAM003).add(aterm).add(colliding.iterator().next().getLocation());
+                error_occurred = true;
             }
             if (aterm.isSchema()) {
                 sort_instances.add(aterm);
@@ -2591,12 +2617,11 @@ public class ALMBaseListener implements ALMListener {
             }
         }
 
-        boolean error_occurred = false;
         //GENERAL SEMANTIC ERROR CHECKING
         for (ALMTerm lit : lits) {
             error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
         }
-
+        
         if (error_occurred) {
             return;
             //structural semantic errors supercede type checking semantic errors.
@@ -2614,7 +2639,10 @@ public class ALMBaseListener implements ALMListener {
         for (ALMTerm adef : attribute_defs) {
             //for each attribute definition
             //type check the attribute function. 
-            adef.typeCheck(tc, st, er);
+            if (adef.getArg(1).isVariable()) {
+                //TODO  THIS IS A TEMPORARY "FIX", DELETE CONTAINING IF ONCE HERBRAND TERMS ARE ADDED. 
+                adef.typeCheck(tc, st, er);
+            }
             ALMTerm range = adef.getArg(1);
             ALMTerm attr = adef.getArg(0);
             String attr_name = attr.getName();
@@ -2640,15 +2668,29 @@ public class ALMBaseListener implements ALMListener {
                     }
                 }
             }
-
+            
         }
 
-        // If Type Check passes, add sort instance declaration.
+        // If Type Check passes, add sort instance declaration or make subsort.
         if (tc.typeCheckPasses(er)) {
             // Register Instances With SortEntries in st
             for (SortEntry se : sort_entries) {
                 for (ALMTerm si : sort_instances) {
-                    se.addSortInstance(si);
+                    if (si.isVariable()) {
+                        //The type of the variable needs to be added as a subsort. 
+                        //TODO VERIFY THIS IS THE RIGHT THING TO DO.  
+                        SortType type = tc.getNarrowestSortType(si);
+                        if (type.isSingleton()) {
+                            se.addChildSort(type.getSingleton());
+                        } else {
+                            for (SortEntry child : type.getSortEntries()) {
+                                se.addChildSort(child);
+                            }
+                        }
+                        //TODO VERIFY THIS IS THE RIGHT THING TO DO.  
+                    } else {
+                        se.addSortInstance(si);
+                    }
                 }
             }
         }
@@ -2679,11 +2721,11 @@ public class ALMBaseListener implements ALMListener {
 //                }
 
                 is_a_head = new ALMTerm(ALM.SPECIAL_FUNCTION_IS_A, ALMTerm.FUN);
-
+                
                 is_a_head.addArg(obj_const);
                 is_a_head.addArg(new ALMTerm(sort_entry.getSortName(), ALMTerm.ID,
                         sort_entry.getLocation().getParserRuleContext()));
-
+                
                 ASPfRule r = aspf.newRule(ALM.STRUCTURE_SORT_INSTANCES, is_a_head, body);
                 r.addComment("Sort Instance [" + obj_const + "] for sort [" + sort_entry + "].");
 
@@ -2745,11 +2787,11 @@ public class ALMBaseListener implements ALMListener {
                     term_relation.addArg(new_var);
                     term_relation.addArg(attr_term);
                     ad_body.add(term_relation);
-
+                    
                     ASPfRule ar = aspf.newRule(ALM.STRUCTURE_ATTRIBUTE_DEFINITIONS, ad_head, ad_body);
                     ar.addComment("Definition of attribute [" + attr_def.getArg(0).getName() + "] for instance ["
                             + obj_const.toString() + "] of sort [" + sort_entry.getSortName() + "].");
-
+                    
                 }
             }
         }
@@ -2851,25 +2893,25 @@ public class ALMBaseListener implements ALMListener {
 
         // TypeCheck ALMTerms and verify that attribute definitions are actual attributes for the sort. 
         TypeChecker tc = new TypeChecker(st, er);
-
+        
         if (literals != null && literals.size() > 0) {
             lits = new ArrayList<>();
             for (LiteralContext lit : literals) {
                 lits.add(ALM.ParseLiteral(lit));
             }
-
+            
             boolean error_occurred = false;
             //GENERAL SEMANTIC ERROR CHECKING
             for (ALMTerm lit : lits) {
                 error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
             }
-
+            
             if (error_occurred) {
                 return;
                 //structural semantic errors supercede type checking semantic errors.
                 //type checking expects well formed literals.  
             }
-
+            
             for (ASPfLiteral lit : lits) {
                 lit.typeCheck(tc, st, er);
                 body.add(lit);
@@ -2878,13 +2920,13 @@ public class ALMBaseListener implements ALMListener {
         {
             head.typeCheck(tc, st, er);
         }
-
+        
         if (!tc.typeCheckPasses(er)) {
             return;
         }
-
+        
         aspf.newRule(ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS, head, body);
-
+        
     }
 
     /**
@@ -2934,7 +2976,7 @@ public class ALMBaseListener implements ALMListener {
         // USE ANTLRErrorListener given to the parser before parsing.
         // ER.newSyntaxError(node);
     }
-
+    
     private boolean LiteralHasSemanticErrors(ALMTerm lit) {
         boolean error_occurred = false;
         String type = lit.getType();
@@ -3053,7 +3095,7 @@ public class ALMBaseListener implements ALMListener {
         }
         return error_occurred;
     }
-
+    
     public boolean termHasSemanticErrors(ALMTerm term) {
         boolean error_occurred = false;
         String type = term.getType();
@@ -3092,52 +3134,52 @@ public class ALMBaseListener implements ALMListener {
         }
         return error_occurred;
     }
-
+    
     @Override
     public void enterSolver_mode(Solver_modeContext ctx) {
         st.setModeActive(ALM.SOLVER_MODE, true);
     }
-
+    
     @Override
     public void exitSolver_mode(Solver_modeContext ctx) {
     }
-
+    
     @Override
     public void enterTemporal_projection(Temporal_projectionContext ctx) {
         st.setModeActive(ALM.SOLVER_MODE_TP, true);
     }
-
+    
     @Override
     public void exitTemporal_projection(Temporal_projectionContext ctx) {
     }
-
+    
     @Override
     public void enterMax_steps(Max_stepsContext ctx) {
     }
-
+    
     @Override
     public void exitMax_steps(Max_stepsContext ctx) {
         TerminalNode max = ctx.POSINT();
         if (max != null) {
             st.setMaxSteps(Integer.parseInt(max.getText()));
         }
-
+        
     }
-
+    
     @Override
     public void enterHistory(HistoryContext ctx) {
         st.setModeActive(ALM.HISTORY, true);
     }
-
+    
     @Override
     public void exitHistory(HistoryContext ctx) {
         aspf.createSection(ALM.HISTORY);
     }
-
+    
     @Override
     public void enterObserved(ObservedContext ctx) {
     }
-
+    
     @Override
     public void exitObserved(ObservedContext ctx) {
         if (er.hasErrors()) {
@@ -3146,14 +3188,14 @@ public class ALMBaseListener implements ALMListener {
         ALMTerm f = ALM.ParseALMTerm(ctx.function_term());
         ALMTerm t = ALM.ParseTerm(ctx.term());
         int i = Integer.parseInt(ctx.nat_num().getText());
-
+        
         st.addHistoryTimeStep(i);
-
+        
         ALMTerm observed = new ALMTerm(ALM.HISTORY_OBSERVED, ALMTerm.FUN);
         observed.addArg(f);
         observed.addArg(t);
         observed.addArg(new ALMTerm(Integer.toString(i), ALMTerm.INT));
-
+        
         FunctionEntry f_ent = getFunctionEntry(f, f.getArgs().size(), st, er);
         if (f_ent != null) {
             if (f_ent.isFluent()) {
@@ -3173,14 +3215,14 @@ public class ALMBaseListener implements ALMListener {
             // TODO record semantic error.
             ALMCompiler.IMPLEMENTATION_FAILURE("Parsing History",
                     "function not recognized, semantic error not implemented yet.");
-
+            
         }
     }
-
+    
     @Override
     public void enterHappened(HappenedContext ctx) {
     }
-
+    
     @Override
     public void exitHappened(HappenedContext ctx) {
         if (er.hasErrors()) {
@@ -3188,13 +3230,13 @@ public class ALMBaseListener implements ALMListener {
         }
         ALMTerm a = ALM.ParseALMTerm(ctx.object_constant());
         int i = Integer.parseInt(ctx.nat_num().getText());
-
+        
         st.addHistoryTimeStep(i);
-
+        
         ALMTerm happened = new ALMTerm(ALM.HISTORY_HAPPENED, ALMTerm.FUN);
         happened.addArg(a);
         happened.addArg(new ALMTerm(Integer.toString(i), ALMTerm.INT));
-
+        
         if (true) { //st.isAction(a) -- need to check but this hasn't been implemented yet. 
             if (st.isTimeStep(i)) {
                 aspf.newRule(ALM.HISTORY, happened, null);
@@ -3208,119 +3250,119 @@ public class ALMBaseListener implements ALMListener {
             ALMCompiler.IMPLEMENTATION_FAILURE("Parsing History",
                     "action not recognized, semantic error not implemented yet.");
         }
-
+        
     }
-
+    
     @Override
     public void enterNat_num(Nat_numContext ctx) {
     }
-
+    
     @Override
     public void exitNat_num(Nat_numContext ctx) {
     }
-
+    
     @Override
     public void enterModule_dependencies(Module_dependenciesContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitModule_dependencies(Module_dependenciesContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterOne_dependency(One_dependencyContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitOne_dependency(One_dependencyContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterId(IdContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitId(IdContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterBool(BoolContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitBool(BoolContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterOne_action_condition(One_action_conditionContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitOne_action_condition(One_action_conditionContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterOne_added_constraint(One_added_constraintContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitOne_added_constraint(One_added_constraintContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterAdded_constraints(Added_constraintsContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitAdded_constraints(Added_constraintsContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterPlanning_problem(Planning_problemContext ctx) {
         st.setModeActive(ALM.SOLVER_MODE_PP, true);
-
+        
     }
-
+    
     @Override
     public void exitPlanning_problem(Planning_problemContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterGoal_state(Goal_stateContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitGoal_state(Goal_stateContext ctx) {
         List<ALMParser.LiteralContext> literals = ctx.literal();
@@ -3328,7 +3370,7 @@ public class ALMBaseListener implements ALMListener {
             //no conditions, return from function. 
             return;
         }
-
+        
         SortEntry booleans = st.getBooleansSortEntry();
         List<SortEntry> sig = new ArrayList<>();
         sig.add(booleans);
@@ -3340,7 +3382,7 @@ public class ALMBaseListener implements ALMListener {
             goal = st.createFunctionEntry(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_GOAL, sig, new Location(ctx.GOAL()));
             goal.setDefined();
             goal.setFluent();
-        } catch (DuplicateFunctionException ex) {
+        } catch (DuplicateFunctionException | NameCollisionException ex) {
             ALMCompiler.IMPLEMENTATION_FAILURE("planning problem", "Assumed unique function name for goal state is already declared.");
             return;
         }
@@ -3352,7 +3394,7 @@ public class ALMBaseListener implements ALMListener {
             success = st.createFunctionEntry(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_SUCCESS, sig, new Location(ctx.GOAL()));
             success.setDefined();
             success.setStatic();
-        } catch (DuplicateFunctionException ex) {
+        } catch (DuplicateFunctionException | NameCollisionException ex) {
             ALMCompiler.IMPLEMENTATION_FAILURE("planning problem", "Assumed unique function name for success state is already declared.");
             return;
         }
@@ -3364,7 +3406,7 @@ public class ALMBaseListener implements ALMListener {
             something_happened = st.createFunctionEntry(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_SOMETHING_HAPPENED, sig, new Location(ctx.GOAL()));
             something_happened.setDefined();
             something_happened.setFluent();
-        } catch (DuplicateFunctionException ex) {
+        } catch (DuplicateFunctionException | NameCollisionException ex) {
             ALMCompiler.IMPLEMENTATION_FAILURE("planning problem", "Assumed unique function name for something_happened is already declared.");
             return;
         }
@@ -3408,90 +3450,90 @@ public class ALMBaseListener implements ALMListener {
 
         //The additional rules are created in the translation to the final SPARC program. 
     }
-
+    
     @Override
     public void enterNormal_conditions(Normal_conditionsContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitNormal_conditions(Normal_conditionsContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterAction_conditions(Action_conditionsContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitAction_conditions(Action_conditionsContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterCurrent_state(Current_stateContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitCurrent_state(Current_stateContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterOne_normal_condition(One_normal_conditionContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void exitOne_normal_condition(One_normal_conditionContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterDiagnostic_problem(Diagnostic_problemContext ctx) {
         st.setModeActive(ALM.SOLVER_MODE_DP, true);
-
+        
     }
-
+    
     @Override
     public void exitDiagnostic_problem(Diagnostic_problemContext ctx) {
         // TODO Auto-generated method stub
 
     }
-
+    
     @Override
     public void enterAlm_file(ALMParser.Alm_fileContext ctx) {
     }
-
+    
     @Override
     public void exitAlm_file(ALMParser.Alm_fileContext ctx) {
     }
-
+    
     @Override
     public void enterCurrent_time(ALMParser.Current_timeContext ctx) {
     }
-
+    
     @Override
     public void exitCurrent_time(ALMParser.Current_timeContext ctx) {
         st.setCurrentTime(Integer.parseInt(ctx.nat_num().getText()));
     }
-
+    
     @Override
     public void enterNew_sort_name(ALMParser.New_sort_nameContext ctx) {
     }
-
+    
     @Override
     public void exitNew_sort_name(ALMParser.New_sort_nameContext ctx) {
     }
-
+    
 }

@@ -32,7 +32,7 @@ import edu.ttu.krlab.alm.datastruct.err.SemanticError;
 import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
-import edu.ttu.krlab.alm.datastruct.sig.SortNotFoundException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
 import edu.ttu.krlab.alm.datastruct.sparc.SPARCLiteral;
 import edu.ttu.krlab.alm.datastruct.type.SortType;
@@ -235,6 +235,7 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
     public boolean isSchema() {
         // schemas have string constants and variables, no mathematical expressions.
         switch (this.type) {
+            case VAR:
             case ID:
                 if (this.args == null || args.size() == 0) {
                     return true;

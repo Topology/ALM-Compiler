@@ -12,7 +12,7 @@ import edu.ttu.krlab.alm.datastruct.err.SemanticError;
 import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
-import edu.ttu.krlab.alm.datastruct.sig.SortNotFoundException;
+import edu.ttu.krlab.alm.datastruct.sig.exception.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
 import java.util.Iterator;
 
@@ -149,7 +149,9 @@ public class TypeChecker {
     }
 
     public SortType getNarrowestSortType(ALMTerm term) {
-
+        if(term.isVariable()){
+            return getNarrowestSortType(term.getName());
+        }
         //This usage is assumed to be for a constant reference that needs to be looked up in the symbol table. 
         String name = term.getName();
         int argSize = term.getArgs().size();
@@ -176,7 +178,7 @@ public class TypeChecker {
                 SortEntry range = f.getRangeSort();
                 return Type.getSortType(range);
             } else {
-                ALMCompiler.IMPLEMENTATION_FAILURE("Get Narrowest Sort Of Term", "Unexpected case for tern :" + term.toString());
+                ALMCompiler.IMPLEMENTATION_FAILURE("Get Narrowest Sort Of Term", "Unexpected case for term: " + term.toString());
             }
             return Type.EMPTY_TYPE;
         }

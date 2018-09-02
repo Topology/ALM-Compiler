@@ -32,6 +32,7 @@ public class ProgramsTest extends UnitTestingBase {
         testProgram("basic_holds_library.alm", "basic_holds_library.answerset");
         testProgram("frenchtoast.alm", "frenchtoast.answerset");
         testProgram("frenchtoast_plan.alm", "frenchtoast_plan.answerset");
+        testProgram("var_as_instance.alm", "var_as_instance.answerset");
         testProgramsFinished();
     }
     

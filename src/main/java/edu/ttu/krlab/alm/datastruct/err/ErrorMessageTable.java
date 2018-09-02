@@ -300,7 +300,7 @@ public abstract class ErrorMessageTable {
                 "In a dynamic causal law, the sort in the first instance atom indicates the subsort for the action in the occurs atom at the head of the law.",
                 "Change either the sort used in the first instance atom or change the sort declaration to be a subsort of actions.");
         errorMetaData.put(SemanticError.AXM011, axm011);
-        
+
         //AXM012
         ErrorMetaDataBase axm012 = new ErrorMetaDataBase(SemanticError.AXM012,
                 "For dynamic causal law [1], the instance atom is either missing or malformed after the 'if'. ",
@@ -414,7 +414,7 @@ public abstract class ErrorMessageTable {
 
         // SID003
         ErrorMetaDataBase sid003 = new ErrorMetaDataBase(SemanticError.SID003,
-                "Sort Instance [1] must either be  a ground function term or a function term whose arguments are either ground function terms or variables.",
+                "Sort Instance [1] must either be a variable or a ground function term or a function term whose arguments are either ground function terms or variables.",
                 "Sort Instances must be string constants (ground function terms) or schemas for string constants (function terms containing only ground function terms or variables).",
                 "Change the sort instance's structure to either be a string constant or a schema.");
         errorMetaData.put(SemanticError.SID003, sid003);
@@ -435,9 +435,15 @@ public abstract class ErrorMessageTable {
 
         // SID006
         errorMetaData.put(SemanticError.SID006, new ErrorMetaDataBase(SemanticError.SID006,
-                "Instances [1] declared for sorts [2] has defined attributes [3].",
+                "Instances [1] declared for sorts [2] are defining attribute functions [3].",
                 "This version of ALM does not support attribute definitions while defining instances for multiple sorts.",
                 "Define the instances for each sort separately in order to define the related sort attributes."));
+
+        // SID007
+        errorMetaData.put(SemanticError.SID007, new ErrorMetaDataBase(SemanticError.SID007,
+                "Instances [1] failed to parse as a term.",
+                "All instances must either be variable or terms.",
+                "Change the structure of the instance to allow parsing as a term."));
 
         // SFD001
         ErrorMetaDataBase sfd001 = new ErrorMetaDataBase(SemanticError.SFD001,
@@ -520,7 +526,35 @@ public abstract class ErrorMessageTable {
                 "Module Dependency [1] resolves with more than one imported theory [2] and [3].",
                 "Module dependency must have unique resolutions.",
                 "Remove one of the conflicting import statements or prefix the module dependency with the name of the theory it should import from.");
-        errorMetaData.put(SemanticError.CDF006, cdf006);
+        errorMetaData.put(SemanticError.IMP001, imp001);
+
+        // NAM001
+        ErrorMetaDataBase nam001 = new ErrorMetaDataBase(SemanticError.NAM001,
+                "Attribute Function [1] cannot have the same name as element [2].",
+                "There may be semantic ambiguity through name collision between Herbrand terms (sort instance and constants) and non-Herbrand terms (functions).",
+                "Change the name of either the function or instance/constant to avoid name collision.");
+        errorMetaData.put(SemanticError.NAM001, nam001);
+
+        // NAM002
+        ErrorMetaDataBase nam002 = new ErrorMetaDataBase(SemanticError.NAM002,
+                "Constant [1] cannot have the same name as element [2].",
+                "There may be semantic ambiguity through name collision between Herbrand terms (sort instance and constants) and non-Herbrand terms (functions).",
+                "Change the name of either the function or instance/constant to avoid name collision.");
+        errorMetaData.put(SemanticError.NAM002, nam002);
+
+        // NAM003
+        ErrorMetaDataBase nam003 = new ErrorMetaDataBase(SemanticError.NAM003,
+                "Sort Instance [1] cannot have the same name as element [2].",
+                "There may be semantic ambiguity through name collision between Herbrand terms (sort instance and constants) and non-Herbrand terms (functions).",
+                "Change the name of either the function or instance/constant to avoid name collision.");
+        errorMetaData.put(SemanticError.NAM003, nam003);
+
+        // NAM001
+        ErrorMetaDataBase nam004 = new ErrorMetaDataBase(SemanticError.NAM004,
+                "Function [1] cannot have the same name as element [2].",
+                "There may be semantic ambiguity through name collision between Herbrand terms (sort instance and constants) and non-Herbrand terms (functions).",
+                "Change the name of either the function or instance/constant to avoid name collision.");
+        errorMetaData.put(SemanticError.NAM004, nam004);
 
         // PER ERROR ID = new ErrorMetaDataBase("errorid", "message", "explanation",
         // "recommendation");

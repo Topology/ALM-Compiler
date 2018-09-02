@@ -332,7 +332,7 @@ one_constant_def: object_constant '=' term;//<one_constant_def>
 /* INSTANCE DEFINITIONS */
  
 instance_defs: INSTANCES (one_instance_def)+;//<instance_defs><remainder_instance_defs> 
-one_instance_def: object_constant (',' object_constant)* IN sort_name (',' sort_name)* (WHERE literal (',' literal)* )? attribute_defs;//<one_instance_def>
+one_instance_def: var_or_obj (',' var_or_obj)* IN sort_name (',' sort_name)* (WHERE literal (',' literal)* )? attribute_defs;//<one_instance_def>
 attribute_defs: (one_attribute_def)*;
 one_attribute_def: function_term EQ term;
 
