@@ -391,6 +391,13 @@ public abstract class ErrorMessageTable {
                 "Either refactor the sort hierarchy to ensure the sort is a sub-sort of actions, or change the sort to be an action sub-sort, or remove the axiom.");
         errorMetaData.put(SemanticError.SPF012, spf012);
 
+        // SPF013
+        ErrorMetaDataBase spf013 = new ErrorMetaDataBase(SemanticError.SPF013,
+                "The instance function [1] does not have the correct number of arguments.",
+                "The first argument must be a variable or term.  The second argument must be the name of a sort.",
+                "Change the form of the instance function to match the expected number of arguments.");
+        errorMetaData.put(SemanticError.SPF013, spf013);
+
         // SID001
         ErrorMetaDataBase sid001 = new ErrorMetaDataBase(SemanticError.SID001,
                 "Sort [1]  is a predefined sort and cannot have its instances extended.",

@@ -1868,8 +1868,8 @@ public class ALMBaseListener implements ALMListener {
         for (LiteralContext lit : ctx.literal()) {
             literals.add(ALM.ParseLiteral(lit));
         }
-        
-        if(instance_atom == null){
+
+        if (instance_atom == null) {
             er.newSemanticError(SemanticError.AXM012).add(ctx);
             return; // this is a fatal error. 
         }
@@ -1924,6 +1924,12 @@ public class ALMBaseListener implements ALMListener {
             if (LiteralHasSemanticErrors(lit)) {
                 error_occurred = true;
             }
+        }
+
+        if (error_occurred) {
+            return;
+            //structural semantic errors supercede type checking semantic errors.
+            //type checking expects well formed literals.  
         }
 
         // Need To Type Check Literals
@@ -2034,6 +2040,12 @@ public class ALMBaseListener implements ALMListener {
             if (LiteralHasSemanticErrors(lit)) {
                 error_occurred = true;
             }
+        }
+
+        if (error_occurred) {
+            return;
+            //structural semantic errors supercede type checking semantic errors.
+            //type checking expects well formed literals.  
         }
 
         // TYPE CHECKING
@@ -2158,6 +2170,17 @@ public class ALMBaseListener implements ALMListener {
             }
         }
 
+        //GENERAL SEMANTIC ERROR CHECKING
+        for (ALMTerm lit : lits) {
+            error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
+        }
+
+        if (error_occurred) {
+            return;
+            //structural semantic errors supercede type checking semantic errors.
+            //type checking expects well formed literals.  
+        }
+
         // Variable Type Checking
         TypeChecker vm = new TypeChecker(st, er);
         for (ALMTerm lit : lits) {
@@ -2237,7 +2260,7 @@ public class ALMBaseListener implements ALMListener {
             }
         }
 
-        // SEMANTIC ERROR CHECKING
+        // SPECIFIC SEMANTIC ERROR CHECKING
         boolean isStatic = false;
         // function must be defined
         FunctionEntry f1 = null;
@@ -2268,6 +2291,17 @@ public class ALMBaseListener implements ALMListener {
                     error_occurred = true;
                 }
             }
+        }
+
+        //GENERAL SEMANTIC ERROR CHECKING
+        for (ALMTerm lit : lits) {
+            error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
+        }
+
+        if (error_occurred) {
+            return;
+            //structural semantic errors supercede type checking semantic errors.
+            //type checking expects well formed literals.  
         }
 
         // VARIABLE TYPE CHECKING
@@ -2557,6 +2591,18 @@ public class ALMBaseListener implements ALMListener {
             }
         }
 
+        boolean error_occurred = false;
+        //GENERAL SEMANTIC ERROR CHECKING
+        for (ALMTerm lit : lits) {
+            error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
+        }
+
+        if (error_occurred) {
+            return;
+            //structural semantic errors supercede type checking semantic errors.
+            //type checking expects well formed literals.  
+        }
+
         // TypeCheck ALMTerms and verify that attribute definitions are actual attributes for the sort. 
         TypeChecker tc = new TypeChecker(st, er);
         for (ALMTerm si : sort_instances) {
@@ -2799,19 +2845,43 @@ public class ALMBaseListener implements ALMListener {
 
         // get head literal
         ALMTerm head = ALM.ParseFunDef(ctx.fun_def());
-
-        ArrayList<ASPfLiteral> body = null;
+        List<ASPfLiteral> body = new ArrayList<>();
+        List<ALMTerm> lits = null;
         List<LiteralContext> literals = ctx.literal();
+
+        // TypeCheck ALMTerms and verify that attribute definitions are actual attributes for the sort. 
+        TypeChecker tc = new TypeChecker(st, er);
+
         if (literals != null && literals.size() > 0) {
-            body = new ArrayList<ASPfLiteral>();
+            lits = new ArrayList<>();
             for (LiteralContext lit : literals) {
-                body.add(ALM.ParseLiteral(lit));
+                lits.add(ALM.ParseLiteral(lit));
             }
+
+            boolean error_occurred = false;
+            //GENERAL SEMANTIC ERROR CHECKING
+            for (ALMTerm lit : lits) {
+                error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
+            }
+
+            if (error_occurred) {
+                return;
+                //structural semantic errors supercede type checking semantic errors.
+                //type checking expects well formed literals.  
+            }
+
+            for (ASPfLiteral lit : lits) {
+                lit.typeCheck(tc, st, er);
+                body.add(lit);
+            }
+        } else // type checking
+        {
+            head.typeCheck(tc, st, er);
         }
-        // do we have body in the values of statics?
-        // type checking
-        TypeChecker vm = new TypeChecker(st, er);
-        head.typeCheck(vm, st, er);
+
+        if (!tc.typeCheckPasses(er)) {
+            return;
+        }
 
         aspf.newRule(ALM.STRUCTURE_STATIC_FUNCTION_DEFINITIONS, head, body);
 
@@ -2874,21 +2944,28 @@ public class ALMBaseListener implements ALMListener {
         ALMTerm arg1;
         switch (type) {
             case ALMTerm.TERM_RELATION:
-                // TODO: Massive Amount Of Work Here...
+                arg0 = args.get(0);
+                error_occurred = termHasSemanticErrors(arg0) || error_occurred;
+                arg1 = args.get(1);
+                error_occurred = termHasSemanticErrors(arg1) || error_occurred;
                 break;
             case ALMTerm.FUN:
                 // TODO: Massive Amount Of Work Here...
                 switch (name) {
-
                     case ALM.SPECIAL_FUNCTION_INSTANCE:
-                        arg0 = args.get(0);
-                        error_occurred = termHasSemanticErrors(arg0) || error_occurred;
-                        arg1 = args.get(1);
-                        try {
-                            SortEntry se = st.getSortEntry(arg1.getName());
-                        } catch (SortNotFoundException ex) {
+                        if (args.size() > 2) {
+                            arg0 = args.get(0);
+                            error_occurred = termHasSemanticErrors(arg0) || error_occurred;
+                            arg1 = args.get(1);
+                            try {
+                                SortEntry se = st.getSortEntry(arg1.getName());
+                            } catch (SortNotFoundException ex) {
+                                error_occurred = true;
+                                er.newSemanticError(SemanticError.SPF001).add(lit);
+                            }
+                        } else {
+                            er.newSemanticError(SemanticError.SPF013).add(lit);
                             error_occurred = true;
-                            er.newSemanticError(SemanticError.SPF001).add(lit);
                         }
                         break;
                     case ALM.SPECIAL_FUNCTION_IS_A:
