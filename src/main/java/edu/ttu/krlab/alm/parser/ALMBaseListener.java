@@ -2953,7 +2953,7 @@ public class ALMBaseListener implements ALMListener {
                 // TODO: Massive Amount Of Work Here...
                 switch (name) {
                     case ALM.SPECIAL_FUNCTION_INSTANCE:
-                        if (args.size() > 2) {
+                        if (args.size() == 2) {
                             arg0 = args.get(0);
                             error_occurred = termHasSemanticErrors(arg0) || error_occurred;
                             arg1 = args.get(1);

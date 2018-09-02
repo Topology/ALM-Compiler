@@ -1,28 +1,46 @@
 system description test
-	theory test
+    theory test
       module test
         sort declarations
             coordinates :: universe
             points :: universe
                attributes
-                  x : coordinates
-                  y : coordinates
-            1..10 :: coordinates
+                  x : 1..10
+                  y : 1..10
+
+            locations :: universe
+            elevations :: universe
+               attributes
+                  top: locations
 
         constant declarations
             p1 : points
               x = 1
-              y = 2
-        
+              y = 9
+
+            topSth : locations
+
+            box: elevations
+              top = topSth % we allow term here
+
         function declarations
             statics
              basic
                 number : 0..10
-              defined 
+              defined
                 intersect: booleans
 
         axioms
             function definitions
-            intersect if instance(X, 0..30), X = x(p1). 
-            
-   
+            intersect if instance(X, 0..30), X = x(p1).
+
+  structure attribute_test
+    instances
+        b1, b2, b3 in locations
+
+        p(X, Y) in points
+            x = X
+            y = Y
+
+        e(X) in elevations
+           top = X
