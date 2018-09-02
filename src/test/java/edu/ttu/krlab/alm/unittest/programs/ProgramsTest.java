@@ -33,6 +33,8 @@ public class ProgramsTest extends UnitTestingBase {
         testProgram("frenchtoast.alm", "frenchtoast.answerset");
         testProgram("frenchtoast_plan.alm", "frenchtoast_plan.answerset");
         testProgram("var_as_instance.alm", "var_as_instance.answerset");
+        testProgram("animal_development.alm", "animal_development.answerset");
+        testProgram("herbrand_term_attribute.alm", "herbrand_term_attribute.answerset");
         testProgramsFinished();
     }
     

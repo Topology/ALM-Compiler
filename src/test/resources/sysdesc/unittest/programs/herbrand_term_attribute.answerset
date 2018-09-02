@@ -1,0 +1,23 @@
+
+system description monkeyBanana
+	theory basic_motion
+      module moving
+        sort declarations
+            points, things :: universe
+            movable_points :: points
+
+            % intended: the instances of movable_points
+            %           are surface(X) where X is an elevation
+            %           the instances of elevations are some objects
+            %           whose attribute is an elment in points. 
+            elevations :: things
+              attributes
+                top: points
+
+
+	structure monkey_and_banana
+	instances
+        box in elevations
+            top = surface(box)
+
+        surface(X) in movable_points where instance(X, elevations)

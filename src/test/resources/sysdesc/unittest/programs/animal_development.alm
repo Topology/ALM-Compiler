@@ -1,0 +1,100 @@
+system description simple_animal_development_example
+   theory animal_development
+      module abstract_animal_development
+         sort declarations
+            stages :: universe
+            abstract_transitions :: actions
+               attributes
+                  old_stage : stages
+                  new_stage : stages
+				  
+         constant declarations
+               potentiality, zygote, blastula, gastrula, juvenile : stages
+               fertilization : abstract_transitions
+                  old_stage = potentiality
+                  new_stage = zygote
+               cleavage : abstract_transitions
+                  old_stage = zygote
+                  new_stage = blastula
+               gastrulation : abstract_transitions
+                  old_stage = blastula
+                  new_stage = gastrula
+               metamorphosis : abstract_transitions
+                  old_stage = gastrula
+                  new_stage = juvenile
+
+      module vocabulary_for_QA
+         depends on abstract_animal_development
+         function declarations
+            statics
+               defined
+                  result_of : stages * abstract_transitions -> booleans
+                  next_stage : stages * stages -> booleans
+                  next_transition : abstract_transitions * abstract_transitions -> booleans
+         axioms
+		 function definitions
+            result_of(X, Y) if new_stage(Y ) = X.
+            next_stage(X, Y) if instance(T, abstract_transitions),
+                                old_stage(T) = X,
+                                new_stage(T) = Y.
+            next_transition(X, Y) if instance(S, stages),
+                                     new_stage(X) = S,
+                                     old_stage(Y ) = S.
+
+      module concrete_animal_development
+         depends on abstract_animal_development
+            sort declarations
+               animals :: universe
+               concrete_transitions :: actions
+                  attributes
+                     actor : animals
+                     type : abstract_transitions
+            function declarations
+               fluents
+                  basic
+                     in : animals -> stages
+            axioms
+				dynamic causal laws
+				   occurs(X) causes in(A) = S if instance(X, concrete_transitions),
+												 actor(X) = A,
+												 type(X) = T,
+												 new_stage(T) = S.
+				executability conditions
+				   impossible occurs(X) if instance(X, concrete_transitions),
+										   actor(X) = A,
+										   in(A) = S,
+										   type(X) = T,
+										   old_stage(T) = S1,
+										   S != S1.
+
+   structure simple_animal_development_example
+      instances
+         a in animals
+
+         f in concrete_transitions
+            actor = a
+            type = fertilization
+
+         c in concrete_transitions
+            actor = a 
+            type = cleavage       
+
+         g in concrete_transitions
+            actor = a 
+            type = gastrulation 
+
+         m in concrete_transitions
+            actor = a 
+            type = metamorphosis
+			
+planning problem
+max steps 12
+
+history
+% initially all cannibals and missionaries at bank1.
+observed(in(a), potentiality, 0).
+
+
+% Our goal is to have all people on bank2 without ever casualties.
+goal = {in(a) = juvenile}
+			
