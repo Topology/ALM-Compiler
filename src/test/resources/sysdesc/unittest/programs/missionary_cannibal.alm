@@ -1,0 +1,139 @@
+    % This is a reified version of the system description
+    % for missionaries and cannibals problem. 
+    % -- YL, Aug 2018
+    system description missionariesAndCannibals
+    theory missionariesAndCannibals
+    module missionariesAndCannibals
+            sort declarations
+            % sort for banks of the river.
+                    bank :: universe
+            % sort of all thing type in the problem
+            % we have people type (missionary, cannibal) and equipment type (boat)
+            things :: universe
+            equipment, people :: things
+            % Action move(NC, NM, Dest) -
+            % move NC canabals and NM missionaries
+            % to bank Dest
+            move :: actions
+              attributes
+                % n(X) - number of people type X (cannibal or missionary) to move
+                % [0..3] is an integer range
+                % ?? do we allow anonymous sort, {m, c}
+                n: things -> [0..3]
+                % dest - the destination
+                dest: bank
+
+            constant declarations
+            % m: missinory; c: cannibal, b: boat
+                    c, m : people
+            b: equipment
+
+            function declarations
+            statics
+              basic
+                % opposite(X) - the opposite bank of bank X.
+                opposite: bank -> bank
+                % totalNumber(T) - the total number of type T (b, m or c)
+                totalNumber: things -> [0..3]
+                    fluents
+              basic
+                % n(T, B) - the number of type T at bank B
+                n: things * bank -> [0..3]
+              defined
+                % casualties - true if cannibals outnumber missionaries
+                casualties: booleans
+
+            axioms
+                    dynamic causal laws
+              % move(NC, NM, Dest) will increase the number of
+              % missionaries/cannibals/boat at bank Dest by NM/NC/1.
+              occurs(X) causes n(P, Dbank) = N+NT if
+                instance(X, move),
+                n(X, T) = NT,
+                dest(X) = Dbank,
+                n(T, Dbank) = N.
+            state constraints
+              % the things at one bank is the total number
+              % minus those at the opposite bank
+              n(T, opposite(B)) = totalNumber(P) - N if
+                n(T, B) = N.
+              % Do we need extra state constraint to make sure
+              % n(b, bank1) != n(b,bank2)? (This should be implied by above law)
+
+              % casualties should be avoided in every state.
+              false if casualties.
+
+            function definitions
+              % casualties - true if cannibals outnumber missionaries
+              casualties if
+                n(c,B) > n(m,B),
+                n(m,B) > 0. % make sure we have a missionary
+            executability conditions
+              % move(NC, NM, Dest) not possible if boat capacity is exceeded.
+              impossible occurs(X) if
+                instance(X, move),
+                n(X,c) = NC,
+                n(X,m) = NM,
+                NC + NM > 2.
+
+              % move(NC, NM, Dest) not possible if no one is on boat.
+              impossible occurs(X) if
+                instance(X, move),
+                % n(X,c) = NC,
+                % n(X,m) = NM,
+                % NC + NM = 0.
+                n(X, c) + n(X, m) = 0.
+
+              % move(NC, NM, Dest) not possible if boat is not at source bank
+              % this is covered by the next executibility condition
+              %impossible occurs(X) if
+              %  instance(X, move),
+              %  dest(X) = Dbank,
+              %  n(b, opposite(Dbank)) = 0. % this n is not attribute n for move action
+
+              % move(NC, NM, Dest) not possible if number of things
+              % (cannibals/missionaries/boat) to move is smaller that their
+              % number at the source bank.
+              impossible occurs(X) if
+                instance(X, move),
+                n(X,T) = NT,
+                n(T, opposite(dest(X))) < NT.
+
+            %% A struct to simplify the two rules above may be:
+            %% X: move
+            %% NC = n(X, c). NM = n(X, m). Dbank = dest(X).
+            %% impossible occurs(X) if NC + NM = 0.
+            %% impossible occurs(X) if NC + NM > 2.
+            %% impossible occurs(X) if
+            %%      n(T, opposite(Dbank)) < n(X,T).
+
+    structure missionariesAndCannibals
+            instances
+                    bank1, bank2 in bank % the two banks of the river
+            % Action move(NC, NM, Dest) -
+            % move NC canabals and NM missionaries
+            % to bank Dest
+            move(NC, NM, Dest) in move
+                n(c) = NC % the number of cannibals to Dest is NC
+                n(m) = NM % the number of cannibals to Dest is NM
+                n(b) = 1  % one boat moves to Dest
+                dest = Dest
+        value of statics
+            % totalNumber: things -> [0..3]
+            totalNumber(m) = 3.
+            totalNumber(c) = 3.
+            totalNumber(b) = 1.
+
+    planning problem
+    max steps 12
+
+    history
+    % initially all cannibals and missionaries at bank1.
+    observed(n(m,bank1), 3, 0).
+    observed(n(c,bank1), 3, 0).
+    observed(n(b,bank1), 1, 0).
+
+    % Our goal is to have all people on bank2 without ever casualties.
+    goal = {n(m, bank2) = 3, n(c, bank2) = 3}
+
+    %End of File

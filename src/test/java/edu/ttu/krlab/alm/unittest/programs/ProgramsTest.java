@@ -35,6 +35,10 @@ public class ProgramsTest extends UnitTestingBase {
         testProgram("var_as_instance.alm", "var_as_instance.answerset");
         testProgram("animal_development.alm", "animal_development.answerset");
         testProgram("herbrand_term_attribute.alm", "herbrand_term_attribute.answerset");
+        testProgram("MonkeyBanana-allInOne.p.alm", "MonkeyBanana-allInOne.p.answerset");
+        testProgram("MonkeyBanana-allInOne.tp.alm", "MonkeyBanana-allInOne.tp.answerset");
+        testProgram("MonkeyBanana-useLib.tp.alm", "MonkeyBanana-useLib.p.answerset");
+        testProgram("MonkeyBanana-useLib.p.alm", "MonkeyBanana-useLib.tp.answerset");
         testProgramsFinished();
     }
     

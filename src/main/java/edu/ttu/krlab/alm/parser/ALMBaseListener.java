@@ -1351,12 +1351,13 @@ public class ALMBaseListener implements ALMListener {
                         instanceOf.addArg(new ALMTerm(sig.get(j).getSortName(), ALMTerm.ID));
                         body.add(instanceOf);
                     }
-
-                    //instance(X, sort) for attribtue range
-                    ALMTerm rangeInstanceOf = new ALMTerm(ALM.SPECIAL_FUNCTION_INSTANCE, ALMTerm.FUN);
-                    rangeInstanceOf.addArg(attr_term);
-                    rangeInstanceOf.addArg(new ALMTerm(sig.get(dom_size).getSortName(), ALMTerm.ID));
-                    body.add(rangeInstanceOf);
+                    
+//                    //DISABLED UNTIL HERBRAND TERM ADDED AS FIRST CLASS CONSTRUCT TO SYMBOL TABLE. 
+//                    //instance(X, sort) for attribtue range
+//                    ALMTerm rangeInstanceOf = new ALMTerm(ALM.SPECIAL_FUNCTION_INSTANCE, ALMTerm.FUN);
+//                    rangeInstanceOf.addArg(attr_term);
+//                    rangeInstanceOf.addArg(new ALMTerm(sig.get(dom_size).getSortName(), ALMTerm.ID));
+//                    body.add(rangeInstanceOf);
 
                     //need to create attribute definition rule.
                     ALMTerm new_fun = new ALMTerm(attr_fun.getName(), ALMTerm.FUN, attr_def.getLocation());

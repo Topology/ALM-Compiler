@@ -42,6 +42,7 @@ public class AnswerSet {
 
     // parse ALMTerm
     private ALMTerm parseALMTerm(String term, int start) {
+        //System.out.println("Parsing Single Term: "+term);
         int firstOpenParenthesis = term.indexOf('(', start);
         if (firstOpenParenthesis < 0) {
             //a simple term.  
@@ -59,6 +60,7 @@ public class AnswerSet {
     }
 
     private void parseALMTermList(String termList, List<ALMTerm> destination) throws IllegalStateException {
+        //System.out.println("Parsing Term List: "+termList);
         int firstComma = termList.indexOf(',');
         if (firstComma < 0) {
             //no sequence detected, at worst a nesting of unary predicates.   
@@ -99,6 +101,10 @@ public class AnswerSet {
             //the first comma is outside the nested term.
             destination.add(parseALMTerm(termList.substring(0, firstComma), 0));
             parseALMTermList(termList.substring(firstComma + 1), destination);
+        } else if( firstComma < firstOpenParenthesis){
+            //The first term in the sequence is a simple term.  
+            destination.add(parseALMTerm(termList.substring(0, firstComma), 0));
+            parseALMTermList(termList.substring(firstComma+1), destination);
         } else {
             //The first comma belongs to the termList between the parenthesis.
             //Parse the first term ending with the first closing parenthesis.

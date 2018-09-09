@@ -42,6 +42,14 @@ public abstract class ErrorMessageTable {
         errorMetaData = new HashMap<String, ErrorMetaData>();
         initialized = true;
 
+        // ANS001
+        ErrorMetaDataBase ans001 = new ErrorMetaDataBase(SemanticError.ANS001,
+                "The intermediate sort calculating program did not have exactly one answerset.",
+                "This ALM Compiler does not support multiple answersets when calculating the static portion of the transition diagram.",
+                "Check that the static axioms and and constant declarations used in the theory and the sort instance definitions used in the structure are not non-monotonic.");
+        errorMetaData.put(SemanticError.ANS001, ans001);
+
+
         // SRT001
         ErrorMetaDataBase srt001 = new ErrorMetaDataBase(SemanticError.SRT001,
                 "Predefined sort [1] cannot appear on right hand side of the '::' token in sort specifications.",

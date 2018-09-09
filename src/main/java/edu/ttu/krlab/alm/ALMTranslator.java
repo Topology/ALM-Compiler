@@ -29,8 +29,6 @@ import edu.ttu.krlab.alm.datastruct.sparc.SPARCSortNotDefined;
 import edu.ttu.krlab.alm.datastruct.type.Type;
 import edu.ttu.krlab.alm.datastruct.type.TypeChecker;
 import edu.ttu.krlab.answerset.parser.AnswerSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class ALMTranslator {
 
@@ -276,15 +274,15 @@ public abstract class ALMTranslator {
 
         PreModelIntegerRangeSortIsAFacts(pm, st);
     }
-    
+
     private static void PreModelIntegerRangeSortIsAFacts(SPARCProgram pm, SymbolTable st) {
         pm.createSection(ALM.SORT_INTEGER_RANGE);
         Set<IntegerRangeSortEntry> irs = new HashSet<>(st.getIntegerRanges());
-        for(IntegerRangeSortEntry ir : irs){
+        for (IntegerRangeSortEntry ir : irs) {
             int low = ir.getLow();
             int high = ir.getHigh();
             ALMTerm rangeName = new ALMTerm(ir.getSortName(), ALMTerm.SORT, ir.getLocation());
-            for(int i = low; i <= high; i++){
+            for (int i = low; i <= high; i++) {
                 ALMTerm isA = new ALMTerm(ALM.SPECIAL_FUNCTION_IS_A, ALMTerm.FUN, ir.getLocation());
                 isA.addArg(new ALMTerm(Integer.toString(i), ALMTerm.INT));
                 isA.addArg(rangeName);
@@ -303,7 +301,7 @@ public abstract class ALMTranslator {
 
         // Is_A Function -- uses structure to generate the rules from sort instance
         // declarations.
-        PreModelAddRulesForIsA(pm, st, aspf);
+        //PreModelAddRulesForIsA(pm, st, aspf);  This is handled by translation of the structure.  
 
         // Instance Function -- This closure of instances based on is_a and link
         // These cannot be enumerated as the pre-model logic program is necessary to
@@ -348,30 +346,30 @@ public abstract class ALMTranslator {
         finished.add(parent);
     }
 
-    private static void PreModelAddRulesForIsA(SPARCProgram pm, SymbolTable st, ASPfProgram aspf) {
-
-        // Add Rules and Facts For Each Instance
-        // These were parsed into ASPf as an intermediate form
-        for (ASPfRule aspf_rule : aspf.getRules(ALM.STRUCTURE_SORT_INSTANCES)) {
-            // These rules should all be static, otherwise a semantic error would occur.
-            // They can be transferred directly to SPARC without modification, casting to
-            // ALMTerm as intermediate representation
-            ASPfLiteral aspf_head = aspf_rule.getHead();
-            SPARCLiteral head = (ALMTerm) aspf_head;
-
-            List<ASPfLiteral> aspf_body = aspf_rule.getBody();
-            List<SPARCLiteral> body = null;
-            if (aspf_body != null) {
-                body = new ArrayList<SPARCLiteral>();
-                for (ASPfLiteral aspf_lit : aspf_body) {
-                    body.add((ALMTerm) aspf_lit);
-                }
-            }
-
-            SPARCRule instance_rule = pm.newSPARCRule(ALM.SPECIAL_FUNCTION_IS_A, head, body);
-            instance_rule.copyComments(aspf_rule);
-        }
-    }
+//    private static void PreModelAddRulesForIsA(SPARCProgram pm, SymbolTable st, ASPfProgram aspf) {
+//
+//        // Add Rules and Facts For Each Instance
+//        // These were parsed into ASPf as an intermediate form
+//        for (ASPfRule aspf_rule : aspf.getRules(ALM.STRUCTURE_SORT_INSTANCES)) {
+//            // These rules should all be static, otherwise a semantic error would occur.
+//            // They can be transferred directly to SPARC without modification, casting to
+//            // ALMTerm as intermediate representation
+//            ASPfLiteral aspf_head = aspf_rule.getHead();
+//            SPARCLiteral head = (ALMTerm) aspf_head;
+//
+//            List<ASPfLiteral> aspf_body = aspf_rule.getBody();
+//            List<SPARCLiteral> body = null;
+//            if (aspf_body != null) {
+//                body = new ArrayList<SPARCLiteral>();
+//                for (ASPfLiteral aspf_lit : aspf_body) {
+//                    body.add((ALMTerm) aspf_lit);
+//                }
+//            }
+//
+//            SPARCRule instance_rule = pm.newSPARCRule(ALM.SPECIAL_FUNCTION_IS_A, head, body);
+//            instance_rule.copyComments(aspf_rule);
+//        }
+//    }
 
     private static void PreModelRulesForInstance(SPARCProgram pm, SymbolTable st) {
 
@@ -783,18 +781,17 @@ public abstract class ALMTranslator {
                 TranslateRule(ar, st, pm, ALM.AXIOMS_DEFINITIONS_STATIC);
             }
         }
-        
+
     }
 
     private static void PreModelSortInstancesAndAttributeDefinitions(SPARCProgram pm, SymbolTable st,
             ASPfProgram aspf) {
-        
-        
+
         pm.createSection(ALM.THEORY_CONSTANT_DECLARATIONS);
         for (ASPfRule ar : aspf.getRules(ALM.THEORY_CONSTANT_DECLARATIONS)) {
             TranslateRule(ar, st, pm, ALM.THEORY_CONSTANT_DECLARATIONS);
         }
-        
+
         pm.createSection(ALM.STRUCTURE_SORT_INSTANCES);
         for (ASPfRule ar : aspf.getRules(ALM.STRUCTURE_SORT_INSTANCES)) {
             TranslateRule(ar, st, pm, ALM.STRUCTURE_SORT_INSTANCES);
@@ -1248,20 +1245,18 @@ public abstract class ALMTranslator {
         ALMTerm I_inc = new ALMTerm("I+1", ALMTerm.VAR);
         ALMTerm I2 = new ALMTerm("I2", ALMTerm.VAR);
 
-        
         //Create Current Time Declaration
         SPARCPredicate current_time = new SPARCPredicate(ALM.CURRENT_TIME);
         SPARCPredicate allow_actions = new SPARCPredicate(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_ALLOW_ACTIONS);
         try {
             current_time.addSPARCSort(tm.getSPARCSort(ALM.SORT_TIMESTEP));
             tm.addSPARCPredicate(current_time);
-            
+
             allow_actions.addSPARCSort(tm.getSPARCSort(ALM.SORT_TIMESTEP));
             tm.addSPARCPredicate(allow_actions);
         } catch (SPARCSortNotDefined | PredicateAlreadyDeclared ex) {
             ALMCompiler.IMPLEMENTATION_FAILURE("Creating Planning Problem", "Adding Current Time. ");
         }
-        
 
         /**
          * ADD Current Time
@@ -1270,9 +1265,7 @@ public abstract class ALMTranslator {
                 new ALMTerm(Integer.toString(st.getCurrentTime()), ALMTerm.ID));
         SPARCRule r = tm.newSPARCRule(ALM.SOLVER_MODE_PP, currentTime, null);
         r.addComment("Current Time:  1 + the maximum time step used in the history.");
-        
-        
-        
+
         //LITERAL goal(I)
         ALMTerm goal_I = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_GOAL, ALMTerm.FUN, I);
 
@@ -1288,17 +1281,17 @@ public abstract class ALMTranslator {
         //LITERAL I >= I2
         ALMTerm I_geq_I2 = new ALMTerm(ALM.SYMBOL_GEQ, ALMTerm.TERM_RELATION, I, I2);
         //geq_current_time.add(I_geq_I2);
-        
+
         /**
          * START: allow_actions(I) :+ after current time.
          */
         ALMTerm allowActions = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_ALLOW_ACTIONS, ALMTerm.FUN, I);
         geq_current_time.add(allowActions);
-        
+
         List<SPARCLiteral> allowActions_body = new ArrayList<>();
         allowActions_body.add(current_time_I2);
         allowActions_body.add(I_geq_I2);
-        
+
         SPARCRule allow_ar = tm.newSPARCRule(ALM.SOLVER_MODE_PP, allowActions, allowActions_body);
         //SPARCRule allow_ar = tm.newSPARC_CR_Rule(ALM.SOLVER_MODE_PP, allowActions, allowActions_body);
         //allow_ar.addComment("This constraint restoring rule minimizes the length of plans.");
@@ -1394,7 +1387,6 @@ public abstract class ALMTranslator {
          * END: :- not smth_happened(I), smth_happened(I+1), I+1 <= max time step, after current time.
          */
 
-        
         /**
          * START: occurs(A,I) :+ instance(A,I), after current time
          */
@@ -1419,14 +1411,14 @@ public abstract class ALMTranslator {
          * START: :- not smth_happened(I), not goal(I).
          */
         // not goal(I)
-        ALMTerm not_goal_I =  new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_GOAL, ALMTerm.FUN, I);
+        ALMTerm not_goal_I = new ALMTerm(ALM.SPECIAL_FUNCTION_PLANNING_PROBLEM_GOAL, ALMTerm.FUN, I);
         not_goal_I.setSign(ALMTerm.SIGN_NOT);
-        
+
         List<SPARCLiteral> action_constraint_body = new ArrayList<>();
         action_constraint_body.add(not_something_happened_I);
         action_constraint_body.add(not_goal_I);
         action_constraint_body.addAll(geq_current_time);
-        
+
         SPARCRule action_constraint = tm.newSPARCRule(ALM.SOLVER_MODE_PP, null, action_constraint_body);
         action_constraint.addComment("Goal cannot be reached until after all actions in history have occurred.");
         /**
@@ -1687,7 +1679,7 @@ public abstract class ALMTranslator {
 
         TypeChecker tc = ar.getTypeChecker();
         if (tc == null) {
-            tc = new TypeChecker(st,null);
+            tc = new TypeChecker(st, null);
         }
 
         // Translate HEAD
@@ -1780,6 +1772,30 @@ public abstract class ALMTranslator {
                 default:
                     ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
                             "Head [" + thead.toString() + "] existed in ASPF but could not create head for SPARC");
+            }
+        }
+
+        if (head != null) {
+            String nVarBase = "N";
+            //NORMALIZE FUNCTION USAGE OUT OF HEAD BY ADDING TERM CONSTRAINTS TO BODY OF RULE FOR COMPLEX SUB-STRUCTURE. 
+            ALMTerm aHead = (ALMTerm) head;
+            List<ALMTerm> aHargs = aHead.getArgs();
+            int numArgs = aHargs.size();
+            for (int i = 0; i < numArgs; i++) {
+                ALMTerm argi = aHargs.get(i);
+                switch (argi.getType()) {
+                    case ALMTerm.FUN:
+                        //this requires normalization if the sub-element is a function. 
+                        if(st.getFunctionEntry(argi.getName(), argi.getArgs().size()) != null){
+                            //create replacement variable
+                            ALMTerm newVar = new ALMTerm(tc.newVariable(nVarBase, null), ALMTerm.VAR);
+                            aHargs.set(i, newVar);
+                            ALMTerm newVarEqArgi = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, newVar, argi);
+                            ar.getBody().add(newVarEqArgi);
+                        }
+                    default:
+                    //do nothing. 
+                }
             }
         }
 
@@ -1892,19 +1908,19 @@ public abstract class ALMTranslator {
                         ALMCompiler.IMPLEMENTATION_FAILURE("Translate Term", "Boolean function ["
                                 + f.getQualifiedFunctionName() + "] is occurring nested within a term");
                     }
-                    
+
                     //NORMALIZE TERM BY TRANSLATING SUB-TERMS
                     List<ALMTerm> normalizedArgs = new ArrayList<>();
-                    for(ALMTerm arg : term.getArgs()){
-                        switch(arg.getType()){
+                    for (ALMTerm arg : term.getArgs()) {
+                        switch (arg.getType()) {
                             case ALMTerm.FUN:
-                                normalizedArgs.add(TranslateTerm(arg,body, st, tc, timestep));
+                                normalizedArgs.add(TranslateTerm(arg, body, st, tc, timestep));
                                 break;
-                            default: 
+                            default:
                                 normalizedArgs.add(arg);
                         }
                     }
-                    
+
                     //The function occurring as a term denotes the value assigned to it in ASP{f}.  
                     //The function must be replaced by a variable carrying its value.  This variable 
                     //is added as the final argument of the literal in SPARC since functions are 

@@ -1,0 +1,122 @@
+%A monkey is in a room. Suspended from the ceiling is a bunch of bananas,
+%beyond the monkey’s reach. In the room there is also a box. The ceiling
+%is just the right height so that a monkey standing on the box under the
+%bananas can reach the bananas. The monkey can move around, carry other
+%things around, climb on the box, and grasp the bananas. What is the best
+%sequence of actions for the monkey to get the bananas?
+% Monkey Bananabproblem from ALM paper. This version of based on some
+% earlier test case by Tech.
+%% assumption: no parallel actions!
+% -- Anu, YL, Aug 2018
+
+system description monkey_banana_problem
+	theory monkey_banana_problem
+	    import motion from commonsense_library
+        module main depends on carrying_things, climbing
+            sort declarations
+                floor_points, ceiling_points, movable_points :: points
+            constant declarations
+                monkey : agents
+                box :  elevations
+                box, banana : carriables
+            function declarations
+                statics
+                    basic
+                        % under(P, T) - point P is under thing T
+                        under : floor_points * things -> booleans
+            axioms
+                function definitions
+                    % monkey can reach the banana if it is on top of the box
+                    % which under the banana
+                    can_reach(monkey, banana) if
+                      loc_in(box) = P, under(P,banana),loc_in(monkey) = top(box).
+
+            state constraints
+                % The location of the box is connected to the top of the box
+                connected(T,P) if
+                    loc_in(box) = P, T= top(box), instance(P, floor_points).
+                % top of box is not connected to
+                % any points other than the box's location.
+                %-connected(top(box),P) if
+                %	loc_in(box) != P, instance(P,floor_points).
+                % workaround of the above
+                -connected(TE,P) if
+                  loc_in(box) != P, instance(P,floor_points), TE = top(box).
+                % any two points on floor are connected
+                connected(P1,P2) if
+                    instance(P1,floor_points), instance(P2, floor_points).
+                % any ceiling point is not connected to any other point
+                -connected(P1, P2) if
+                    instance(P1, ceiling_points),
+                    instance(P2,points), P1 != P2.
+            executability conditions
+                impossible occurs(X) if
+                    instance(X, actions),
+                    occurs(Y),
+                    instance(Y, actions),
+                    X!=Y.
+
+structure monkey_and_banana
+	instances
+        under_banana, initial_monkey, initial_box in floor_points
+        initial_banana in ceiling_points
+
+        move(P) in move where instance(P, points)
+            actor = monkey
+            dest = P
+
+		carry(box, P) in carry where instance(P, floor_points)
+			actor = monkey
+			carried_object = box
+			dest = P
+		grasp(C) in grasp where instance(C, carriables)
+			grasper = monkey
+			grasped_thing = C
+		release(C) in release where instance(C, carriables)
+			releaser = monkey
+			released_thing = C
+
+        box in elevations
+            % top = top(box)
+            top = t(box)
+
+        t(X) in movable_points where instance(X, elevations)
+
+        climb(box) in climb
+            actor = monkey
+            elevation = box
+            % dest = t(box)
+
+	value of statics
+		under(under_banana, banana).
+		symmetric_connectivity.
+		-transitive_connectivity.
+
+planning problem
+max steps 8
+history
+
+observed(loc_in(box), initial_box, 0).
+observed(loc_in(monkey), initial_monkey, 0).
+%    happened(move(initial_box), 0).
+%    happened(grasp(box), 1).
+%    happened(carry(box, under_banana), 2).
+%    happened(release(box), 3).
+%    happened(climb(box), 4).
+%    happened(grasp(banana), 5).
+
+goal = {holding(monkey, banana)}
+
+% display (usable only in SPARC program to control answer sets display)
+%   observed.
+%   happened.
+%   loc_in.
+%   loc_in.
+%   move_origin.
+%   can_reach.
+%   -can_reach.
+%   #floor_points.
+%   under.
+%   elevations_top.
+
+

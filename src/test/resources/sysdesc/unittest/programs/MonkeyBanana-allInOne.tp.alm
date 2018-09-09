@@ -1,0 +1,302 @@
+%A monkey is in a room. Suspended from the ceiling is a bunch of bananas,
+%beyond the monkey’s reach. In the room there is also a box. The ceiling
+%is just the right height so that a monkey standing on the box under the
+%bananas can reach the bananas. The monkey can move around, carry other
+%things around, climb on the box, and grasp the bananas. What is the best
+%sequence of actions for the monkey to get the bananas?
+% Monkey Bananabproblem from ALM paper. This version of based on some
+% earlier test case by Tech.
+%% assumption: no parallel actions!
+% -- Anu, YL, Aug 2018
+
+system description monkey_banana_problem
+   theory monkey_banana_problem
+      module moving
+        sort declarations
+            points, things :: universe
+            agents :: things
+
+            move :: actions
+                attributes
+                    actor : agents
+                    origin : points
+                    dest : points
+
+        function declarations
+            statics
+                basic
+                    symmetric_connectivity : booleans
+                    transitive_connectivity : booleans
+            fluents
+                basic
+                    % connnected(P1, P2) - true if P1 and P2 are connected
+                    connected : points * points -> booleans
+                    % loca_in(T) - the point where thing T is at
+                    total loc_in : things -> points
+        axioms
+            dynamic causal laws
+                % move action causes its actor to be at its destination
+                occurs(X) causes loc_in(A) = D if
+                    instance(X, move),
+                    actor(X) = A,
+                    dest(X) = D.
+            state constraints
+                connected(X, X).
+                connected(X, Y) if connected(Y, X),symmetric_connectivity.
+                -connected(X, Y) if -connected(Y, X),symmetric_connectivity.
+                connected(X, Z) if
+                    connected(X, Y),connected(Y, Z),transitive_connectivity.
+                % NEW bug?
+
+            executability conditions
+                % move is not possible if its actor is not at its origin.
+                % NEW - what if the origin of actor unknown?
+                impossible occurs(X) if
+                    instance(X, move),actor(X) = A,loc_in(A) != origin(X).
+                    % instance(X, move), loc_in(actor(X)) != origin(X).
+
+                % move is not possible if its actor is at its dest.
+                impossible occurs(X) if
+                    instance(X, move),actor(X) = A,loc_in(A) = dest(X).
+                    % instance(X, move), loc_in(actor(X)) = dest(X).
+
+                % move is not possible if the location of its actor is not
+                % connected to its dest.
+                impossible occurs(X) if
+                    instance(X, move),
+                    actor(X) = A,
+                    loc_in(A) = O,
+                    dest(X) = D,
+                    -connected(O, D).
+
+    module carrying_things depends on moving
+        sort declarations
+            carriables :: things
+            % carry <actor, origin, dest, carried_obj>
+            %   actor carries carried_obj from origin to dest.
+            carry :: move
+                attributes
+                    carried_object : carriables
+            % grasp <grasper, grasped_thing> - rasper grasps grasped_thing
+            grasp :: actions
+                attributes
+                    grasper : agents
+                    grasped_thing : things
+            % release <releaser, released_thing> -
+            %   releaser releases released_thing
+            release :: actions
+                attributes
+                    releaser : agents
+                    released_thing : things
+        function declarations
+            fluents
+                basic
+                    % holding(A, T) - agent A holds thing T.
+                    total holding : agents * things -> booleans
+                defined
+                    % is_held(T) - thign T is held (by some agent)
+                    is_held : things -> booleans
+                    % can_reach(A, T) - agent A can reach thing T
+                    can_reach : agents * things -> booleans
+                    % NEW: holdingCWA(A, T): A holds T with CWA on holding
+                    holdingCWA: agents * things -> booleans
+        axioms
+            dynamic causal laws
+                % grasp causes its grasper to hold its grasped_thing
+                occurs(A) causes holding(X,Y) if
+                    instance(A,grasp), grasper(A) = X, grasped_thing(A) = Y.
+                % release causes its releaser not to hold its grasped_thing.
+                occurs(A) causes -holding(X,Y) if
+                    instance(A,release), releaser(A) = X, released_thing(A) = Y.
+            state constraints
+                % If A holds T, then they have the same location.
+                loc_in(T) = P if holding(A,T), loc_in(A) = P.
+                loc_in(A) = P if holding(A,T), loc_in(T) = P.
+                % An agent can hold only one thing
+                -holding(X,Y2) if holding(X,Y1), Y1 != Y2.
+                % NEW on default values of carry:
+                %   its origin is where the agent is
+                % general question - principles of where to
+                % "set" values of attributes structure or state constraits?
+                % there is a bug below: using fluent (loc_in/1) define attribute
+                % origin(C) = P if
+                %    instance(C, carry),
+                %    loc_in(actor(C)) = P.
+            function definitions
+                is_held(X) if holding(T,X).
+                % Agent M can reach O if they are in the same location
+                can_reach(M,O) if loc_in(M) = loc_in(O).
+                %% NEW holdingCWA(A, T) holds if holding(A, T) holds
+                holdingCWA(A, T) if holding(A, T).
+
+            executability conditions
+                % grasp is not possible if its grasper already holds its grasped
+                impossible occurs(A) if instance(A,grasp), grasper(A) = X, grasped_thing(A) = Y, holding(X,Y).
+                % grasp is not possible if its grasper cannot reach its grasped
+                impossible occurs(A) if
+                    instance(A,grasp), grasper(A) = X,
+                    grasped_thing(A) = Y, -can_reach(X,Y).
+                % release is not possible if its releaser does not hold its grasped
+                impossible occurs(A) if
+                    instance(A,release), releaser(A) = X,
+                    released_thing(A) = Y, -holding(X,Y).
+                % move is not possible if its actor is held.
+                impossible occurs(X) if
+                    instance(X,move), actor(X) = A, is_held(A).
+                % carry is not possible if its actor does not hold its carried
+                impossible occurs(X) if
+                    instance(X,carry), actor(X) = A,
+                    carried_object(X) = C, -holdingCWA(A,C).
+
+    module climbing depends on moving
+%    module climbing depends on carrying_things
+		sort declarations
+            elevations :: things
+              attributes
+                top: points
+
+            % climb <actor, origin, destination, elevation>
+            %    -- actor climbs the elevation (to its top)
+            %       (from its origin)
+            climb :: move
+              attributes
+                elevation : elevations
+        axioms
+            state constraints
+                % top(E) is the destination of climbing an elevation E
+                % dest(A) = top(E) if elevation(A) = E.
+                dest(A) = C if elevation(A) = E, C = top(E).
+                % Any thing T cannot locate on top of T
+                false if loc_in(T) = top(T).
+            executability conditions
+                % climb is not possible if its elevation is not in the same
+                % location of its actor. 
+                impossible occurs(X) if
+                    instance(X,climb), actor(X) = A,
+                    elevation(X) = O, loc_in(O) != loc_in(A).
+                % NEW climb a box is not possible if it is held by some agent
+                %impossible occurs(X) if
+                %  instance(X,climb),
+                %  elevation(X) = box,
+                %  is_held(box).
+    module main depends on carrying_things, climbing
+        sort declarations
+            floor_points, ceiling_points, movable_points :: points
+        constant declarations
+            monkey : agents
+            box :  elevations
+            box, banana : carriables
+        function declarations
+            statics
+                basic
+                    % under(P, T) - point P is under thing T
+                    under : floor_points * things -> booleans
+        axioms
+            function definitions
+                % monkey can reach the banana if it is on top of the box
+                % which under the banana
+                can_reach(monkey, banana) if
+                  loc_in(box) = P, under(P,banana),loc_in(monkey) = top(box).
+
+            state constraints
+                % The location of the box is connected to the top of the box
+                connected(T,P) if
+                    loc_in(box) = P, T= top(box), instance(P, floor_points).
+                % top of box is not connected to
+                % any points other than the box's location.
+                %-connected(top(box),P) if
+                %	loc_in(box) != P, instance(P,floor_points).
+                % workaround of the above
+                -connected(TE,P) if
+                  loc_in(box) != P, instance(P,floor_points), TE = top(box).
+                % any two points on floor are connected
+                connected(P1,P2) if
+                    instance(P1,floor_points), instance(P2, floor_points).
+                % any ceiling point is not connected to any other point
+                -connected(P1, P2) if
+                    instance(P1, ceiling_points),
+                    instance(P2,points), P1 != P2.
+            executability conditions
+                impossible occurs(X) if
+                    instance(X, actions),
+                    occurs(Y),
+                    instance(Y, actions),
+                    X!=Y.
+
+structure monkey_and_banana
+	instances
+        under_banana, initial_monkey, initial_box in floor_points
+        initial_banana in ceiling_points
+
+        move(P) in move where instance(P, points)
+            actor = monkey
+            dest = P
+
+		carry(box, P) in carry where instance(P, floor_points)
+			actor = monkey
+			carried_object = box
+			dest = P
+		grasp(C) in grasp where instance(C, carriables)
+			grasper = monkey
+			grasped_thing = C
+		release(C) in release where instance(C, carriables)
+			releaser = monkey
+			released_thing = C
+
+        box in elevations
+            % top = top(box)
+            top = t(box)
+
+        t(X) in movable_points where instance(X, elevations)
+
+        climb(box) in climb
+            actor = monkey
+            elevation = box
+            % dest = t(box)
+
+	value of statics
+		under(under_banana, banana).
+		symmetric_connectivity.
+		-transitive_connectivity.
+temporal projection
+max steps 7
+history
+    %% construct a temporal project problem or planning problem
+    %% loc_in(box) = initial_box
+    %% loc_in(monkey) = initial_monkey
+    observed(loc_in(box), initial_box, 0).
+    observed(loc_in(monkey), initial_monkey, 0).
+
+    % monkey does not hold anything.
+    % -holding(monkey, T): holding is a total function.
+    % Closed world assumption is used.
+    % Initially, we assume no agents hold anything and thus
+    % no observation on holding.
+
+    % a sequence of actions for monkey to get the banana
+    % monkey moves to the box location, grasp the box, move to below banana
+    % release the box, climb the box and grasp the banana
+    happened(move(initial_box), 0).
+    happened(grasp(box), 1).
+    happened(carry(box, under_banana), 2).
+    % What if we don't release?
+    % NEW - an agent cannot climb a box that is held by the agent
+    %       we can test without release
+    %       the program from paper allows this.
+    happened(release(box), 3).
+    happened(climb(box), 4).
+    happened(grasp(banana), 5).
+    % NEW - can we add in CALM to control
+    %       what to show in planning problem/temporal projection
+    %       by default?
+    % SPARC has a display section for this. For example
+    %       display
+    %           -q. % a predicate with 0 arity
+    %           -p(f(X)).
+    %           p(X).
+    %           #s. % can display sorts
+
+
+
+
+

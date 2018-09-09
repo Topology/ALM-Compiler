@@ -1080,6 +1080,22 @@ public class SymbolTable {
                 //will never happen. 
             }
         }
+        
+        //add constant entries to the range for the values in the range. 
+        for(int i = low; i <= high; i++){
+            ConstantEntry ce = getConstantEntry(Integer.toString(i), Collections.EMPTY_LIST);
+            if(ce != null){
+                ce.addSortsForConstant(Collections.singletonList(rangeSort));
+            } else {
+                try {
+                    createConstantEntry(Integer.toString(i), Collections.EMPTY_LIST, Collections.singletonList(rangeSort), loc);
+                } catch (DuplicateConstantException |NameCollisionException ex) {
+                    //will never happen for integers. 
+                }
+            }
+        }
+        
+        
         return rangeSort;
     }
 
