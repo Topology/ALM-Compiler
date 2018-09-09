@@ -1,46 +1,44 @@
-system description test
-    theory test
-      module test
-        sort declarations
-            coordinates :: universe
-            points :: universe
-               attributes
-                  x : 1..10
-                  y : 1..10
+system description coin_flip
+theory coin_flip
+module coin_flip
+	sort declarations
+		sides :: universe
+		coins :: universe
+		flips :: actions
+			attributes
+				flipped_coin : coins
+		hides :: actions
+			attributes
+				coin_hidden : coins
+	constant declarations
+		heads, tails : sides
+	function declarations
+		fluents 
+			basic
+				showing: coins -> sides
+	axioms
+		dynamic causal laws
+			occurs(X) causes showing(Y) = heads if instance(X, flips), flipped_coin(X) = Y, showing(Y) = tails.
+			occurs(X) causes showing(Y) = tails if instance(X, flips), flipped_coin(X) = Y, showing(Y) = heads.
+			occurs(X) causes -dom_showing(Y) if instance(X, hides), coin_hidden(X) = Y. 
+structure coin_flip
+	instances
+		nickel, dime, quarter in coins
+		flip(X) in flips
+			flipped_coin = X
+		hide(X) in hides
+			coin_hidden = X
 
-            locations :: universe
-            elevations :: universe
-               attributes
-                  top: locations
+planning problem
+max steps 6
 
-        constant declarations
-            p1 : points
-              x = 1
-              y = 9
+history 
+observed(showing(dime), heads, 0).
+observed(showing(nickel),heads, 0).
+observed(showing(quarter), heads,0).
+happened(flip(dime), 2).
 
-            topSth : locations
+goal = {showing(dime) = heads, showing(nickel)= tails, -dom_showing(quarter)}
 
-            box: elevations
-              top = topSth % we allow term here
 
-        function declarations
-            statics
-             basic
-                number : 0..10
-              defined
-                intersect: booleans
-
-        axioms
-            function definitions
-            intersect if instance(X, 0..30), X = x(p1).
-
-  structure attribute_test
-    instances
-        b1, b2, b3 in locations
-
-        p(X, Y) in points
-            x = X
-            y = Y
-
-        e(X) in elevations
-           top = X
+%End of File

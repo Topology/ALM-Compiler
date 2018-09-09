@@ -22,12 +22,14 @@ import edu.ttu.krlab.alm.datastruct.aspf.ASPfRule;
 import edu.ttu.krlab.alm.datastruct.err.ErrorReport;
 import edu.ttu.krlab.alm.datastruct.err.SemanticError;
 import edu.ttu.krlab.alm.datastruct.sig.ConstantEntry;
+import edu.ttu.krlab.alm.datastruct.sig.DOMFunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.exception.DuplicateConstantException;
 import edu.ttu.krlab.alm.datastruct.sig.exception.DuplicateFunctionException;
 import edu.ttu.krlab.alm.datastruct.sig.exception.DuplicateSortException;
 import edu.ttu.krlab.alm.datastruct.sig.FunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.NormalFunctionEntry;
 import edu.ttu.krlab.alm.datastruct.sig.SortEntry;
+import edu.ttu.krlab.alm.datastruct.sig.SortInstanceEntry;
 import edu.ttu.krlab.alm.datastruct.sig.exception.SortNotFoundException;
 import edu.ttu.krlab.alm.datastruct.sig.SymbolTable;
 import edu.ttu.krlab.alm.datastruct.sig.exception.NameCollisionException;
@@ -68,6 +70,8 @@ import edu.ttu.krlab.alm.parser.ALMParser.Solver_modeContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Sort_nameContext;
 import edu.ttu.krlab.alm.parser.ALMParser.Temporal_projectionContext;
 import edu.ttu.krlab.alm.parser.ALMParser.TermContext;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class provides an empty implementation of {@link ALMListener}, which can be extended to create a listener which
@@ -1942,7 +1946,7 @@ public class ALMBaseListener implements ALMListener {
 
         // Verify remaining literals are semantically sound
         for (ALMTerm lit : literals) {
-            if (LiteralHasSemanticErrors(lit)) {
+            if (literalHasSemanticErrors(lit)) {
                 error_occurred = true;
             }
         }
@@ -2058,7 +2062,7 @@ public class ALMBaseListener implements ALMListener {
 
         // check remaining literals for semantic errors.
         for (ALMTerm lit : lits) {
-            if (LiteralHasSemanticErrors(lit)) {
+            if (literalHasSemanticErrors(lit)) {
                 error_occurred = true;
             }
         }
@@ -2193,7 +2197,7 @@ public class ALMBaseListener implements ALMListener {
 
         //GENERAL SEMANTIC ERROR CHECKING
         for (ALMTerm lit : lits) {
-            error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
+            error_occurred = literalHasSemanticErrors(lit) || error_occurred;
         }
         
         if (error_occurred) {
@@ -2316,7 +2320,7 @@ public class ALMBaseListener implements ALMListener {
 
         //GENERAL SEMANTIC ERROR CHECKING
         for (ALMTerm lit : lits) {
-            error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
+            error_occurred = literalHasSemanticErrors(lit) || error_occurred;
         }
         
         if (error_occurred) {
@@ -2620,7 +2624,7 @@ public class ALMBaseListener implements ALMListener {
 
         //GENERAL SEMANTIC ERROR CHECKING
         for (ALMTerm lit : lits) {
-            error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
+            error_occurred = literalHasSemanticErrors(lit) || error_occurred;
         }
         
         if (error_occurred) {
@@ -2690,10 +2694,19 @@ public class ALMBaseListener implements ALMListener {
                         }
                         //TODO VERIFY THIS IS THE RIGHT THING TO DO.  
                     } else {
-                        se.addSortInstance(si);
+                        try {
+                            st.createSortInstanceEntry(se, si);
+                        } catch (NameCollisionException ex) {
+                            er.newSemanticError(SemanticError.NAM003).add(si).add(ex.getLocation());
+                            error_occurred = true;
+                        }
                     }
                 }
             }
+        }
+        
+        if(error_occurred){
+            return;
         }
 
         // body
@@ -2905,7 +2918,7 @@ public class ALMBaseListener implements ALMListener {
             boolean error_occurred = false;
             //GENERAL SEMANTIC ERROR CHECKING
             for (ALMTerm lit : lits) {
-                error_occurred = LiteralHasSemanticErrors(lit) || error_occurred;
+                error_occurred = literalHasSemanticErrors(lit) || error_occurred;
             }
             
             if (error_occurred) {
@@ -2979,7 +2992,7 @@ public class ALMBaseListener implements ALMListener {
         // ER.newSyntaxError(node);
     }
     
-    private boolean LiteralHasSemanticErrors(ALMTerm lit) {
+    private boolean literalHasSemanticErrors(ALMTerm lit) {
         boolean error_occurred = false;
         String type = lit.getType();
         String name = lit.getName();
@@ -3082,8 +3095,24 @@ public class ALMBaseListener implements ALMListener {
                         }
                         break;
                     default:
-                    // TODO: Need To Handle General Boolean Function With
-                    // Arguments.
+                        //Check that the function is in the symbol table and is a boolean function. 
+                        FunctionEntry  fun = st.getFunctionEntry(name, args.size());
+                        if(fun != null){
+                            if(fun instanceof DOMFunctionEntry ||    fun.getRangeSort() == st.getBooleansSortEntry()){
+                                //check the term arguments for semantic errors. 
+                                for(ALMTerm arg : args){
+                                    if(termHasSemanticErrors(arg)){
+                                        error_occurred = true;
+                                    }
+                                }
+                            } else {
+                                er.newSemanticError(SemanticError.FND010).add(lit);
+                                error_occurred = true;
+                            }
+                        } else {
+                            er.newSemanticError(SemanticError.FND003).add(lit);
+                            error_occurred = true;
+                        }
                 }
                 break;
             default:
@@ -3103,19 +3132,29 @@ public class ALMBaseListener implements ALMListener {
         String type = term.getType();
         String name = term.getName();
         List<ALMTerm> args = term.getArgs();
+        int numArgs = args.size();
+        Set<ConstantEntry> matchingConstants = null;
+        Set<FunctionEntry> functions = null;
+        SortInstanceEntry sie = null;
+        boolean inSymbolTable = false;
         for (ALMTerm arg : args) {
             error_occurred = termHasSemanticErrors(arg) || error_occurred;
         }
         switch (type) {
             case ALMTerm.ID:
-                boolean inSymbolTable = false;
                 //these are either constants or no-argument functions.  Just verify exists in symbol table. 
-                Set<ConstantEntry> matchingConstants = st.getConstantEntries(name);
+                matchingConstants = st.getConstantEntries(name, 0);
                 if (matchingConstants.size() > 0) {
                     inSymbolTable = true;
                 }
+                if(!inSymbolTable){
+                    sie = st.getSortInstanceEntry(term.getName(), 0);
+                    if(sie != null){
+                        inSymbolTable = true;
+                    }
+                }
                 if (!inSymbolTable) {
-                    Set<FunctionEntry> functions = st.getFunctionEntries(name);
+                    functions = st.getFunctionEntries(name,0);
                     for (FunctionEntry f : functions) {
                         if (f.getSignature().size() == 1) {
                             inSymbolTable = true;
@@ -3130,6 +3169,33 @@ public class ALMBaseListener implements ALMListener {
             case ALMTerm.INT:
                 break;
             case ALMTerm.FUN:
+                //these are either constants or no-argument functions.  Just verify exists in symbol table. 
+                matchingConstants = st.getConstantEntries(name, numArgs);
+                if (matchingConstants.size() > 0) {
+                    inSymbolTable = true;
+                }
+                if(!inSymbolTable){
+                    sie = st.getSortInstanceEntry(term.getName(), numArgs);
+                    if(sie != null){
+                        inSymbolTable = true;
+                    }
+                }
+                if (!inSymbolTable) {
+                    functions = st.getFunctionEntries(name, numArgs);
+                    if(! functions.isEmpty()){
+                        inSymbolTable  = true;
+                    }
+                }
+                if (!inSymbolTable) {
+                    er.newSemanticError(SemanticError.CND008).add(term);
+                    error_occurred = true;
+                } else {
+                    for(ALMTerm arg : args){
+                        if(termHasSemanticErrors(arg)){
+                            error_occurred = true;
+                        }
+                    }
+                }
                 break;
             case ALMTerm.VAR:
                 break;
@@ -3419,14 +3485,19 @@ public class ALMBaseListener implements ALMListener {
             lits.add(ALM.ParseLiteral(literal));
         }
 
+        boolean error_occurred = false;
+        
         //Type Check Literals
         TypeChecker tc = new TypeChecker(st, er);
-        for (ASPfLiteral lit : lits) {
+        for (ALMTerm lit : lits) {
+            if(literalHasSemanticErrors(lit)){
+                error_occurred = true;
+            }
             lit.typeCheck(tc, st, er);
         }
 
         //Verify Type Check Passes.
-        if (!tc.typeCheckPasses(er)) {
+        if (!tc.typeCheckPasses(er) || error_occurred) {
             //cannot proceed if errors.
             return;
         }

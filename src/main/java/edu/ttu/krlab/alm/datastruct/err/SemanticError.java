@@ -45,6 +45,7 @@ public class SemanticError {
     public static final String FND007 = "FND007";
     public static final String FND008 = "FND008";
     public static final String FND009 = "FND009";
+    public static final String FND010 = "FND010";
     public static final String AXM001 = "AXM001";
     public static final String AXM002 = "AXM002";
     public static final String AXM003 = "AXM003";

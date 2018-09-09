@@ -233,6 +233,13 @@ public abstract class ErrorMessageTable {
                 "Either add instance(X,sort) literals to disambiguate the arguments signature or remove one of the function declarations.");
         errorMetaData.put(SemanticError.FND009, fnd009);
 
+        //FND009
+        ErrorMetaDataBase fnd010 = new ErrorMetaDataBase(SemanticError.FND010,
+                "Function [1] occurs in the position of a literal but is not a boolean function.",
+                "Non-boolean functions must occur within a term relation.  The usage of Boolean functions as literals is syntactic sugar for a term relation.",
+                "Change the the usage of the function to occur within a term relation.");
+        errorMetaData.put(SemanticError.FND010, fnd010);
+
         // AXM001
         ErrorMetaDataBase axm001 = new ErrorMetaDataBase(SemanticError.AXM001,
                 "Variable [1] does not have an associated sort.",

@@ -1,6 +1,5 @@
 package edu.ttu.krlab.alm.datastruct.sig;
 
-import edu.ttu.krlab.alm.ALM;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -140,7 +139,6 @@ public class SortEntry {
 
     public void addSortInstance(ALMTerm si) {
         instances.add(si);
-
     }
 
     public boolean subsortof(SortEntry sort) {

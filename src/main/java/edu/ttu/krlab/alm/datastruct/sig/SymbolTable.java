@@ -36,6 +36,7 @@ public class SymbolTable {
     final private SortEntry timestep;
     final private SortEntry comparable_integers_subsort;
     final private Map<String, Set<ConstantEntry>> globalCEMap;
+    final private Map<SortInstanceEntry, SortInstanceEntry> SIMap;  //structure populated
     final private Map<ALMTerm, ConstantEntry> CDMap; //structure populated
     private int maxStep = -1;
     private int currentTime = 0;
@@ -96,6 +97,7 @@ public class SymbolTable {
             modes = null;
             CDMap = null;
             globalCEMap = null;
+            SIMap = null;
             return;
         }
 
@@ -111,6 +113,7 @@ public class SymbolTable {
         CDMap = new HashMap<>();
         modes = new HashSet<>();
         globalCEMap = new HashMap<>();
+        SIMap = new HashMap<>();
 
         try {
             // Before the Hierarchy can be initialized, we need a special sort entry for nodes in the hierarchy.
@@ -1115,6 +1118,35 @@ public class SymbolTable {
             return "neg_" + (i * -1);
         } else {
             return "pos_" + i;
+        }
+    }
+
+    public void createSortInstanceEntry(SortEntry se, ALMTerm si) throws NameCollisionException {
+        if(rootST != null){
+            rootST.createSortInstanceEntry(se, si);
+        } else {
+            String name = si.getName();
+            int numArgs = si.getArgs().size();
+            FunctionEntry prevFun = getFunctionEntry(name, numArgs);
+            if( prevFun != null){
+                throw new NameCollisionException(name, prevFun.getLocation());
+            }
+            Set<ConstantEntry> constEntries = getConstantEntries(name, numArgs);
+            if(!constEntries.isEmpty()){
+                throw new NameCollisionException(name, constEntries.iterator().next().getLocation());
+            }
+            
+            SortInstanceEntry entry = new SortInstanceEntry(name, numArgs, se, new Location(si.getLocation()));
+            SIMap.put(entry, entry);
+            se.addSortInstance(si);
+        }
+    }
+    
+    public SortInstanceEntry getSortInstanceEntry(String name, int numArgs){
+        if(rootST != null){
+            return rootST.getSortInstanceEntry(name, numArgs);
+        } else {
+            return SIMap.get(new SortInstanceEntry(name, numArgs, null, null));
         }
     }
 
