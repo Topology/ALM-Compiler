@@ -366,58 +366,58 @@ public class ALMTerm implements ASPfLiteral, SPARCLiteral {
             case ALMTerm.INT:
                 // If expected type is not null and not integers, create a semantic error and
                 // return EMPTY_TYPE.
-                if (expected != null && INTEGERS_TYPE.isSubtypeOf(expected)) {
+                if (expected != null && !INTEGERS_TYPE.isSubtypeOf(expected)) {
                     er.newSemanticError(SemanticError.TYP003).add(this).add(expected).add(INTEGERS_TYPE);
                 }
                 return INTEGERS_TYPE;
             case ALMTerm.BOOL:
-                if (expected != null && BOOLEANS_TYPE.isSubtypeOf(expected)) {
+                if (expected != null && !BOOLEANS_TYPE.isSubtypeOf(expected)) {
                     er.newSemanticError(SemanticError.TYP003).add(this).add(expected).add(BOOLEANS_TYPE);
                 }
                 return BOOLEANS_TYPE;
             case ALMTerm.MATH_NEG:
-                if (expected != null && INTEGERS_TYPE.isSubtypeOf(expected)) {
+                if (expected != null && !INTEGERS_TYPE.isSubtypeOf(expected)) {
                     er.newSemanticError(SemanticError.TYP003).add(this.prc).add(expected).add(INTEGERS_TYPE);
                 }
                 args.get(0).typeCheck(tc, st, er, INTEGERS_TYPE);
                 return INTEGERS_TYPE;
             case ALMTerm.MATH_ADD:
-                if (expected != null && INTEGERS_TYPE.isSubtypeOf(expected)) {
+                if (expected != null && !INTEGERS_TYPE.isSubtypeOf(expected)) {
                     er.newSemanticError(SemanticError.TYP003).add(this.prc).add(expected).add(INTEGERS_TYPE);
                 }
                 args.get(0).typeCheck(tc, st, er, INTEGERS_TYPE);
                 args.get(1).typeCheck(tc, st, er, INTEGERS_TYPE);
                 return INTEGERS_TYPE;
             case ALMTerm.MATH_SUB:
-                if (expected != null && INTEGERS_TYPE.isSubtypeOf(expected)) {
+                if (expected != null && !INTEGERS_TYPE.isSubtypeOf(expected)) {
                     er.newSemanticError(SemanticError.TYP003).add(this.prc).add(expected).add(INTEGERS_TYPE);
                 }
                 args.get(0).typeCheck(tc, st, er, INTEGERS_TYPE);
                 args.get(1).typeCheck(tc, st, er, INTEGERS_TYPE);
                 return INTEGERS_TYPE;
             case ALMTerm.MATH_MULT:
-                if (expected != null && INTEGERS_TYPE.isSubtypeOf(expected)) {
+                if (expected != null && !INTEGERS_TYPE.isSubtypeOf(expected)) {
                     er.newSemanticError(SemanticError.TYP003).add(this.prc).add(expected).add(INTEGERS_TYPE);
                 }
                 args.get(0).typeCheck(tc, st, er, INTEGERS_TYPE);
                 args.get(1).typeCheck(tc, st, er, INTEGERS_TYPE);
                 return INTEGERS_TYPE;
             case ALMTerm.MATH_DIV:
-                if (expected != null && INTEGERS_TYPE.isSubtypeOf(expected)) {
+                if (expected != null && !INTEGERS_TYPE.isSubtypeOf(expected)) {
                     er.newSemanticError(SemanticError.TYP003).add(this.prc).add(expected).add(INTEGERS_TYPE);
                 }
                 args.get(0).typeCheck(tc, st, er, INTEGERS_TYPE);
                 args.get(1).typeCheck(tc, st, er, INTEGERS_TYPE);
                 return INTEGERS_TYPE;
             case ALMTerm.MATH_MOD:
-                if (expected != null && INTEGERS_TYPE.isSubtypeOf(expected)) {
+                if (expected != null && !INTEGERS_TYPE.isSubtypeOf(expected)) {
                     er.newSemanticError(SemanticError.TYP003).add(this.prc).add(expected).add(INTEGERS_TYPE);
                 }
                 args.get(0).typeCheck(tc, st, er, INTEGERS_TYPE);
                 args.get(1).typeCheck(tc, st, er, INTEGERS_TYPE);
                 return INTEGERS_TYPE;
             case ALMTerm.MATH_EXP:
-                if (expected != null && INTEGERS_TYPE.isSubtypeOf(expected)) {
+                if (expected != null && !INTEGERS_TYPE.isSubtypeOf(expected)) {
                     er.newSemanticError(SemanticError.TYP003).add(this.prc).add(expected).add(INTEGERS_TYPE);
                 }
                 args.get(0).typeCheck(tc, st, er, INTEGERS_TYPE);

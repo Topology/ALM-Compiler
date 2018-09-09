@@ -2644,10 +2644,10 @@ public class ALMBaseListener implements ALMListener {
         for (ALMTerm adef : attribute_defs) {
             //for each attribute definition
             //type check the attribute function. 
-            if (adef.getArg(1).isVariable()) {
-                //TODO  THIS IS A TEMPORARY "FIX", DELETE CONTAINING IF ONCE HERBRAND TERMS ARE ADDED. 
+//            if (adef.getArg(1).isVariable()) {
+//                //TODO  THIS IS A TEMPORARY "FIX", DELETE CONTAINING IF ONCE HERBRAND TERMS ARE ADDED. 
                 adef.typeCheck(tc, st, er);
-            }
+//            }
             ALMTerm range = adef.getArg(1);
             ALMTerm attr = adef.getArg(0);
             String attr_name = attr.getName();
@@ -2781,6 +2781,7 @@ public class ALMBaseListener implements ALMListener {
 //                    body.add(rangeInstanceOf);
 
                     //need to create attribute definition rule.
+                    //This is the new function to use. 
                     ALMTerm new_fun = new ALMTerm(attr_fun.getName(), ALMTerm.FUN, attr_def.getLocation());
                     new_fun.addArg(obj_const);
                     if (attr_fun.getArgs() != null) {
@@ -2788,20 +2789,39 @@ public class ALMBaseListener implements ALMListener {
                             new_fun.addArg(arg);
                         }
                     }
-                    // Construct a new variable for the function to equal.
-                    String new_var_base = attr_fun.getName().substring(0, 1).toUpperCase() + "_";
-                    ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base, Type.ANY_TYPE), ALMTerm.VAR, attr_def.getLocation());
-                    ALMTerm ad_head = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, attr_def.getLocation());
-                    ad_head.addArg(new_fun);
-                    ad_head.addArg(new_var);
-
-                    // add new term relation to body for variable.
+                    
+                    
+                    ALMTerm ad_head = null;
                     List<ASPfLiteral> ad_body = new ArrayList<ASPfLiteral>();
+                    //check if range is boolean or non-booleans. 
+                    if(fun.isBoolean()){
+                        boolean sign  = false;
+                        if(attr_term.getName().equals(ALM.BOOLEAN_TRUE)){
+                            sign = true;
+                        } else if(!attr_term.getName().equals(ALM.BOOLEAN_FALSE)){
+                            ALMCompiler.IMPLEMENTATION_FAILURE("Attribute Definition in Sort Definition", "This should be caught by earlier semantic error.");
+                        }
+                        
+                        ad_head = new_fun;
+                        if(!sign){
+                            ad_head.setSign(ALMTerm.SIGN_NEG);
+                        }
+                    }else {
+                        // Construct a new variable for the function to equal.
+                        String new_var_base = attr_fun.getName().substring(0, 1).toUpperCase() + "_";
+                        ALMTerm new_var = new ALMTerm(tc.newVariable(new_var_base, Type.ANY_TYPE), ALMTerm.VAR, attr_def.getLocation());
+                        ad_head = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, attr_def.getLocation());
+                        ad_head.addArg(new_fun);
+                        ad_head.addArg(new_var);
+
+                        ALMTerm term_relation = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, attr_def.getLocation());
+                        term_relation.addArg(new_var);
+                        term_relation.addArg(attr_term);
+                        ad_body.add(term_relation);
+                    }
+                    
+                    // add new term relation to body for variable.
                     ad_body.addAll(body);
-                    ALMTerm term_relation = new ALMTerm(ALM.SYMBOL_EQ, ALMTerm.TERM_RELATION, attr_def.getLocation());
-                    term_relation.addArg(new_var);
-                    term_relation.addArg(attr_term);
-                    ad_body.add(term_relation);
                     
                     ASPfRule ar = aspf.newRule(ALM.STRUCTURE_ATTRIBUTE_DEFINITIONS, ad_head, ad_body);
                     ar.addComment("Definition of attribute [" + attr_def.getArg(0).getName() + "] for instance ["

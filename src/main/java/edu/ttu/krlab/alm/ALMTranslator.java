@@ -302,7 +302,6 @@ public abstract class ALMTranslator {
         // Is_A Function -- uses structure to generate the rules from sort instance
         // declarations.
         //PreModelAddRulesForIsA(pm, st, aspf);  This is handled by translation of the structure.  
-
         // Instance Function -- This closure of instances based on is_a and link
         // These cannot be enumerated as the pre-model logic program is necessary to
         // specify the enumeration.
@@ -370,7 +369,6 @@ public abstract class ALMTranslator {
 //            instance_rule.copyComments(aspf_rule);
 //        }
 //    }
-
     private static void PreModelRulesForInstance(SPARCProgram pm, SymbolTable st) {
 
         ALMTerm XVar = new ALMTerm("X", ALMTerm.VAR);
@@ -1746,11 +1744,16 @@ public abstract class ALMTranslator {
                     ft = st.getFunctionEntry(left.getName(), left.getArgs().size());
                     if (ft != null) {
                         if (ft.isBoolean()) {
-                            ALMCompiler.IMPLEMENTATION_FAILURE("Translate Rule",
-                                    "Boolean Function cannot be in a Term Relation at head of rule");
-                        }
-                        // Should be caught by semantic error.
-                        if (ft.isStatic()) {
+                            //determine sign on boolean function. 
+                            boolean rhs = right.getName().compareTo(ALM.BOOLEAN_TRUE) == 0;
+                            boolean relation = thead.getName().compareTo(ALM.SYMBOL_EQ) == 0;
+                            boolean sign = rhs == relation; //either double positive or double negative produces positive.  
+                            if (ft.isStatic()) {
+                                head = new_SPARCLiteral_Boolean_Static(sign ? ALMTerm.SIGN_POS : ALMTerm.SIGN_NEG, ft, left.getArgs());
+                            } else {
+                                head = new_SPARCLiteral_Boolean_Fluent(sign ? ALMTerm.SIGN_POS : ALMTerm.SIGN_NEG, ft, left.getArgs(), timestep + timeAdd);
+                            }
+                        } else if (ft.isStatic()) {
                             head = new_SPARCLiteral_NonBoolean_Static(ft, left.getArgs(), right);
                         } else if (ft.isFluent()) {
                             head = new_SPARCLiteral_NonBoolean_Fluent(ft, left.getArgs(), right, timestep + timeAdd);
@@ -1786,7 +1789,7 @@ public abstract class ALMTranslator {
                 switch (argi.getType()) {
                     case ALMTerm.FUN:
                         //this requires normalization if the sub-element is a function. 
-                        if(st.getFunctionEntry(argi.getName(), argi.getArgs().size()) != null){
+                        if (st.getFunctionEntry(argi.getName(), argi.getArgs().size()) != null) {
                             //create replacement variable
                             ALMTerm newVar = new ALMTerm(tc.newVariable(nVarBase, null), ALMTerm.VAR);
                             aHargs.set(i, newVar);
@@ -1948,6 +1951,17 @@ public abstract class ALMTranslator {
                 }
                 return copy;
         }
+    }
+
+    private static SPARCLiteral new_SPARCLiteral_Boolean_Static(String sign, FunctionEntry f, List<ALMTerm> args) {
+        ALMTerm slit = new ALMTerm(f.getQualifiedFunctionName(), ALMTerm.FUN);
+        slit.setSign(sign);
+        if (args != null) {
+            for (ALMTerm arg : args) {
+                slit.addArg(arg);
+            }
+        }
+        return slit;
     }
 
     private static SPARCLiteral new_SPARCLiteral_NonBoolean_Static(FunctionEntry f, List<ALMTerm> args, ALMTerm range) {

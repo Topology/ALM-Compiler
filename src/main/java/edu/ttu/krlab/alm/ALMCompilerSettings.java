@@ -254,17 +254,18 @@ public class ALMCompilerSettings {
     public void setErrorDestination(String destination) {
         settings.put(ER_DESTINATION, destination);
     }
-    public void deleteErrorDestinationFile() {
-        deleteDestinationFile(ER_DESTINATION);
-    }
 
-    public void deleteNonErrorDestinationFiles(){
-        deleteDestinationFile(FINAL_AS_DESTINATION);
+    public void cleanupBeforeCompile() {
+        deleteDestinationFile(ER_DESTINATION);
         deleteDestinationFile(PREMODEL_AS_DESTINATION);
         deleteDestinationFile(TM_DESTINATION);
         deleteDestinationFile(PLAN_DESTINATION);
         deleteDestinationFile(PM_DESTINATION);
         deleteDestinationFile(TP_DESTINATION);
+    }
+    
+    public void deleteNonErrorDestinationFiles(){
+        deleteDestinationFile(FINAL_AS_DESTINATION);
     }
     
     public void deleteDestinationFiles() {
