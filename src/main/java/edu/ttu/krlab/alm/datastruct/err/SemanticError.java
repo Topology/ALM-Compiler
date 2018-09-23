@@ -92,10 +92,10 @@ public class SemanticError {
     public static final String CDF005 = "CDF005";
     public static final String CDF006 = "CDF006";
     public static final String IMP001 = "IMP001";
-    public static final String NAM001 = "IMP001";
-    public static final String NAM002 = "IMP002";
-    public static final String NAM003 = "IMP003";
-    public static final String NAM004 = "IMP004";
+    public static final String NAM001 = "NAM001";
+    public static final String NAM002 = "NAM002";
+    public static final String NAM003 = "NAM003";
+    public static final String NAM004 = "NAM004";
 
     String errID;
     String completeMessage;

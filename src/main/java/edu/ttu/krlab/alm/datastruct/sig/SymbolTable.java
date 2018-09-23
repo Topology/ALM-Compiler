@@ -23,6 +23,7 @@ import edu.ttu.krlab.alm.datastruct.sig.exception.NameCollisionException;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class SymbolTable {
 
@@ -1017,9 +1018,15 @@ public class SymbolTable {
         return STName;
     }
 
-    public void addIntegerOccurrence(int parseInt) {
-        // TODO Auto-generated method stub
-
+    public void addIntegerOccurrence(String iText, Location loc) {
+        Set<ConstantEntry> constInt = getConstantEntries(iText);
+        if(constInt.isEmpty()){
+            try {
+                createConstantEntry(iText, Collections.EMPTY_LIST, Collections.singletonList(getIntegersSortEntry()), loc);
+            } catch (DuplicateConstantException | NameCollisionException ex) {
+                //never happens.
+            }
+        }
     }
 
     public void addHistoryTimeStep(int i) {

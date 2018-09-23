@@ -546,29 +546,29 @@ public abstract class ErrorMessageTable {
         // NAM001
         ErrorMetaDataBase nam001 = new ErrorMetaDataBase(SemanticError.NAM001,
                 "Attribute Function [1] cannot have the same name as element [2].",
-                "There may be semantic ambiguity through name collision between Herbrand terms (sort instance and constants) and non-Herbrand terms (functions).",
-                "Change the name of either the function or instance/constant to avoid name collision.");
+                "The names of functions in attribute or function declarations must be new and not collide with other functions or constants.",
+                "Change the name of one of the elements to avoid name collision.");
         errorMetaData.put(SemanticError.NAM001, nam001);
 
         // NAM002
         ErrorMetaDataBase nam002 = new ErrorMetaDataBase(SemanticError.NAM002,
                 "Constant [1] cannot have the same name as element [2].",
-                "There may be semantic ambiguity through name collision between Herbrand terms (sort instance and constants) and non-Herbrand terms (functions).",
-                "Change the name of either the function or instance/constant to avoid name collision.");
+                "The names of constants must not collide with names of functions.",
+                "Change the name of one of the elements to avoid name collision.");
         errorMetaData.put(SemanticError.NAM002, nam002);
 
         // NAM003
         ErrorMetaDataBase nam003 = new ErrorMetaDataBase(SemanticError.NAM003,
                 "Sort Instance [1] cannot have the same name as element [2].",
-                "There may be semantic ambiguity through name collision between Herbrand terms (sort instance and constants) and non-Herbrand terms (functions).",
-                "Change the name of either the function or instance/constant to avoid name collision.");
+                "The names of sort instances must be new and not collide with functions, constants or previously defined sort instances.",
+                "Change the name of one of the elements to avoid name collision.");
         errorMetaData.put(SemanticError.NAM003, nam003);
 
-        // NAM001
+        // NAM004
         ErrorMetaDataBase nam004 = new ErrorMetaDataBase(SemanticError.NAM004,
                 "Function [1] cannot have the same name as element [2].",
-                "There may be semantic ambiguity through name collision between Herbrand terms (sort instance and constants) and non-Herbrand terms (functions).",
-                "Change the name of either the function or instance/constant to avoid name collision.");
+                "The names of functions in function declaration must not collide with constants or other functions.",
+                "Change the name of one of the elements to avoid name collision.");
         errorMetaData.put(SemanticError.NAM004, nam004);
 
         // PER ERROR ID = new ErrorMetaDataBase("errorid", "message", "explanation",

@@ -126,6 +126,9 @@ public abstract class ALM {
         } else if (litcon.term() != null) {
             ALMTerm left = ALM.ParseTerm(litcon.term(0));
             ALMTerm right = ALM.ParseTerm(litcon.term(1));
+            if(left == null || right == null){
+                return null;
+            }
             return new ALMTerm(litcon.relation().getText(), ALMTerm.TERM_RELATION, litcon).addArg(left).addArg(right);
         }
         return null;
